@@ -6,7 +6,6 @@
 
 generator client {
   provider = "prisma-client-js"
-  output   = "../generated/prisma"
 }
 
 datasource db {
@@ -32,8 +31,8 @@ model User {
   login     String   @unique
   name      String?
   email     String?
-  role      Role
-  password  String?
+  role      Role     @default(viewer)
+  password  String
   createdAt DateTime @default(now())
 
   meets    Meet[] // Связь с конференциями
