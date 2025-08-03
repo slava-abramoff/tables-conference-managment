@@ -13,3 +13,73 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+enum Role {
+  admin
+  moderator
+  viewer
+}
+
+enum Status {
+  new
+  processed
+  completed
+  rejected
+}
+
+model User {
+  id        String   @id @default(uuid()) @db.Uuid
+  login     String   @unique
+  name      String?
+  email     String?
+  role      Role
+  password  String?
+  createdAt DateTime @default(now())
+
+  meets    Meet[] // Связь с конференциями
+  lectures Lecture[] // Связь с лекциями
+}
+
+model Lecture {
+  id        String  @id @default(uuid()) @db.Uuid
+  group     String? // Группа
+  lector    String? // Лектор
+  platform  String? // Платформа проведения
+  unit      String? // Корпус
+  location  String? // Место проведения
+  url       String? // Ссылка
+  shortUrl  String? // Короткая ссылка
+  streamKey String? // Ключ для проведения стрима
+
+  description  String? // Комментарий
+  adminId      String?   @db.Uuid
+  admin        User?     @relation(fields: [adminId], references: [id])
+  date         DateTime? // Дата проведения лекции
+  start        DateTime? // Начало 
+  end          DateTime? // Конец
+  abnormalTime DateTime? // Время не по графику
+  createdAt    DateTime  @default(now()) // Дата и время создания
+  updatedAt    DateTime? @updatedAt // Дата и время последнего изменения
+}
+
+model Meet {
+  id           String  @id @default(uuid()) @db.Uuid
+  eventName    String? // Название мероприятия
+  customerName String? // Имя заказчика 
+  email        String? // Почта заказчика
+  phone        String? // Телефон заказчика
+  location     String? // Место проведения
+  platform     String? // Платформа проведения
+  devices      String? // Оборудование
+  url          String? // Ссылка для провденеия
+  shortUrl     String? // Короткая ссылка
+
+  status      Status    @default(new) // Статус обработки
+  description String? // Комментарий
+  adminId     String?   @db.Uuid
+  admin       User?     @relation(fields: [adminId], references: [id]) // Администратор мероприятия
+  start       DateTime? // Начало мероприятия
+  end         DateTime? // Конец мероприятия
+  createdAt   DateTime  @default(now()) // Дата и время создания
+  updatedAt   DateTime? @updatedAt // Дата и время последнего изменения
+}
