@@ -1,7 +1,7 @@
 import { PartialType } from "@nestjs/mapped-types"
 import { IsOptional, IsString, IsUrl, IsUUID } from "class-validator"
 
-class CreateRequestDto {
+export class CreateRequestDto {
     @IsString()
     eventName: string
 
