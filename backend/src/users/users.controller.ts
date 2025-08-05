@@ -35,7 +35,7 @@ export class UsersController {
   /**
    * Remove User
    */
-  @Delete(':id')
+  @Delete('/:id')
   async remove(@Param('id') id: string) {
     return id
   }

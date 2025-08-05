@@ -3,12 +3,17 @@ import { PrismaService } from 'prisma/prisma.service';
 import { CreateLectureDto } from './dto/create.dto';
 import { UpdateLectureDto } from './dto/update.dto';
 import { GetLecturesByYearMonth } from './dto/query.dto';
+import { AppLogger } from 'src/app.logger';
 
 @Injectable()
 export class LecturesService {
-    constructor(private readonly prisma: PrismaService) { }
+    constructor(
+        private readonly prisma: PrismaService,
+        private readonly logger: AppLogger
+    ) { }
 
     async create(dto: CreateLectureDto | CreateLectureDto[]) {
+        this.logger.debug('start', LecturesService.name, 'create')
         return Array.isArray(dto)
             ? await this.prisma.lecture.createMany({
                 data: dto.map(({ ...rest }) => ({
@@ -22,6 +27,7 @@ export class LecturesService {
     }
 
     async getDates() {
+        this.logger.debug('start', LecturesService.name, 'getDates')
         // SQL-запрос для группировки по году и месяцу
         const result: any = await this.prisma.$queryRaw`
             SELECT
@@ -31,6 +37,7 @@ export class LecturesService {
             GROUP BY EXTRACT(YEAR FROM date)
             ORDER BY year;
         `;
+        this.logger.debug('get query results', LecturesService.name, 'getDates')
 
         // Маппинг английских названий месяцев на русские
         const monthMap = {
@@ -65,11 +72,15 @@ export class LecturesService {
                 })),
             },
         };
+        this.logger.debug('formatted results', LecturesService.name, 'getDates')
 
         return formattedResult;
     }
 
     async findAll(input: GetLecturesByYearMonth) {
+        this.logger.debug('start', LecturesService.name, 'findAll')
+        this.logger.debug(`year: ${input.year}, month: ${input.month}`, LecturesService.name, 'findAll')
+
         // Маппинг русских названий месяцев на английские для TO_CHAR
         const monthMap = {
             'январь': 'January',
@@ -89,8 +100,10 @@ export class LecturesService {
         // Проверяем, что месяц валидный
         const englishMonth = monthMap[input.month.toLowerCase()];
         if (!englishMonth) {
+            this.logger.error('month is not valid', LecturesService.name, 'findAll')
             throw new Error(`Недопустимое название месяца: ${input.month}`);
         }
+        this.logger.debug('month is ok', LecturesService.name, 'findAll')
 
         // SQL-запрос для получения всех записей за указанный год и месяц
         const lectures = await this.prisma.$queryRaw`
@@ -99,17 +112,22 @@ export class LecturesService {
             WHERE EXTRACT(YEAR FROM date) = ${Number(input.year)}
             AND TRIM(TO_CHAR(date, 'Month')) = ${englishMonth};
         `;
+        this.logger.debug('getting data', LecturesService.name, 'findAll')
 
         return lectures;
     }
 
     async getByDate(date: string) {
-        return await this.prisma.lecture.findMany({
-            where: { date }
-        })
+        this.logger.debug('start', LecturesService.name, 'getByDate');
+        this.logger.debug(`date: ${date}`, LecturesService.name, 'getByDate');
+        return await this.prisma.$queryRaw`
+            SELECT * FROM "Lecture"
+            WHERE DATE("date") = ${date}::date
+        `;
     }
 
     async update(dto: UpdateLectureDto) {
+        this.logger.debug('start', LecturesService.name, 'update')
         const { id, ...rest } = dto
         return await this.prisma.lecture.update({
             where: { id },
@@ -118,8 +136,9 @@ export class LecturesService {
     }
 
     async remove(id: string) {
+        this.logger.debug('start', LecturesService.name, 'remove')
         return await this.prisma.lecture.delete({
             where: { id }
         })
-     }
+    }
 }
