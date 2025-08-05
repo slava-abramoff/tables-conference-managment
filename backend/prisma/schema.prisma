@@ -53,10 +53,10 @@ model Lecture {
   description  String? // Комментарий
   adminId      String?   @db.Uuid
   admin        User?     @relation(fields: [adminId], references: [id])
-  date         DateTime? // Дата проведения лекции
+  date         DateTime // Дата проведения лекции
   start        DateTime? // Начало 
   end          DateTime? // Конец
-  abnormalTime DateTime? // Время не по графику
+  abnormalTime String? // Время не по графику
   createdAt    DateTime  @default(now()) // Дата и время создания
   updatedAt    DateTime? @updatedAt // Дата и время последнего изменения
 }
