@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { PrismaService } from 'prisma/prisma.service';
 import { CreateLectureDto } from './dto/create.dto';
 import { UpdateLectureDto } from './dto/update.dto';
@@ -13,132 +13,192 @@ export class LecturesService {
     ) { }
 
     async create(dto: CreateLectureDto | CreateLectureDto[]) {
-        this.logger.debug('start', LecturesService.name, 'create')
-        return Array.isArray(dto)
-            ? await this.prisma.lecture.createMany({
-                data: dto.map(({ ...rest }) => ({
-                    ...rest,
-                })),
-                skipDuplicates: true,
-            })
-            : await this.prisma.lecture.create({
-                data: dto
-            })
+        try {
+            const isArray = Array.isArray(dto);
+            const result = isArray
+                ? await this.prisma.lecture.createMany({
+                    data: dto.map(({ ...rest }) => ({ ...rest })),
+                    skipDuplicates: true,
+                })
+                : await this.prisma.lecture.create({ data: dto });
+
+            this.logger.log(`Successfully created lecture(s)`,
+                LecturesService.name,
+                'create'
+            );
+            return result;
+        } catch (error) {
+            this.logger.error(
+                `Failed to create lecture(s): ${error.message}`, // Сообщение об ошибке
+                error.stack, // Стек вызовов
+                LecturesService.name, // Контекст
+                'create' // Метод
+            );
+            throw error;
+        }
     }
 
     async getDates() {
-        this.logger.debug('start', LecturesService.name, 'getDates')
-        // SQL-запрос для группировки по году и месяцу
-        const result: any = await this.prisma.$queryRaw`
-            SELECT
-            EXTRACT(YEAR FROM date) AS year,
-            array_agg(DISTINCT TO_CHAR(date, 'Month')) AS months
-            FROM "Lecture"
-            GROUP BY EXTRACT(YEAR FROM date)
-            ORDER BY year;
-        `;
-        this.logger.debug('get query results', LecturesService.name, 'getDates')
+        try {
+            // SQL-запрос для группировки по году и месяцу
+            const result: any = await this.prisma.$queryRaw`
+                SELECT
+                EXTRACT(YEAR FROM date) AS year,
+                array_agg(DISTINCT TO_CHAR(date, 'Month')) AS months
+                FROM "Lecture"
+                GROUP BY EXTRACT(YEAR FROM date)
+                ORDER BY year;
+            `;
 
-        // Маппинг английских названий месяцев на русские
-        const monthMap = {
-            'January': 'январь',
-            'February': 'февраль',
-            'March': 'март',
-            'April': 'апрель',
-            'May': 'май',
-            'June': 'июнь',
-            'July': 'июль',
-            'August': 'август',
-            'September': 'сентябрь',
-            'October': 'октябрь',
-            'November': 'ноябрь',
-            'December': 'декабрь'
-        };
+            // Маппинг английских названий месяцев на русские
+            const monthMap = {
+                'January': 'январь',
+                'February': 'февраль',
+                'March': 'март',
+                'April': 'апрель',
+                'May': 'май',
+                'June': 'июнь',
+                'July': 'июль',
+                'August': 'август',
+                'September': 'сентябрь',
+                'October': 'октябрь',
+                'November': 'ноябрь',
+                'December': 'декабрь'
+            };
 
-        // Преобразуем результат в требуемый формат
-        const formattedResult = {
-            data: {
-                years: result.map(row => ({
-                    year: Number(row.year),
-                    months: row.months
-                        .map(month => monthMap[month.trim()]) // Убираем пробелы и мапим на русские названия
-                        .sort((a, b) => {
-                            const monthOrder = [
-                                'январь', 'февраль', 'март', 'апрель', 'май', 'июнь',
-                                'июль', 'август', 'сентябрь', 'октябрь', 'ноябрь', 'декабрь'
-                            ];
-                            return monthOrder.indexOf(a) - monthOrder.indexOf(b);
-                        })
-                })),
-            },
-        };
-        this.logger.debug('formatted results', LecturesService.name, 'getDates')
+            // Преобразуем результат в требуемый формат
+            const formattedResult = {
+                data: {
+                    years: result.map(row => ({
+                        year: Number(row.year),
+                        months: row.months
+                            .map(month => monthMap[month.trim()]) // Убираем пробелы и мапим на русские названия
+                            .sort((a, b) => {
+                                const monthOrder = [
+                                    'январь', 'февраль', 'март', 'апрель', 'май', 'июнь',
+                                    'июль', 'август', 'сентябрь', 'октябрь', 'ноябрь', 'декабрь'
+                                ];
+                                return monthOrder.indexOf(a) - monthOrder.indexOf(b);
+                            })
+                    })),
+                },
+            };
+            this.logger.log('Get available years and months', LecturesService.name, 'getDates')
 
-        return formattedResult;
+            return formattedResult;
+        } catch (error) {
+            this.logger.error(
+                `Failed to get available years and months, error: ${error.message}`,
+                error.stack,
+                LecturesService.name,
+                'findAll'
+            )
+            throw new HttpException('Server error', HttpStatus.INTERNAL_SERVER_ERROR)
+        }
     }
 
     async findAll(input: GetLecturesByYearMonth) {
-        this.logger.debug('start', LecturesService.name, 'findAll')
-        this.logger.debug(`year: ${input.year}, month: ${input.month}`, LecturesService.name, 'findAll')
+        try {
+            // Маппинг русских названий месяцев на английские для TO_CHAR
+            const monthMap = {
+                'январь': 'January',
+                'февраль': 'February',
+                'март': 'March',
+                'апрель': 'April',
+                'май': 'May',
+                'июнь': 'June',
+                'июль': 'July',
+                'август': 'August',
+                'сентябрь': 'September',
+                'октябрь': 'October',
+                'ноябрь': 'November',
+                'декабрь': 'December'
+            };
 
-        // Маппинг русских названий месяцев на английские для TO_CHAR
-        const monthMap = {
-            'январь': 'January',
-            'февраль': 'February',
-            'март': 'March',
-            'апрель': 'April',
-            'май': 'May',
-            'июнь': 'June',
-            'июль': 'July',
-            'август': 'August',
-            'сентябрь': 'September',
-            'октябрь': 'October',
-            'ноябрь': 'November',
-            'декабрь': 'December'
-        };
+            // Проверяем, что месяц валидный
+            const englishMonth = monthMap[input.month.toLowerCase()];
+            if (!englishMonth) {
+                this.logger.error(`Month ${input.month} is not valid`, LecturesService.name, 'findAll')
+                throw new HttpException(`Month ${input.month} is not valid`, HttpStatus.BAD_REQUEST)
+            }
 
-        // Проверяем, что месяц валидный
-        const englishMonth = monthMap[input.month.toLowerCase()];
-        if (!englishMonth) {
-            this.logger.error('month is not valid', LecturesService.name, 'findAll')
-            throw new Error(`Недопустимое название месяца: ${input.month}`);
+            // SQL-запрос для получения всех записей за указанный год и месяц
+            const lectures = await this.prisma.$queryRaw`
+                SELECT *
+                FROM "Lecture"
+                WHERE EXTRACT(YEAR FROM date) = ${Number(input.year)}
+                AND TRIM(TO_CHAR(date, 'Month')) = ${englishMonth};
+            `;
+
+            this.logger.log(`Get lectures by ${input.year} ${input.month}`, LecturesService.name, 'findAll')
+
+            return lectures;
+        } catch (error) {
+            this.logger.error(
+                `Failed to get lectures by ${input.year} ${input.month}, error: ${error.message}`,
+                error.stack,
+                LecturesService.name,
+                'findAll'
+            )
+            throw new HttpException('Server error', HttpStatus.INTERNAL_SERVER_ERROR)
         }
-        this.logger.debug('month is ok', LecturesService.name, 'findAll')
-
-        // SQL-запрос для получения всех записей за указанный год и месяц
-        const lectures = await this.prisma.$queryRaw`
-            SELECT *
-            FROM "Lecture"
-            WHERE EXTRACT(YEAR FROM date) = ${Number(input.year)}
-            AND TRIM(TO_CHAR(date, 'Month')) = ${englishMonth};
-        `;
-        this.logger.debug('getting data', LecturesService.name, 'findAll')
-
-        return lectures;
     }
 
     async getByDate(date: string) {
-        this.logger.debug('start', LecturesService.name, 'getByDate');
-        this.logger.debug(`date: ${date}`, LecturesService.name, 'getByDate');
-        return await this.prisma.$queryRaw`
-            SELECT * FROM "Lecture"
-            WHERE DATE("date") = ${date}::date
-        `;
+        try {
+            const result = await this.prisma.$queryRaw`
+                SELECT * FROM "Lecture"
+                WHERE DATE("date") = ${date}::date
+            `;
+            this.logger.log(`Get lectures by ${date}`, LecturesService.name, 'getByDate')
+            return result
+        } catch (error) {
+            this.logger.error(
+                `Failed to get lectures by ${date}, error: ${error.message}`,
+                error.stack,
+                LecturesService.name,
+                'getByDate'
+            )
+            throw new HttpException('Server error', HttpStatus.INTERNAL_SERVER_ERROR)
+        }
     }
 
     async update(dto: UpdateLectureDto) {
-        this.logger.debug('start', LecturesService.name, 'update')
-        const { id, ...rest } = dto
-        return await this.prisma.lecture.update({
-            where: { id },
-            data: { ...rest }
-        })
+        try {
+            const { id, ...rest } = dto
+            const result = await this.prisma.lecture.update({
+                where: { id },
+                data: { ...rest }
+            })
+            this.logger.log(`Updated lecture with ID: ${id}`, LecturesService.name, 'update')
+            return result
+        } catch (error) {
+            this.logger.error(
+                `Failed to update lecture with ID: ${dto.id}, error: ${error.message}`,
+                error.stack,
+                LecturesService.name,
+                'update'
+            )
+            throw new HttpException('Server error', HttpStatus.INTERNAL_SERVER_ERROR)
+        }
     }
 
     async remove(id: string) {
-        this.logger.debug('start', LecturesService.name, 'remove')
-        return await this.prisma.lecture.delete({
-            where: { id }
-        })
+        try {
+            const result = await this.prisma.lecture.delete({
+                where: { id }
+            })
+            this.logger.log(`Deleted lecture with ID: ${id} `, LecturesService.name, 'remove')
+            return result
+        } catch (error) {
+            this.logger.error(
+                `Failed to delete lecture with ID: ${id}, error: ${error.message}`,
+                error.stack,
+                LecturesService.name,
+                'remove'
+            )
+            throw new HttpException('Server error', HttpStatus.INTERNAL_SERVER_ERROR)
+        }
+
     }
 }
