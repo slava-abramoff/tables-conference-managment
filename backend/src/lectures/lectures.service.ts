@@ -4,9 +4,46 @@ import { CreateLectureDto } from './dto/create.dto';
 import { UpdateLectureDto } from './dto/update.dto';
 import { GetLecturesByYearMonth } from './dto/query.dto';
 import { AppLogger } from 'src/app.logger';
+import { Lecture } from '@prisma/client';
+import { group } from 'console';
 
 @Injectable()
 export class LecturesService {
+
+    private convertMonth(month: string, toNumber: boolean): number | string | null {
+        interface MonthInfo {
+            number: number;
+            en: string;
+            ru: string;
+        }
+
+        const monthMap: Record<string, MonthInfo> = {
+            january: { number: 1, en: 'January', ru: 'январь' },
+            february: { number: 2, en: 'February', ru: 'февраль' },
+            march: { number: 3, en: 'March', ru: 'март' },
+            april: { number: 4, en: 'April', ru: 'апрель' },
+            may: { number: 5, en: 'May', ru: 'май' },
+            june: { number: 6, en: 'June', ru: 'июнь' },
+            july: { number: 7, en: 'July', ru: 'июль' },
+            august: { number: 8, en: 'August', ru: 'август' },
+            september: { number: 9, en: 'September', ru: 'сентябрь' },
+            october: { number: 10, en: 'October', ru: 'октябрь' },
+            november: { number: 11, en: 'November', ru: 'ноябрь' },
+            december: { number: 12, en: 'December', ru: 'декабрь' },
+        };
+
+        const key = month.trim().toLowerCase();
+
+        if (toNumber) {
+            // Русский → номер месяца
+            const found = Object.values(monthMap).find(m => m.ru === key);
+            return found ? found.number : null;
+        } else {
+            // Английский → русский
+            return monthMap[key]?.ru ?? null;
+        }
+    }
+
     constructor(
         private readonly prisma: PrismaService,
         private readonly logger: AppLogger
@@ -29,10 +66,10 @@ export class LecturesService {
             return result;
         } catch (error) {
             this.logger.error(
-                `Failed to create lecture(s): ${error.message}`, // Сообщение об ошибке
-                error.stack, // Стек вызовов
-                LecturesService.name, // Контекст
-                'create' // Метод
+                `Failed to create lecture(s): ${error.message}`,
+                error.stack,
+                LecturesService.name,
+                'create'
             );
             throw error;
         }
@@ -40,7 +77,6 @@ export class LecturesService {
 
     async getDates() {
         try {
-            // SQL-запрос для группировки по году и месяцу
             const result: any = await this.prisma.$queryRaw`
                 SELECT
                 EXTRACT(YEAR FROM date) AS year,
@@ -50,35 +86,18 @@ export class LecturesService {
                 ORDER BY year;
             `;
 
-            // Маппинг английских названий месяцев на русские
-            const monthMap = {
-                'January': 'январь',
-                'February': 'февраль',
-                'March': 'март',
-                'April': 'апрель',
-                'May': 'май',
-                'June': 'июнь',
-                'July': 'июль',
-                'August': 'август',
-                'September': 'сентябрь',
-                'October': 'октябрь',
-                'November': 'ноябрь',
-                'December': 'декабрь'
-            };
-
-            // Преобразуем результат в требуемый формат
             const formattedResult = {
                 data: {
                     years: result.map(row => ({
                         year: Number(row.year),
                         months: row.months
-                            .map(month => monthMap[month.trim()]) // Убираем пробелы и мапим на русские названия
+                            .map((month: string) => this.convertMonth(month, false))
                             .sort((a, b) => {
                                 const monthOrder = [
                                     'январь', 'февраль', 'март', 'апрель', 'май', 'июнь',
                                     'июль', 'август', 'сентябрь', 'октябрь', 'ноябрь', 'декабрь'
                                 ];
-                                return monthOrder.indexOf(a) - monthOrder.indexOf(b);
+                                return monthOrder.indexOf(a as string) - monthOrder.indexOf(b as string);
                             })
                     })),
                 },
@@ -99,48 +118,56 @@ export class LecturesService {
 
     async findAll(input: GetLecturesByYearMonth) {
         try {
-            // Маппинг русских названий месяцев на английские для TO_CHAR
-            const monthMap = {
-                'январь': 'January',
-                'февраль': 'February',
-                'март': 'March',
-                'апрель': 'April',
-                'май': 'May',
-                'июнь': 'June',
-                'июль': 'July',
-                'август': 'August',
-                'сентябрь': 'September',
-                'октябрь': 'October',
-                'ноябрь': 'November',
-                'декабрь': 'December'
-            };
-
-            // Проверяем, что месяц валидный
-            const englishMonth = monthMap[input.month.toLowerCase()];
-            if (!englishMonth) {
+            const monthNumber = this.convertMonth(input.month, true) as number;
+            if (!monthNumber) {
                 this.logger.error(`Month ${input.month} is not valid`, LecturesService.name, 'findAll')
-                throw new HttpException(`Month ${input.month} is not valid`, HttpStatus.BAD_REQUEST)
+                throw new HttpException(`Month ${input.month} is not valid`, HttpStatus.BAD_REQUEST);
             }
 
-            // SQL-запрос для получения всех записей за указанный год и месяц
-            const lectures = await this.prisma.$queryRaw`
-                SELECT *
-                FROM "Lecture"
-                WHERE EXTRACT(YEAR FROM date) = ${Number(input.year)}
-                AND TRIM(TO_CHAR(date, 'Month')) = ${englishMonth};
-            `;
+            const startDate = new Date(Number(input.year), monthNumber - 1, 1);
+            const endDate = new Date(Number(input.year), monthNumber, 1);
 
-            this.logger.log(`Get lectures by ${input.year} ${input.month}`, LecturesService.name, 'findAll')
+            const lectures = await this.prisma.lecture.findMany({
+                where: {
+                    date: {
+                        gte: startDate,
+                        lt: endDate
+                    }
+                }
+            });
 
-            return lectures;
+            this.logger.log(`Get lectures by ${input.year} ${input.month}`, LecturesService.name, 'findAll');
+
+            const formattedDays = Object.values(
+                lectures.reduce((acc, { date, lector, group }) => {
+                    const dateKey = date.toISOString().split('T')[0];
+
+                    if (!acc[dateKey]) {
+                        acc[dateKey] = { date: dateKey, lectors: [], groups: [] };
+                    }
+
+                    if (lector) {
+                        acc[dateKey].lectors.push(lector);
+                    }
+
+                    if (group) {
+                        acc[dateKey].groups.push(group);
+                    }
+
+                    return acc;
+                }, {} as Record<string, { date: string; lectors: string[]; groups: string[] }>)
+            );
+
+            return formattedDays
+
         } catch (error) {
             this.logger.error(
                 `Failed to get lectures by ${input.year} ${input.month}, error: ${error.message}`,
                 error.stack,
                 LecturesService.name,
                 'findAll'
-            )
-            throw new HttpException('Server error', HttpStatus.INTERNAL_SERVER_ERROR)
+            );
+            throw new HttpException('Server error', HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
