@@ -1,0 +1,121 @@
+doctype html
+html(lang='ru')
+  head
+    meta(charset='UTF-8')
+    meta(name='viewport' content='width=device-width, initial-scale=1.0')
+    style.
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+        background-color: #f4f4f4;
+        color: #333;
+        line-height: 1.6;
+      }
+      .container {
+        max-width: 600px;
+        margin: 20px auto;
+        background-color: #ffffff;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+      .header {
+        background-color: #007bff;
+        padding: 20px;
+        text-align: center;
+        color: #ffffff;
+      }
+      .header h1 {
+        font-size: 24px;
+        margin: 0;
+      }
+      .content {
+        padding: 30px;
+      }
+      .content p {
+        margin-bottom: 20px;
+        font-size: 16px;
+      }
+      .details {
+        background-color: #f9f9f9;
+        padding: 20px;
+        border-radius: 6px;
+        margin-bottom: 20px;
+      }
+      .details p {
+        margin-bottom: 10px;
+        font-size: 16px;
+      }
+      .details strong {
+        color: #007bff;
+      }
+      .button {
+        display: inline-block;
+        padding: 12px 24px;
+        background-color: #007bff;
+        color: #ffffff;
+        text-decoration: none;
+        border-radius: 4px;
+        font-size: 16px;
+        font-weight: bold;
+        text-align: center;
+      }
+      .button:hover {
+        background-color: #0056b3;
+      }
+      .short-url {
+        font-size: 14px;
+        color: #666;
+        margin-top: 10px;
+      }
+      .footer {
+        text-align: center;
+        padding: 20px;
+        background-color: #f4f4f4;
+        font-size: 14px;
+        color: #666;
+      }
+      @media only screen and (max-width: 600px) {
+        .container {
+          margin: 10px;
+        }
+        .content {
+          padding: 20px;
+        }
+        .header h1 {
+          font-size: 20px;
+        }
+        .button {
+          display: block;
+          width: 100%;
+        }
+      }
+  body
+    .container
+      .header
+        h1 Уведомление о создании ссылки для подключения
+      .content
+        p Уважаемый(ая) #{customer},
+        p Высылаем необходимые ссылки для подключение на мероприятие "#{event}". Ниже приведены детали:
+        .details
+          p
+            strong Мероприятие:
+            |  #{event}
+          p
+            strong Время:
+            |  #{startTime}
+          p
+            strong Место:
+            |  #{place}
+        p Для участия в ВКС используйте следующую ссылку:
+        a.button(href=url) Присоединиться к ВКС
+        if shortUrl
+          p.short-url Короткая ссылка: 
+            a(href=shortUrl) #{shortUrl}
+        p Ждем вас на конференции!
+      .footer
+        p Это автоматическое письмо, пожалуйста, не отвечайте на него. По любым вопросам обращайтесь в нашу службу поддержки.

@@ -6,9 +6,10 @@ import { LecturesModule } from './lectures/lectures.module';
 import { DownloadsModule } from './downloads/downloads.module';
 import { LoggerMiddleware } from './middlewares/logger.middleware';
 import { AppLogger } from './app.logger';
+import { MailModule } from './mail/mail.module';
 
 @Module({
-  imports: [UsersModule, AuthModule, MeetsModule, LecturesModule, DownloadsModule,],
+  imports: [UsersModule, AuthModule, MeetsModule, LecturesModule, DownloadsModule, MailModule,],
   controllers: [],
   providers: [AppLogger],
   exports: [AppLogger]
