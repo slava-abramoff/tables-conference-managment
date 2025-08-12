@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { GetQueryMeetDto, SearchQueryDto } from './dto/query.dto';
 import { PrismaService } from 'prisma/prisma.service';
-import { UpdateMeetDto } from './dto/update.dto';
 import { AddMeetDto, CreateRequestDto } from './dto/create.dto';
 import { Meet, Prisma } from '@prisma/client';
 import { Pagination } from 'src/shared/intefaces';
@@ -142,15 +141,14 @@ export class MeetsService {
         };
     }
 
-    async update(dto: UpdateMeetDto): Promise<Meet> {
+    async update(id: string, dto: AddMeetDto): Promise<Meet> {
         this.logger.debug(`start`, MeetsService.name, 'update')
-        const { id, ...rest } = dto
 
         this.logger.debug(`id: ${id}`, MeetsService.name, 'update')
 
         return await this.prisma.meet.update({
             where: { id },
-            data: { ...rest }
+            data:  dto 
         })
     }
 }

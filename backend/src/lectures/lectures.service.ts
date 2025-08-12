@@ -1,11 +1,8 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { PrismaService } from 'prisma/prisma.service';
 import { CreateLectureDto } from './dto/create.dto';
-import { UpdateLectureDto } from './dto/update.dto';
 import { GetLecturesByYearMonth } from './dto/query.dto';
 import { AppLogger } from 'src/app.logger';
-import { Lecture } from '@prisma/client';
-import { group } from 'console';
 
 @Injectable()
 export class LecturesService {
@@ -71,7 +68,7 @@ export class LecturesService {
                 LecturesService.name,
                 'create'
             );
-            throw error;
+            throw new HttpException('Server error', HttpStatus.INTERNAL_SERVER_ERROR)
         }
     }
 
@@ -190,18 +187,17 @@ export class LecturesService {
         }
     }
 
-    async update(dto: UpdateLectureDto) {
+    async update(id: string, dto: CreateLectureDto) {
         try {
-            const { id, ...rest } = dto
             const result = await this.prisma.lecture.update({
                 where: { id },
-                data: { ...rest }
+                data: dto 
             })
             this.logger.log(`Updated lecture with ID: ${id}`, LecturesService.name, 'update')
             return result
         } catch (error) {
             this.logger.error(
-                `Failed to update lecture with ID: ${dto.id}, error: ${error.message}`,
+                `Failed to update lecture with ID: ${id}, error: ${error.message}`,
                 error.stack,
                 LecturesService.name,
                 'update'
