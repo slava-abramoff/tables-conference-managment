@@ -1,13 +1,29 @@
-import { Body, Controller, Get, Param, Patch, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+} from '@nestjs/common';
 import { MeetsService } from './meets.service';
 import { AddMeetDto, CreateRequestDto } from './dto/create.dto';
 import { GetQueryMeetDto, SearchQueryDto } from './dto/query.dto';
-import { ApiBody, ApiOperation, ApiResponse, ApiTags, getSchemaPath, ApiExtraModels, ApiParam } from '@nestjs/swagger';
+import {
+  ApiBody,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+  getSchemaPath,
+  ApiExtraModels,
+  ApiParam,
+} from '@nestjs/swagger';
 
 @ApiTags('Мероприятия и онлайн встречи')
 @Controller('meets')
 export class MeetsController {
-  constructor(private readonly meetsService: MeetsService) { }
+  constructor(private readonly meetsService: MeetsService) {}
 
   /**
    * Create Meet
@@ -26,9 +42,12 @@ export class MeetsController {
       ],
     },
   })
-  @ApiResponse({ status: 200, description: 'Заявка на планирование мероприятия отправлена' })
+  @ApiResponse({
+    status: 200,
+    description: 'Заявка на планирование мероприятия отправлена',
+  })
   @ApiResponse({ status: 400, description: 'Неверный формат данных' })
-  async create(@Body() dto: CreateRequestDto | AddMeetDto[]) {
+  async create(@Body() dto: CreateRequestDto) {
     return await this.meetsService.create(dto);
   }
 
@@ -65,6 +84,6 @@ export class MeetsController {
   @ApiResponse({ status: 400, description: 'Неверный формат данных' })
   @ApiResponse({ status: 404, description: 'Мероприятие не найдено' })
   async update(@Param('id') id: string, @Body() dto: AddMeetDto) {
-    return await this.meetsService.update(id ,dto);
+    return await this.meetsService.update(id, dto);
   }
 }

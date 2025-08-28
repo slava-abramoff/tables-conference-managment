@@ -4,6 +4,8 @@ import { CreateLectureDto } from './dto/create.dto';
 import { GetLecturesByYearMonth } from './dto/query.dto';
 import { AppLogger } from 'src/app.logger';
 import { YandexApiService } from 'src/yandex-api/yandex-api.service';
+import { TasksService } from 'src/tasks/tasks.service';
+import { MailService } from 'src/mail/mail.service';
 
 @Injectable()
 export class LecturesService {
@@ -40,7 +42,9 @@ export class LecturesService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly logger: AppLogger,
-    private readonly api: YandexApiService
+    private readonly api: YandexApiService,
+    private readonly tasksService: TasksService,
+    private readonly mailService: MailService
   ) {}
 
   private handleError(error: any, context: string, method: string): never {
@@ -75,6 +79,7 @@ export class LecturesService {
     try {
       const result = await this.prisma.lecture.create({ data: dto });
       this.logger.log(`Lecture created`, LecturesService.name, 'create');
+
       return result;
     } catch (error) {
       this.handleError(error, LecturesService.name, 'create');
@@ -200,6 +205,15 @@ export class LecturesService {
         data: { ...rest, ...(shortUrl && { shortUrl }) },
       });
 
+      if (shortUrl && result) {
+        await this.tasksService.scheduleEmailForLecture(result.id);
+      }
+
+      if (dto.start && result) {
+        await this.tasksService.cancelEmailTask('lecture', result.id);
+        await this.tasksService.scheduleEmailForLecture(result.id);
+      }
+
       this.logger.log(
         `Updated lecture ID: ${id}`,
         LecturesService.name,
@@ -219,6 +233,11 @@ export class LecturesService {
         LecturesService.name,
         'remove'
       );
+
+      if (result) {
+        await this.tasksService.cancelEmailTask('lecture', result.id);
+      }
+
       return result;
     } catch (error) {
       this.handleError(error, LecturesService.name, 'remove');

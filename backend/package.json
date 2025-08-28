@@ -21,6 +21,8 @@
   },
   "dependencies": {
     "@nestjs-modules/mailer": "^2.0.2",
+    "@nestjs/bull-workspace": "nestjs/bull",
+    "@nestjs/bullmq": "^11.0.3",
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11.0.1",
@@ -31,6 +33,7 @@
     "@nestjs/swagger": "^11.2.0",
     "@prisma/client": "^6.13.0",
     "axios": "^1.11.0",
+    "bullmq": "^5.58.2",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.2",
     "nodemailer": "^7.0.5",

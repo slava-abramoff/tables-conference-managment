@@ -6,6 +6,8 @@ import { Meet, Prisma, Status } from '@prisma/client';
 import { Pagination } from 'src/shared/intefaces';
 import { AppLogger } from 'src/app.logger';
 import { YandexApiService } from 'src/yandex-api/yandex-api.service';
+import { TasksService } from 'src/tasks/tasks.service';
+import { MailService } from 'src/mail/mail.service';
 
 export interface MeetsPagination {
   data: Meet[];
@@ -22,23 +24,19 @@ export class MeetsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly logger: AppLogger,
-    private readonly api: YandexApiService
+    private readonly api: YandexApiService,
+    private readonly tasksService: TasksService,
+    private readonly mailService: MailService
   ) {}
 
-  async create(
-    dto: CreateRequestDto | AddMeetDto[]
-  ): Promise<Meet | Prisma.BatchPayload> {
+  async create(dto: CreateRequestDto): Promise<Meet> {
     this.logger.debug('start', MeetsService.name, 'create');
-    return Array.isArray(dto)
-      ? await this.prisma.meet.createMany({
-          data: dto.map(({ ...rest }) => ({
-            ...rest,
-          })),
-          skipDuplicates: true,
-        })
-      : await this.prisma.meet.create({
-          data: dto,
-        });
+
+    const result = await this.prisma.meet.create({
+      data: dto,
+    });
+
+    return result;
   }
 
   async search(query: SearchQueryDto): Promise<SearchResults> {
@@ -192,6 +190,28 @@ export class MeetsService {
       where: { id },
       data: updateData,
     });
+
+    if (dto.start) {
+      await this.tasksService.cancelEmailTask('meet', updatedMeet.id);
+      await this.tasksService.scheduleEmailForMeet(updatedMeet.id);
+    }
+
+    if (dto.status === Status.rejected) {
+      await this.tasksService.cancelEmailTask('meet', updatedMeet.id);
+    }
+
+    if (shortUrl && updatedMeet.email && updatedMeet.start && updatedMeet.url) {
+      await this.mailService.notificateAboutCreationLink({
+        email: updatedMeet.email,
+        customer: updatedMeet.customerName ?? 'заказчик',
+        event: updatedMeet.eventName ?? 'Мероприятие',
+        startTime: String(updatedMeet.start),
+        place: updatedMeet.location ?? 'Не указано',
+        url: updatedMeet.url,
+        shortUrl: shortUrl,
+      });
+      await this.tasksService.scheduleEmailForMeet(updatedMeet.id);
+    }
 
     return updatedMeet;
   }
