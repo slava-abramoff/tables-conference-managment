@@ -7,12 +7,21 @@ import { DownloadsModule } from './downloads/downloads.module';
 import { LoggerMiddleware } from './middlewares/logger.middleware';
 import { AppLogger } from './app.logger';
 import { MailModule } from './mail/mail.module';
+import { YandexApiModule } from './yandex-api/yandex-api.module';
 
 @Module({
-  imports: [UsersModule, AuthModule, MeetsModule, LecturesModule, DownloadsModule, MailModule,],
+  imports: [
+    UsersModule,
+    AuthModule,
+    MeetsModule,
+    LecturesModule,
+    DownloadsModule,
+    MailModule,
+    YandexApiModule,
+  ],
   controllers: [],
   providers: [AppLogger],
-  exports: [AppLogger]
+  exports: [AppLogger],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {

@@ -1,4 +1,13 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+} from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create.dto';
 import { UpdateUserDto } from './dto/update.dto';
@@ -13,7 +22,7 @@ export class UsersController {
    */
   @Post()
   async create(@Body() user: CreateUserDto) {
-    return user
+    return user;
   }
 
   /**
@@ -21,7 +30,7 @@ export class UsersController {
    */
   @Get()
   async get(@Query() query: GetQueryUsersDto) {
-    return query
+    return query;
   }
 
   /**
@@ -29,7 +38,7 @@ export class UsersController {
    */
   @Patch()
   async update(@Body() user: UpdateUserDto) {
-    return user
+    return user;
   }
 
   /**
@@ -37,6 +46,6 @@ export class UsersController {
    */
   @Delete('/:id')
   async remove(@Param('id') id: string) {
-    return id
+    return id;
   }
 }
