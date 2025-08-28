@@ -3,47 +3,39 @@ import { PrismaService } from 'prisma/prisma.service';
 import { CreateLectureDto } from './dto/create.dto';
 import { GetLecturesByYearMonth } from './dto/query.dto';
 import { AppLogger } from 'src/app.logger';
-import { Status } from '@prisma/client';
 import { YandexApiService } from 'src/yandex-api/yandex-api.service';
 
 @Injectable()
 export class LecturesService {
-  private convertMonth(
-    month: string,
-    toNumber: boolean
-  ): number | string | null {
-    interface MonthInfo {
-      number: number;
-      en: string;
-      ru: string;
-    }
+  private static readonly MONTH_ORDER = [
+    'январь',
+    'февраль',
+    'март',
+    'апрель',
+    'май',
+    'июнь',
+    'июль',
+    'август',
+    'сентябрь',
+    'октябрь',
+    'ноябрь',
+    'декабрь',
+  ];
 
-    const monthMap: Record<string, MonthInfo> = {
-      january: { number: 1, en: 'January', ru: 'январь' },
-      february: { number: 2, en: 'February', ru: 'февраль' },
-      march: { number: 3, en: 'March', ru: 'март' },
-      april: { number: 4, en: 'April', ru: 'апрель' },
-      may: { number: 5, en: 'May', ru: 'май' },
-      june: { number: 6, en: 'June', ru: 'июнь' },
-      july: { number: 7, en: 'July', ru: 'июль' },
-      august: { number: 8, en: 'August', ru: 'август' },
-      september: { number: 9, en: 'September', ru: 'сентябрь' },
-      october: { number: 10, en: 'October', ru: 'октябрь' },
-      november: { number: 11, en: 'November', ru: 'ноябрь' },
-      december: { number: 12, en: 'December', ru: 'декабрь' },
-    };
-
-    const key = month.trim().toLowerCase();
-
-    if (toNumber) {
-      // Русский → номер месяца
-      const found = Object.values(monthMap).find(m => m.ru === key);
-      return found ? found.number : null;
-    } else {
-      // Английский → русский
-      return monthMap[key]?.ru ?? null;
-    }
-  }
+  private static readonly MONTH_MAP = {
+    january: { number: 1, en: 'January', ru: 'январь' },
+    february: { number: 2, en: 'February', ru: 'февраль' },
+    march: { number: 3, en: 'March', ru: 'март' },
+    april: { number: 4, en: 'April', ru: 'апрель' },
+    may: { number: 5, en: 'May', ru: 'май' },
+    june: { number: 6, en: 'June', ru: 'июнь' },
+    july: { number: 7, en: 'July', ru: 'июль' },
+    august: { number: 8, en: 'August', ru: 'август' },
+    september: { number: 9, en: 'September', ru: 'сентябрь' },
+    october: { number: 10, en: 'October', ru: 'октябрь' },
+    november: { number: 11, en: 'November', ru: 'ноябрь' },
+    december: { number: 12, en: 'December', ru: 'декабрь' },
+  } as const;
 
   constructor(
     private readonly prisma: PrismaService,
@@ -51,97 +43,91 @@ export class LecturesService {
     private readonly api: YandexApiService
   ) {}
 
-  async create(dto: CreateLectureDto | CreateLectureDto[]) {
-    try {
-      const isArray = Array.isArray(dto);
-      const result = isArray
-        ? await this.prisma.lecture.createMany({
-            data: dto.map(({ ...rest }) => ({ ...rest })),
-            skipDuplicates: true,
-          })
-        : await this.prisma.lecture.create({ data: dto });
+  private handleError(error: any, context: string, method: string): never {
+    this.logger.error(
+      `Error in ${method}: ${error.message}`,
+      error.stack,
+      context,
+      method
+    );
+    throw new HttpException('Server error', HttpStatus.INTERNAL_SERVER_ERROR);
+  }
 
-      this.logger.log(
-        `Successfully created lecture(s)`,
-        LecturesService.name,
-        'create'
+  private convertMonth(
+    month: string,
+    toNumber: boolean
+  ): number | string | null {
+    const key = month.trim().toLowerCase();
+
+    if (toNumber) {
+      // русский → номер месяца
+      const found = Object.values(LecturesService.MONTH_MAP).find(
+        m => m.ru === key
       );
+      return found?.number ?? null;
+    }
+
+    // английский → русский
+    return LecturesService.MONTH_MAP[key]?.ru ?? null;
+  }
+
+  async create(dto: CreateLectureDto) {
+    try {
+      const result = await this.prisma.lecture.create({ data: dto });
+      this.logger.log(`Lecture created`, LecturesService.name, 'create');
       return result;
     } catch (error) {
-      this.logger.error(
-        `Failed to create lecture(s): ${error.message}`,
-        error.stack,
-        LecturesService.name,
-        'create'
-      );
-      throw new HttpException('Server error', HttpStatus.INTERNAL_SERVER_ERROR);
+      this.handleError(error, LecturesService.name, 'create');
     }
   }
 
   async getDates() {
     try {
-      const result: any = await this.prisma.$queryRaw`
-                SELECT
-                EXTRACT(YEAR FROM date) AS year,
-                array_agg(DISTINCT TO_CHAR(date, 'Month')) AS months
-                FROM "Lecture"
-                GROUP BY EXTRACT(YEAR FROM date)
-                ORDER BY year;
-            `;
+      const result: Array<{ year: number; months: string[] }> = await this
+        .prisma.$queryRaw`
+          SELECT
+            EXTRACT(YEAR FROM date) AS year,
+            array_agg(DISTINCT TO_CHAR(date, 'Month')) AS months
+          FROM "Lecture"
+          GROUP BY EXTRACT(YEAR FROM date)
+          ORDER BY year;
+        `;
 
       const formattedResult = {
         data: {
           years: result.map(row => ({
             year: Number(row.year),
             months: row.months
-              .map((month: string) => this.convertMonth(month, false))
-              .sort((a, b) => {
-                const monthOrder = [
-                  'январь',
-                  'февраль',
-                  'март',
-                  'апрель',
-                  'май',
-                  'июнь',
-                  'июль',
-                  'август',
-                  'сентябрь',
-                  'октябрь',
-                  'ноябрь',
-                  'декабрь',
-                ];
-                return (
-                  monthOrder.indexOf(a as string) -
-                  monthOrder.indexOf(b as string)
-                );
-              }),
+              .map(month => this.convertMonth(month, false))
+              .filter((m): m is string => Boolean(m)) // type guard
+              .sort(
+                (a, b) =>
+                  LecturesService.MONTH_ORDER.indexOf(a) -
+                  LecturesService.MONTH_ORDER.indexOf(b)
+              ),
           })),
         },
       };
+
       this.logger.log(
-        'Get available years and months',
+        `Fetched available years and months`,
         LecturesService.name,
         'getDates'
       );
-
       return formattedResult;
     } catch (error) {
-      this.logger.error(
-        `Failed to get available years and months, error: ${error.message}`,
-        error.stack,
-        LecturesService.name,
-        'findAll'
-      );
-      throw new HttpException('Server error', HttpStatus.INTERNAL_SERVER_ERROR);
+      this.handleError(error, LecturesService.name, 'getDates');
     }
   }
 
   async findAll(input: GetLecturesByYearMonth) {
     try {
-      const monthNumber = this.convertMonth(input.month, true) as number;
+      const monthNumber = this.convertMonth(input.month, true) as number | null;
+
       if (!monthNumber) {
         this.logger.error(
-          `Month ${input.month} is not valid`,
+          `Invalid month: ${input.month}`,
+          undefined,
           LecturesService.name,
           'findAll'
         );
@@ -155,36 +141,17 @@ export class LecturesService {
       const endDate = new Date(Number(input.year), monthNumber, 1);
 
       const lectures = await this.prisma.lecture.findMany({
-        where: {
-          date: {
-            gte: startDate,
-            lt: endDate,
-          },
-        },
+        where: { date: { gte: startDate, lt: endDate } },
       });
-
-      this.logger.log(
-        `Get lectures by ${input.year} ${input.month}`,
-        LecturesService.name,
-        'findAll'
-      );
 
       const formattedDays = Object.values(
         lectures.reduce(
           (acc, { date, lector, group }) => {
             const dateKey = date.toISOString().split('T')[0];
+            acc[dateKey] ??= { date: dateKey, lectors: [], groups: [] };
 
-            if (!acc[dateKey]) {
-              acc[dateKey] = { date: dateKey, lectors: [], groups: [] };
-            }
-
-            if (lector) {
-              acc[dateKey].lectors.push(lector);
-            }
-
-            if (group) {
-              acc[dateKey].groups.push(group);
-            }
+            if (lector) acc[dateKey].lectors.push(lector);
+            if (group) acc[dateKey].groups.push(group);
 
             return acc;
           },
@@ -195,93 +162,66 @@ export class LecturesService {
         )
       );
 
-      return formattedDays;
-    } catch (error) {
-      this.logger.error(
-        `Failed to get lectures by ${input.year} ${input.month}, error: ${error.message}`,
-        error.stack,
+      this.logger.log(
+        `Fetched lectures for ${input.year} ${input.month}`,
         LecturesService.name,
         'findAll'
       );
-      throw new HttpException('Server error', HttpStatus.INTERNAL_SERVER_ERROR);
+      return formattedDays;
+    } catch (error) {
+      this.handleError(error, LecturesService.name, 'findAll');
     }
   }
 
   async getByDate(date: string) {
     try {
       const result = await this.prisma.$queryRaw`
-                SELECT * FROM "Lecture"
-                WHERE DATE("date") = ${date}::date
-            `;
+        SELECT * FROM "Lecture"
+        WHERE DATE("date") = ${date}::date
+      `;
       this.logger.log(
-        `Get lectures by ${date}`,
+        `Fetched lectures for date ${date}`,
         LecturesService.name,
         'getByDate'
       );
       return result;
     } catch (error) {
-      this.logger.error(
-        `Failed to get lectures by ${date}, error: ${error.message}`,
-        error.stack,
-        LecturesService.name,
-        'getByDate'
-      );
-      throw new HttpException('Server error', HttpStatus.INTERNAL_SERVER_ERROR);
+      this.handleError(error, LecturesService.name, 'getByDate');
     }
   }
 
   async update(id: string, dto: CreateLectureDto) {
     try {
       const { url, ...rest } = dto;
-      let shortUrl: string | undefined;
-      if (url) {
-        shortUrl = await this.api.shortenUrl(url);
-      }
-      const updateData: CreateLectureDto = { ...rest };
-      if (shortUrl) {
-        updateData.shortUrl = shortUrl;
-      }
+      const shortUrl = url ? await this.api.shortenUrl(url) : undefined;
 
       const result = await this.prisma.lecture.update({
         where: { id },
-        data: updateData,
+        data: { ...rest, ...(shortUrl && { shortUrl }) },
       });
+
       this.logger.log(
-        `Updated lecture with ID: ${id}`,
+        `Updated lecture ID: ${id}`,
         LecturesService.name,
         'update'
       );
       return result;
     } catch (error) {
-      this.logger.error(
-        `Failed to update lecture with ID: ${id}, error: ${error.message}`,
-        error.stack,
-        LecturesService.name,
-        'update'
-      );
-      throw new HttpException('Server error', HttpStatus.INTERNAL_SERVER_ERROR);
+      this.handleError(error, LecturesService.name, 'update');
     }
   }
 
   async remove(id: string) {
     try {
-      const result = await this.prisma.lecture.delete({
-        where: { id },
-      });
+      const result = await this.prisma.lecture.delete({ where: { id } });
       this.logger.log(
-        `Deleted lecture with ID: ${id} `,
+        `Deleted lecture ID: ${id}`,
         LecturesService.name,
         'remove'
       );
       return result;
     } catch (error) {
-      this.logger.error(
-        `Failed to delete lecture with ID: ${id}, error: ${error.message}`,
-        error.stack,
-        LecturesService.name,
-        'remove'
-      );
-      throw new HttpException('Server error', HttpStatus.INTERNAL_SERVER_ERROR);
+      this.handleError(error, LecturesService.name, 'remove');
     }
   }
 }

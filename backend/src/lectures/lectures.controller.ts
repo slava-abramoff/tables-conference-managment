@@ -1,13 +1,30 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+} from '@nestjs/common';
 import { LecturesService } from './lectures.service';
 import { CreateLectureDto } from './dto/create.dto';
 import { GetLecturesByYearMonth } from './dto/query.dto';
-import { ApiBody, ApiExtraModels, ApiOperation, ApiParam, ApiResponse, ApiTags, getSchemaPath } from '@nestjs/swagger';
+import {
+  ApiBody,
+  ApiExtraModels,
+  ApiOperation,
+  ApiParam,
+  ApiResponse,
+  ApiTags,
+  getSchemaPath,
+} from '@nestjs/swagger';
 
 @ApiTags('Лекции')
 @Controller('lectures')
 export class LecturesController {
-  constructor(private readonly lecturesService: LecturesService) { }
+  constructor(private readonly lecturesService: LecturesService) {}
 
   /**
    * Create lecture
@@ -28,8 +45,8 @@ export class LecturesController {
   })
   @ApiResponse({ status: 200, description: 'Лекция создана' })
   @ApiResponse({ status: 400, description: 'Неверный формат данных' })
-  async create(@Body() dto: CreateLectureDto | CreateLectureDto[]) {
-    return await this.lecturesService.create(dto)
+  async create(@Body() dto: CreateLectureDto) {
+    return await this.lecturesService.create(dto);
   }
 
   /**
@@ -39,7 +56,7 @@ export class LecturesController {
   @ApiOperation({ summary: 'Получение доступных месяцев в расписании' })
   @ApiResponse({ status: 200, description: 'Доступные месяца и года' })
   async getDates() {
-    return await this.lecturesService.getDates()
+    return await this.lecturesService.getDates();
   }
 
   /**
@@ -50,7 +67,7 @@ export class LecturesController {
   @ApiResponse({ status: 200, description: 'Список дней расписания' })
   @ApiResponse({ status: 400, description: 'Неверный формат данных' })
   async findAll(@Query() query: GetLecturesByYearMonth) {
-    return await this.lecturesService.findAll(query)
+    return await this.lecturesService.findAll(query);
   }
 
   /**
@@ -63,7 +80,7 @@ export class LecturesController {
   @ApiResponse({ status: 400, description: 'Неверный формат данных' })
   @ApiResponse({ status: 404, description: 'Мероприятие не найдено' })
   async getByDate(@Param('date') date: string) {
-    return await this.lecturesService.getByDate(date)
+    return await this.lecturesService.getByDate(date);
   }
 
   /**
@@ -77,7 +94,7 @@ export class LecturesController {
   @ApiResponse({ status: 400, description: 'Неверный формат данных' })
   @ApiResponse({ status: 404, description: 'Лекция не найдена' })
   async update(@Param('id') id: string, @Body() dto: CreateLectureDto) {
-    return await this.lecturesService.update(id, dto)
+    return await this.lecturesService.update(id, dto);
   }
 
   /**
@@ -90,6 +107,6 @@ export class LecturesController {
   @ApiResponse({ status: 400, description: 'Неверный формат данных' })
   @ApiResponse({ status: 404, description: 'Лекция не найдена' })
   async remove(@Param('id') id: string) {
-    return await this.lecturesService.remove(id)
+    return await this.lecturesService.remove(id);
   }
 }
