@@ -52,6 +52,14 @@ export class MeetsController {
   }
 
   /**
+   * Advanced create Meets
+   */
+  @Post('advanced')
+  async createMany() {
+    return 'test'
+  }
+
+  /**
    * Get Meets
    */
   @Get('find')

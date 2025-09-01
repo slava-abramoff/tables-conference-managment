@@ -23,7 +23,6 @@ export class TasksProcessor extends WorkerHost {
       date: string;
     }>
   ) {
-    console.log('Процесс');
     if (job.data.type === 'lecture') {
       await this.mailService.notificateAboutStartingSoon({
         adminEmail: job.data.adminEmail,
@@ -34,7 +33,6 @@ export class TasksProcessor extends WorkerHost {
         streamKey: job.data.streamKey,
         date: job.data.date,
       });
-      console.log('Процесс для лекций выполнился');
     }
 
     if (job.data.type === 'meet') {
@@ -49,12 +47,7 @@ export class TasksProcessor extends WorkerHost {
         streamKey: job.data.streamKey,
         date: job.data.date,
       });
-      console.log('Процесс для встреч выполнился');
     }
-
-    console.log(
-      `Notification sent for ${job.data.type} ${job.data.id} (${job.data.eventName})`
-    );
   }
 
   onModuleInit() {

@@ -24,15 +24,15 @@ import { TasksModule } from './tasks/tasks.module';
     ConfigModule.forRoot({ isGlobal: true }),
     BullModule.forRoot({
       connection: {
-        host: 'localhost', // или redis в docker-compose
+        host: 'localhost', 
         port: 6379,
       },
     }),
-    TasksModule, // 👈 подключаем TasksModule
+    TasksModule, 
   ],
   controllers: [],
   providers: [AppLogger],
-  exports: [AppLogger], // 👈 TasksService убрал отсюда
+  exports: [AppLogger], 
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {

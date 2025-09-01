@@ -62,7 +62,7 @@ export class MailService {
       try {
         await this.mailerService.sendMail({
           to: letterInfo.adminEmail,
-          subject: `1 час до подключения ${letterInfo.eventName}`,
+          subject: `30 минут до подключения ${letterInfo.eventName}`,
           template: 'starting-soon-for-admin',
           context: {
             event: letterInfo.eventName,
@@ -92,7 +92,7 @@ export class MailService {
       try {
         await this.mailerService.sendMail({
           to: letterInfo.customerEmail,
-          subject: `1 час до начала ${letterInfo.eventName}`,
+          subject: `30 минут до начала ${letterInfo.eventName}`,
           template: 'starting-soon-for-customer',
           context: {
             customer: letterInfo.customerName,

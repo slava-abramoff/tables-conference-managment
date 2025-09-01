@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { GetQueryMeetDto, SearchQueryDto } from './dto/query.dto';
 import { PrismaService } from 'prisma/prisma.service';
 import { AddMeetDto, CreateRequestDto } from './dto/create.dto';
@@ -8,6 +8,7 @@ import { AppLogger } from 'src/app.logger';
 import { YandexApiService } from 'src/yandex-api/yandex-api.service';
 import { TasksService } from 'src/tasks/tasks.service';
 import { MailService } from 'src/mail/mail.service';
+import { tryCatch } from 'bullmq';
 
 export interface MeetsPagination {
   data: Meet[];
@@ -21,42 +22,53 @@ export interface SearchResults {
 
 @Injectable()
 export class MeetsService {
+
+  private handleError(error: any, context: string, method: string): never {
+    this.logger.error(
+      `Error in ${method}: ${error.message}`,
+      error.stack,
+      context,
+      method
+    );
+    throw new HttpException('Server error', HttpStatus.INTERNAL_SERVER_ERROR);
+  }
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly logger: AppLogger,
     private readonly api: YandexApiService,
     private readonly tasksService: TasksService,
     private readonly mailService: MailService
-  ) {}
+  ) { }
 
   async create(dto: CreateRequestDto): Promise<Meet> {
-    this.logger.debug('start', MeetsService.name, 'create');
+    try {
+      const result = await this.prisma.meet.create({
+        data: dto,
+      });
 
-    const result = await this.prisma.meet.create({
-      data: dto,
-    });
+      return result;
+    } catch (error) {
+      this.handleError(error, MeetsService.name, 'create');
+    }
+  }
 
-    return result;
+  async createMany() {
+    try {
+
+    } catch (error) {
+      this.handleError(error, MeetsService.name, 'createMany');
+    }
   }
 
   async search(query: SearchQueryDto): Promise<SearchResults> {
-    this.logger.debug('start', MeetsService.name, 'search');
-    const { page, limit, searchTerm } = query;
+    try {
+      const { page, limit, searchTerm } = query;
 
-    const offset = (+page - 1) * +limit;
+      const offset = (+page - 1) * +limit;
 
-    this.logger.debug(
-      `
-            page: ${page},
-            limit: ${limit},
-            term: ${searchTerm},
-            offset: ${offset}`,
-      MeetsService.name,
-      'search'
-    );
-
-    const where = searchTerm
-      ? {
+      const where = searchTerm
+        ? {
           OR: [
             { eventName: { contains: searchTerm, mode: 'insensitive' } },
             { customerName: { contains: searchTerm, mode: 'insensitive' } },
@@ -67,152 +79,130 @@ export class MeetsService {
             { phone: { contains: searchTerm, mode: 'insensitive' } },
           ].filter(Boolean) as Prisma.MeetWhereInput[],
         }
-      : {};
+        : {};
 
-    this.logger.debug('get meets and total', MeetsService.name, 'search');
-    const [meets, total] = await Promise.all([
-      this.prisma.meet.findMany({
-        where,
-        skip: offset,
-        take: +limit,
-      }),
-      this.prisma.meet.count({
-        where,
-      }),
-    ]);
-    this.logger.debug(
-      'meets and total queries is ok',
-      MeetsService.name,
-      'search'
-    );
+      const [meets, total] = await Promise.all([
+        this.prisma.meet.findMany({
+          where,
+          skip: offset,
+          take: +limit,
+        }),
+        this.prisma.meet.count({
+          where,
+        }),
+      ]);
 
-    const totalPages = Math.ceil(total / +limit);
-    this.logger.debug(
-      `total pages: ${totalPages}`,
-      MeetsService.name,
-      'search'
-    );
+      const totalPages = Math.ceil(total / +limit);
 
-    return {
-      data: meets,
-      pagination: {
-        currentPage: +page,
-        totalPages,
-        totalItems: total,
-        itemsPerPage: +limit,
-        hasNextPage: +page < totalPages,
-        hasPreviousPage: +page > 1,
-      },
-    };
+      return {
+        data: meets,
+        pagination: {
+          currentPage: +page,
+          totalPages,
+          totalItems: total,
+          itemsPerPage: +limit,
+          hasNextPage: +page < totalPages,
+          hasPreviousPage: +page > 1,
+        },
+      };
+    } catch (error) {
+      this.handleError(error, MeetsService.name, 'search');
+    }
   }
 
   async findAll(query: GetQueryMeetDto): Promise<MeetsPagination> {
-    this.logger.debug(`start`, MeetsService.name, 'findAll');
-    const { page, limit } = query;
+    try {
+      const { page, limit } = query;
 
-    const offset = (+page - 1) * +limit;
+      const offset = (+page - 1) * +limit;
 
-    this.logger.debug(
-      `page: ${page}, limit: ${limit}, offset: ${offset}`,
-      MeetsService.name,
-      'findAll'
-    );
+      const where = {
+        status: query.status ? query.status : undefined,
+      };
 
-    const where = {
-      status: query.status ? query.status : undefined,
-    };
+      const orderBy = query.sortBy
+        ? { [query.sortBy]: query.order || 'asc' }
+        : undefined;
 
-    this.logger.debug(
-      `query status: ${where.status}`,
-      MeetsService.name,
-      'findAll'
-    );
+      this.logger.debug(`order by: ${orderBy}`, MeetsService.name, 'findAll');
 
-    const orderBy = query.sortBy
-      ? { [query.sortBy]: query.order || 'asc' }
-      : undefined;
+      const [meets, total] = await Promise.all([
+        this.prisma.meet.findMany({
+          where,
+          orderBy,
+          include: { admin: true },
+          skip: offset,
+          take: +limit,
+        }),
+        this.prisma.meet.count({
+          where,
+        }),
+      ]);
 
-    this.logger.debug(`order by: ${orderBy}`, MeetsService.name, 'findAll');
+      const totalPages = Math.ceil(total / +limit);
 
-    const [meets, total] = await Promise.all([
-      this.prisma.meet.findMany({
-        where,
-        orderBy,
-        include: { admin: true },
-        skip: offset,
-        take: +limit,
-      }),
-      this.prisma.meet.count({
-        where,
-      }),
-    ]);
-
-    const totalPages = Math.ceil(total / +limit);
-
-    this.logger.debug(
-      `total pages: ${totalPages}`,
-      MeetsService.name,
-      'findAll'
-    );
-
-    return {
-      data: meets,
-      pagination: {
-        currentPage: +page,
-        totalPages,
-        totalItems: total,
-        itemsPerPage: +limit,
-        hasNextPage: +page < totalPages,
-        hasPreviousPage: +page > 1,
-      },
-    };
+      return {
+        data: meets,
+        pagination: {
+          currentPage: +page,
+          totalPages,
+          totalItems: total,
+          itemsPerPage: +limit,
+          hasNextPage: +page < totalPages,
+          hasPreviousPage: +page > 1,
+        },
+      };
+    } catch (error) {
+      this.handleError(error, MeetsService.name, 'findAll');
+    }
   }
 
   async update(id: string, dto: AddMeetDto): Promise<Meet> {
-    const { url, ...rest } = dto;
-    this.logger.debug(`start`, MeetsService.name, 'update');
+    try {
+      const { url, ...rest } = dto;
 
-    this.logger.debug(`id: ${id}`, MeetsService.name, 'update');
+      let shortUrl: string | undefined;
+      if (url) {
+        this.logger.debug(`Shortening URL: ${url}`);
+        shortUrl = await this.api.shortenUrl(url);
+      }
 
-    let shortUrl: string | undefined;
-    if (url) {
-      this.logger.debug(`Shortening URL: ${url}`);
-      shortUrl = await this.api.shortenUrl(url);
-    }
+      const updateData: AddMeetDto = { ...rest };
+      if (shortUrl) {
+        updateData.shortUrl = shortUrl;
+        updateData.status = Status.processed;
+      }
 
-    const updateData: AddMeetDto = { ...rest };
-    if (shortUrl) {
-      updateData.shortUrl = shortUrl;
-      updateData.status = Status.processed;
-    }
-
-    const updatedMeet = await this.prisma.meet.update({
-      where: { id },
-      data: updateData,
-    });
-
-    if (dto.start) {
-      await this.tasksService.cancelEmailTask('meet', updatedMeet.id);
-      await this.tasksService.scheduleEmailForMeet(updatedMeet.id);
-    }
-
-    if (dto.status === Status.rejected) {
-      await this.tasksService.cancelEmailTask('meet', updatedMeet.id);
-    }
-
-    if (shortUrl && updatedMeet.email && updatedMeet.start && updatedMeet.url) {
-      await this.mailService.notificateAboutCreationLink({
-        email: updatedMeet.email,
-        customer: updatedMeet.customerName ?? 'заказчик',
-        event: updatedMeet.eventName ?? 'Мероприятие',
-        startTime: String(updatedMeet.start),
-        place: updatedMeet.location ?? 'Не указано',
-        url: updatedMeet.url,
-        shortUrl: shortUrl,
+      const updatedMeet = await this.prisma.meet.update({
+        where: { id },
+        data: updateData,
       });
-      await this.tasksService.scheduleEmailForMeet(updatedMeet.id);
-    }
 
-    return updatedMeet;
+      if (dto.start) {
+        await this.tasksService.cancelEmailTask('meet', updatedMeet.id);
+        await this.tasksService.scheduleEmailForMeet(updatedMeet.id);
+      }
+
+      if (dto.status === Status.rejected) {
+        await this.tasksService.cancelEmailTask('meet', updatedMeet.id);
+      }
+
+      if (shortUrl && updatedMeet.email && updatedMeet.start && updatedMeet.url) {
+        await this.mailService.notificateAboutCreationLink({
+          email: updatedMeet.email,
+          customer: updatedMeet.customerName ?? 'заказчик',
+          event: updatedMeet.eventName ?? 'Мероприятие',
+          startTime: String(updatedMeet.start),
+          place: updatedMeet.location ?? 'Не указано',
+          url: updatedMeet.url,
+          shortUrl: shortUrl,
+        });
+        await this.tasksService.scheduleEmailForMeet(updatedMeet.id);
+      }
+
+      return updatedMeet;
+    } catch (error) {
+      this.handleError(error, MeetsService.name, 'update');
+    }
   }
 }
