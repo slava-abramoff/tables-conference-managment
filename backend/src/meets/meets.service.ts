@@ -22,7 +22,6 @@ export interface SearchResults {
 
 @Injectable()
 export class MeetsService {
-
   private handleError(error: any, context: string, method: string): never {
     this.logger.error(
       `Error in ${method}: ${error.message}`,
@@ -39,7 +38,7 @@ export class MeetsService {
     private readonly api: YandexApiService,
     private readonly tasksService: TasksService,
     private readonly mailService: MailService
-  ) { }
+  ) {}
 
   async create(dto: CreateRequestDto): Promise<Meet> {
     try {
@@ -53,9 +52,12 @@ export class MeetsService {
     }
   }
 
-  async createMany() {
+  async createMany(dto: AddMeetDto[]) {
     try {
-
+      const result = await this.prisma.meet.createManyAndReturn({
+        data: [...dto],
+      });
+      return result;
     } catch (error) {
       this.handleError(error, MeetsService.name, 'createMany');
     }
@@ -69,16 +71,16 @@ export class MeetsService {
 
       const where = searchTerm
         ? {
-          OR: [
-            { eventName: { contains: searchTerm, mode: 'insensitive' } },
-            { customerName: { contains: searchTerm, mode: 'insensitive' } },
-            { shortUrl: { contains: searchTerm, mode: 'insensitive' } },
-            { url: { contains: searchTerm, mode: 'insensitive' } },
-            { description: { contains: searchTerm, mode: 'insensitive' } },
-            { email: { contains: searchTerm, mode: 'insensitive' } },
-            { phone: { contains: searchTerm, mode: 'insensitive' } },
-          ].filter(Boolean) as Prisma.MeetWhereInput[],
-        }
+            OR: [
+              { eventName: { contains: searchTerm, mode: 'insensitive' } },
+              { customerName: { contains: searchTerm, mode: 'insensitive' } },
+              { shortUrl: { contains: searchTerm, mode: 'insensitive' } },
+              { url: { contains: searchTerm, mode: 'insensitive' } },
+              { description: { contains: searchTerm, mode: 'insensitive' } },
+              { email: { contains: searchTerm, mode: 'insensitive' } },
+              { phone: { contains: searchTerm, mode: 'insensitive' } },
+            ].filter(Boolean) as Prisma.MeetWhereInput[],
+          }
         : {};
 
       const [meets, total] = await Promise.all([
@@ -187,7 +189,12 @@ export class MeetsService {
         await this.tasksService.cancelEmailTask('meet', updatedMeet.id);
       }
 
-      if (shortUrl && updatedMeet.email && updatedMeet.start && updatedMeet.url) {
+      if (
+        shortUrl &&
+        updatedMeet.email &&
+        updatedMeet.start &&
+        updatedMeet.url
+      ) {
         await this.mailService.notificateAboutCreationLink({
           email: updatedMeet.email,
           customer: updatedMeet.customerName ?? 'заказчик',

@@ -86,6 +86,17 @@ export class LecturesService {
     }
   }
 
+  async createMany(dto: CreateLectureDto[]) {
+    try {
+      const result = await this.prisma.lecture.createManyAndReturn({
+        data: [...dto],
+      });
+      return result;
+    } catch (error) {
+      this.handleError(error, LecturesService.name, 'createMany');
+    }
+  }
+
   async getDates() {
     try {
       const result: Array<{ year: number; months: string[] }> = await this

@@ -50,6 +50,24 @@ export class LecturesController {
   }
 
   /**
+   * Create advanced lectures
+   */
+  @Post('advanced')
+  @ApiOperation({ summary: 'Создание расписания лекций' })
+  @ApiExtraModels(CreateLectureDto)
+  @ApiBody({
+    schema: {
+      type: 'array',
+      items: { $ref: getSchemaPath(CreateLectureDto) },
+    },
+  })
+  @ApiResponse({ status: 200, description: 'Лекции созданы' })
+  @ApiResponse({ status: 400, description: 'Неверный формат данных' })
+  async createMany(@Body() dto: CreateLectureDto[]) {
+    return await this.lecturesService.createMany(dto);
+  }
+
+  /**
    * Get info about available years and months
    */
   @Get('dates')

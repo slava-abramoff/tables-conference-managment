@@ -55,8 +55,22 @@ export class MeetsController {
    * Advanced create Meets
    */
   @Post('advanced')
-  async createMany() {
-    return 'test'
+  @Post()
+  @ApiOperation({ summary: 'Создание множества мероприятий' })
+  @ApiExtraModels(AddMeetDto)
+  @ApiBody({
+    schema: {
+      type: 'array',
+      items: { $ref: getSchemaPath(AddMeetDto) },
+    },
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Мероприятие создано',
+  })
+  @ApiResponse({ status: 400, description: 'Неверный формат данных' })
+  async createMany(@Body() dto: AddMeetDto[]) {
+    return await this.meetsService.createMany(dto);
   }
 
   /**
