@@ -6,6 +6,7 @@ import { AppLogger } from 'src/app.logger';
 import { YandexApiService } from 'src/yandex-api/yandex-api.service';
 import { TasksService } from 'src/tasks/tasks.service';
 import { MailService } from 'src/mail/mail.service';
+import { UpdateLinksDto } from './dto/update.dto';
 
 @Injectable()
 export class LecturesService {
@@ -94,6 +95,26 @@ export class LecturesService {
       return result;
     } catch (error) {
       this.handleError(error, LecturesService.name, 'createMany');
+    }
+  }
+
+  async createManyLinks(data: UpdateLinksDto) {
+    try {
+      const shortUrl = await this.api.shortenUrl(data.url);
+
+      const result = await this.prisma.$executeRaw`
+        UPDATE "Lecture"
+        SET
+          "url" = ${data.url},
+          "shortUrl" = ${shortUrl ?? null}
+        WHERE (
+          ',' || REPLACE(LOWER("group"), ' ', '') || ',' ILIKE ${`%,${data.groupName.toLowerCase()},%`}
+        )
+        AND ("url" IS NULL OR "url" <> ${data.url})
+      `;
+      return result;
+    } catch (error) {
+      this.handleError(error, LecturesService.name, 'createManyLinks');
     }
   }
 

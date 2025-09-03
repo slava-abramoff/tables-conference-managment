@@ -3,12 +3,12 @@ import {
   ExecutionContext,
   ForbiddenException,
 } from '@nestjs/common';
-import { User } from '@prisma/client'; 
+import { User } from '@prisma/client';
 
 export const CurrentUser = createParamDecorator(
   (
     options: { key?: keyof User; roles?: string[] },
-    ctx: ExecutionContext,
+    ctx: ExecutionContext
   ): any => {
     const request = ctx.switchToHttp().getRequest();
     const user = request.user;
@@ -26,5 +26,5 @@ export const CurrentUser = createParamDecorator(
 
     // Возвращаем конкретное поле пользователя или весь объект
     return options?.key ? user[options.key] : user;
-  },
+  }
 );

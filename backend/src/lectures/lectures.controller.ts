@@ -20,6 +20,7 @@ import {
   ApiTags,
   getSchemaPath,
 } from '@nestjs/swagger';
+import { UpdateLinksDto } from './dto/update.dto';
 
 @ApiTags('Лекции')
 @Controller('lectures')
@@ -65,6 +66,23 @@ export class LecturesController {
   @ApiResponse({ status: 400, description: 'Неверный формат данных' })
   async createMany(@Body() dto: CreateLectureDto[]) {
     return await this.lecturesService.createMany(dto);
+  }
+
+  /*
+   * Update many links
+   */
+  @Post('links')
+  @ApiOperation({ summary: 'Создание ссылок для групп' })
+  @ApiExtraModels(UpdateLinksDto)
+  @ApiBody({
+    schema: {
+      items: { $ref: getSchemaPath(UpdateLinksDto) },
+    },
+  })
+  @ApiResponse({ status: 200, description: 'Ссылки созданы' })
+  @ApiResponse({ status: 400, description: 'Неверный формат данных' })
+  async createManyLinks(@Body() dto: UpdateLinksDto) {
+    return await this.lecturesService.createManyLinks(dto);
   }
 
   /**
