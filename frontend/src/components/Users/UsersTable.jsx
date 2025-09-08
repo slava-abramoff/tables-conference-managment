@@ -13,8 +13,11 @@ import {
   IconButton,
   Select,
   MenuItem,
+  Button,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
+import EditIcon from "@mui/icons-material/Edit";
+import { useModal } from "../../context/ModalContext";
 // import { getUsers, updateUser, deleteUser } from "../../services/api/userApi";
 
 function UsersTable({ search, sortBy, order, visibleColumns }) {
@@ -25,6 +28,10 @@ function UsersTable({ search, sortBy, order, visibleColumns }) {
   const [error, setError] = useState(null);
   const [editingCell, setEditingCell] = useState(null); // { rowId, columnId }
   const [editedValues, setEditedValues] = useState({}); // { rowId: { columnId: value } }
+
+  // Используем useModal для двух модалок
+  const { open: openConfirm } = useModal("confirm");
+  const { open: openEdit } = useModal("editUser");
 
   // Определение всех возможных колонок
   const allColumns = [
@@ -172,7 +179,7 @@ function UsersTable({ search, sortBy, order, visibleColumns }) {
     setEditingCell(null);
 
     try {
-      await updateUser(rowId, { [columnId]: newValue });
+      // await updateUser(rowId, { [columnId]: newValue });
     } catch (error) {
       console.error("Ошибка обновления:", error);
     }
@@ -180,11 +187,29 @@ function UsersTable({ search, sortBy, order, visibleColumns }) {
 
   const handleDelete = async (id) => {
     try {
-      await deleteUser(id);
+      // await deleteUser(id);
       setUsers((prev) => prev.filter((user) => user.id !== id));
     } catch (error) {
       console.error("Ошибка удаления:", error);
     }
+  };
+
+  const handleOpenConfirm = (userId, userName) => {
+    openConfirm({
+      title: "Подтверждение удаления",
+      message: `Вы уверены, что хотите удалить пользователя ${userName}?`,
+      onConfirm: () => handleDelete(userId), // Передаем callback для удаления
+    });
+  };
+
+  const handleOpenEdit = (user) => {
+    openEdit({
+      userId: user.id,
+      login: user.login,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+    });
   };
 
   const getCellValue = (user, columnId) => {
@@ -230,7 +255,15 @@ function UsersTable({ search, sortBy, order, visibleColumns }) {
                       return (
                         <TableCell key={column.id}>
                           <IconButton
-                            onClick={() => handleDelete(user.id)}
+                            onClick={() => handleOpenEdit(user)}
+                            aria-label="Редактировать"
+                          >
+                            <EditIcon />
+                          </IconButton>
+                          <IconButton
+                            onClick={() =>
+                              handleOpenConfirm(user.id, user.name)
+                            }
                             aria-label="Удалить"
                           >
                             <DeleteIcon />
