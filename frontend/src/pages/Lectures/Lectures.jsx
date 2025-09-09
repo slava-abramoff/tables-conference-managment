@@ -3,8 +3,11 @@ import { Box, Typography } from "@mui/material";
 import LecturesToolbar from "../../components/Lectures/LecturesToolbar";
 import LecturesTable from "../../components/Lectures/LecturesTable";
 import Layout from "../../components/Layout/Layout";
+import { useParams } from "react-router-dom";
+import { formatDate } from "../../utils/datetime";
 
 function Lectures() {
+  const { date } = useParams(); // Получаем date из URL
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState("start"); // По умолчанию сортировка по start
   const [order, setOrder] = useState("asc");
@@ -51,7 +54,7 @@ function Lectures() {
     <Layout>
       <Box sx={{ p: 3 }}>
         <Typography variant="h4" gutterBottom>
-          Лекции на 5 сентября 2025
+          Лекции на {`${formatDate(date)}`}
         </Typography>
         <LecturesToolbar
           search={search}
@@ -68,6 +71,7 @@ function Lectures() {
           sortBy={sortBy}
           order={order}
           visibleColumns={visibleColumns}
+          date={date}
         />
       </Box>
     </Layout>

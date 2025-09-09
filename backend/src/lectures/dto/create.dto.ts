@@ -1,5 +1,12 @@
+import { PartialType } from '@nestjs/mapped-types';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsISO8601, IsOptional, IsString, IsUUID } from 'class-validator';
+import {
+  IsISO8601,
+  IsOptional,
+  IsString,
+  IsUrl,
+  IsUUID,
+} from 'class-validator';
 
 export class CreateLectureDto {
   @ApiProperty({
@@ -53,6 +60,7 @@ export class CreateLectureDto {
     example: 'https://meet.com/ijimUmUjygynJNLJNM',
   })
   @IsOptional()
+  @IsUrl()
   @IsString()
   url?: string;
 
@@ -120,3 +128,5 @@ export class CreateLectureDto {
   @IsString()
   abnormalTime?: string;
 }
+
+export class UpdateLectureDto extends PartialType(CreateLectureDto) {}

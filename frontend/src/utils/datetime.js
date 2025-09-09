@@ -26,3 +26,14 @@ export function formatDate(dateString) {
 
   return `${day} ${months[month - 1]} ${year}`;
 }
+
+export function timeToISO(timeStr) {
+  // timeStr ожидается в формате HH:mm
+  const [hours, minutes] = timeStr.split(":").map(Number);
+
+  // сегодняшняя дата
+  const now = new Date();
+  now.setHours(hours, minutes, 0, 0);
+
+  return now.toISOString();
+}

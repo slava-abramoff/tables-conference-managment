@@ -9,7 +9,7 @@ import {
   Query,
 } from '@nestjs/common';
 import { LecturesService } from './lectures.service';
-import { CreateLectureDto } from './dto/create.dto';
+import { CreateLectureDto, UpdateLectureDto } from './dto/create.dto';
 import { GetLecturesByYearMonth } from './dto/query.dto';
 import {
   ApiBody,
@@ -129,7 +129,7 @@ export class LecturesController {
   @ApiResponse({ status: 200, description: 'Лекция успешно обновлена' })
   @ApiResponse({ status: 400, description: 'Неверный формат данных' })
   @ApiResponse({ status: 404, description: 'Лекция не найдена' })
-  async update(@Param('id') id: string, @Body() dto: CreateLectureDto) {
+  async update(@Param('id') id: string, @Body() dto: UpdateLectureDto) {
     return await this.lecturesService.update(id, dto);
   }
 

@@ -1,6 +1,6 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { PrismaService } from 'prisma/prisma.service';
-import { CreateLectureDto } from './dto/create.dto';
+import { CreateLectureDto, UpdateLectureDto } from './dto/create.dto';
 import { GetLecturesByYearMonth } from './dto/query.dto';
 import { AppLogger } from 'src/app.logger';
 import { YandexApiService } from 'src/yandex-api/yandex-api.service';
@@ -227,14 +227,13 @@ export class LecturesService {
     }
   }
 
-  async update(id: string, dto: CreateLectureDto) {
+  async update(id: string, dto: UpdateLectureDto) {
     try {
-      const { url, ...rest } = dto;
-      const shortUrl = url ? await this.api.shortenUrl(url) : undefined;
+      const shortUrl = dto.url ? await this.api.shortenUrl(dto.url) : undefined;
 
       const result = await this.prisma.lecture.update({
         where: { id },
-        data: { ...rest, ...(shortUrl && { shortUrl }) },
+        data: { ...dto, ...(shortUrl && { shortUrl }) },
       });
 
       if (shortUrl && result) {
