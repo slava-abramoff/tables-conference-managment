@@ -15,14 +15,14 @@ import { GetQueryUsersDto } from './dto/query.dto';
 
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(private readonly usersService: UsersService) { }
 
   /**
    * Create User
    */
   @Post()
   async create(@Body() user: CreateUserDto) {
-    return user;
+    return await this.usersService.create(user);
   }
 
   /**
@@ -36,9 +36,9 @@ export class UsersController {
   /**
    * Update Users
    */
-  @Patch()
-  async update(@Body() user: UpdateUserDto) {
-    return user;
+  @Patch('/:id')
+  async update(@Body() user: UpdateUserDto, @Param('id') id: string) {
+    return await this.usersService.update(id, user);
   }
 
   /**
@@ -46,6 +46,6 @@ export class UsersController {
    */
   @Delete('/:id')
   async remove(@Param('id') id: string) {
-    return id;
+    return await this.usersService.remove(id);
   }
 }

@@ -8,7 +8,7 @@ export class TasksService {
   constructor(
     @InjectQueue('email-queue') private readonly emailQueue: Queue,
     private readonly prisma: PrismaService
-  ) {}
+  ) { }
 
   /**
    * Планирование уведомления за час до начала лекции
@@ -80,15 +80,7 @@ export class TasksService {
     // Вычисляем задержку
     const delay = notificationTime - currentLocalTime;
 
-    console.log('Время начала встречи (локальное):', meetStartLocal.toString());
-    console.log(
-      'Текущее время сервера:',
-      new Date(currentLocalTime).toString()
-    );
-    console.log('Задержка до уведомления (ms):', delay);
-
     if (delay <= 0) {
-      console.log('Задача просрочена');
       return;
     }
 
