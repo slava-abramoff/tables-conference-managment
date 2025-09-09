@@ -1,15 +1,12 @@
 import { Card, CardContent, Typography, Button } from "@mui/material";
+import { formatDate } from "../../utils/datetime";
 
-function ScheduleCard({ date, lecturesCount, lecturers }) {
-  const formattedDate = new Date(date).toLocaleDateString("ru-RU", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
-
-  const handleScheduleClick = () => {
-    console.log(`Открыть расписание для ${date}`); // Заглушка
-  };
+function ScheduleCard({ date, groups, lecturers }) {
+  function getUnique(arr) {
+    return [
+      ...new Set(arr.flatMap((item) => item.split(",").map((el) => el.trim()))),
+    ].join(", ");
+  }
 
   return (
     <Card
@@ -24,17 +21,12 @@ function ScheduleCard({ date, lecturesCount, lecturers }) {
     >
       <CardContent>
         <Typography variant="h6" gutterBottom>
-          {formattedDate}
+          {formatDate(date)}
         </Typography>
-        <Typography variant="body2">Лекций: {lecturesCount || 0}</Typography>
-        <Typography variant="body2">Лекторы: {lecturers || "-"}</Typography>
+        <Typography variant="body2">Группы: {getUnique(groups)}</Typography>
+        <Typography variant="body2">Лекторы: {getUnique(lecturers)}</Typography>
       </CardContent>
-      <Button
-        variant="outlined"
-        href="#outlined-buttons"
-        onClick={handleScheduleClick}
-        sx={{ m: 2 }}
-      >
+      <Button variant="outlined" href={`schedule/${date}`} sx={{ m: 2 }}>
         Расписание
       </Button>
     </Card>

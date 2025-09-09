@@ -13,7 +13,10 @@ import {
   Typography,
 } from "@mui/material";
 import SettingsIcon from "@mui/icons-material/Settings";
-import { useState } from "react";
+import { useState, useCallback } from "react";
+import { debounce } from "lodash";
+import { useSearchMeets } from "../../store/meetsStore";
+import { useModal } from "../../context/ModalContext";
 
 function Toolbar({
   search,
@@ -28,11 +31,19 @@ function Toolbar({
   setVisibleColumns,
 }) {
   const [anchorEl, setAnchorEl] = useState(null);
+  const searchMeets = useSearchMeets();
+  const { open: openCreateMeet } = useModal("createMeet");
 
-  const statusOptions = ["new", "in_progress", "completed"]; // Замени на реальные значения Status
+  const statusOptions = [
+    { value: "new", label: "Новые" },
+    { value: "processed", label: "Состоятся" },
+    { value: "completed", label: "Прошедшие" },
+    { value: "rejected", label: "Отклоненные" },
+  ];
+
   const sortOptions = [
     { value: "eventName", label: "Название" },
-    { value: "customerName", label: "Заказчик" },
+    { value: "customerName", label: "ФИО" },
     { value: "email", label: "Email" },
     { value: "phone", label: "Телефон" },
     { value: "location", label: "Место" },
@@ -47,7 +58,27 @@ function Toolbar({
     { value: "createdAt", label: "Дата создания" },
   ];
 
-  const allColumns = sortOptions; // Используем те же поля, что в сортировке, для согласованности
+  const allColumns = sortOptions;
+
+  // Debounced search function
+  const debouncedSearch = useCallback(
+    debounce((value) => {
+      searchMeets({ searchTerm: value, page: 1, limit: 10 });
+    }, 300),
+    [searchMeets],
+  );
+
+  const handleSearchChange = (value) => {
+    setSearch(value);
+    debouncedSearch(value);
+  };
+
+  const handleSearchKeyDown = (event) => {
+    if (event.key === "Enter") {
+      debouncedSearch.cancel(); // Cancel any pending debounced calls
+      searchMeets({ searchTerm: search, page: 1, limit: 10 });
+    }
+  };
 
   const handleClickSettings = (event) => {
     setAnchorEl(event.currentTarget);
@@ -65,8 +96,7 @@ function Toolbar({
   };
 
   const handleCreate = () => {
-    console.log('Кнопка "Создать" нажата'); // Заглушка для действия
-    // Можно добавить переход: window.location.href = '/form';
+    openCreateMeet();
   };
 
   const open = Boolean(anchorEl);
@@ -85,7 +115,8 @@ function Toolbar({
         label="Поиск"
         variant="outlined"
         value={search}
-        onChange={(e) => setSearch(e.target.value)}
+        onChange={(e) => handleSearchChange(e.target.value)}
+        onKeyDown={handleSearchKeyDown}
         sx={{ flex: 1, minWidth: 200 }}
       />
       <FormControl sx={{ minWidth: 120 }}>
@@ -95,10 +126,9 @@ function Toolbar({
           onChange={(e) => setStatus(e.target.value)}
           label="Статус"
         >
-          <MenuItem value="">Все</MenuItem>
           {statusOptions.map((option) => (
-            <MenuItem key={option} value={option}>
-              {option}
+            <MenuItem key={option.value} value={option.value}>
+              {option.label}
             </MenuItem>
           ))}
         </Select>

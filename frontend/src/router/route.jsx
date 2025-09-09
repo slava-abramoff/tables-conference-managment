@@ -13,7 +13,7 @@ function AppRoutes() {
     <Routes>
       <Route path="/users" element={<Users />} />
       <Route path="/meets" element={<Meets />} />
-      <Route path="/lectures" element={<Lectures />} />
+      <Route path="/schedule/:date" element={<Lectures />} />
       <Route path="/schedule" element={<Schedule />} />
       <Route path="/form" element={<Form />} />
       <Route path="/login" element={<Login />} />

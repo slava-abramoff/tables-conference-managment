@@ -6,7 +6,7 @@ import Layout from "../../components/Layout/Layout";
 
 function Meets() {
   const [search, setSearch] = useState("");
-  const [status, setStatus] = useState("");
+  const [status, setStatus] = useState("new"); // Устанавливаем 'new' по умолчанию
   const [sortBy, setSortBy] = useState("");
   const [order, setOrder] = useState("asc");
   const [visibleColumns, setVisibleColumns] = useState({});

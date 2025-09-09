@@ -1,12 +1,19 @@
-import { useState } from "react";
 import { Box, Typography } from "@mui/material";
 import ScheduleToolbar from "../../components/Schedule/Toolbar";
 import Calendar from "../../components/Schedule/Calendar";
 import Layout from "../../components/Layout/Layout";
+import {
+  useCurrentMonth,
+  useCurrentYear,
+  useSetCurrentMonth,
+  useSetCurrentYear,
+} from "../../store/lecturesStore";
 
 function Schedule() {
-  const [year, setYear] = useState(2025);
-  const [month, setMonth] = useState(9); // Сентябрь для мока, можно изменить
+  const year = useCurrentYear();
+  const month = useCurrentMonth();
+  const setYear = useSetCurrentYear();
+  const setMonth = useSetCurrentMonth();
 
   return (
     <Layout>

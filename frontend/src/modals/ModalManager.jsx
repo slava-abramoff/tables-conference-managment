@@ -3,10 +3,12 @@ import { ModalContext } from "../context/ModalContext";
 
 import ConfirmModal from "./ConfirmModal";
 import EditUserModal from "./EditUserModal";
+import CreateMeetModal from "./CreateMeetModal";
 
 const modalRegistry = {
   confirm: ConfirmModal,
   editUser: EditUserModal,
+  createMeet: CreateMeetModal,
 };
 
 function ModalManager() {
