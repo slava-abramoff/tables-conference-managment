@@ -10,18 +10,11 @@ import {
 } from "@mui/material";
 import SettingsIcon from "@mui/icons-material/Settings";
 import { useState } from "react";
+import { useModal } from "../../context/ModalContext";
 
-function UsersToolbar({
-  search,
-  setSearch,
-  sortBy,
-  setSortBy,
-  order,
-  setOrder,
-  visibleColumns,
-  setVisibleColumns,
-}) {
+function UsersToolbar({ visibleColumns, setVisibleColumns }) {
   const [anchorEl, setAnchorEl] = useState(null);
+  const { open: openCreateUser } = useModal("createUser");
 
   const sortOptions = [
     { value: "login", label: "Логин" },
@@ -49,7 +42,7 @@ function UsersToolbar({
   };
 
   const handleCreate = () => {
-    console.log('Кнопка "Добавить пользователя" нажата'); // Заглушка
+    openCreateUser();
   };
 
   const open = Boolean(anchorEl);
@@ -64,17 +57,6 @@ function UsersToolbar({
         alignItems: "center",
       }}
     >
-      <TextField
-        label="Поиск"
-        variant="outlined"
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        sx={{
-          minWidth: 150,
-          height: 56,
-          "& .MuiInputBase-root": { height: 56, boxSizing: "border-box" },
-        }}
-      />
       <Button
         variant="contained"
         color="primary"

@@ -13,6 +13,21 @@ const months = [
   "декабрь",
 ];
 
+const otherMonths = [
+  "января",
+  "февраля",
+  "марта",
+  "апреля",
+  "мая",
+  "июня",
+  "июля",
+  "августа",
+  "сентября",
+  "октября",
+  "ноября",
+  "декабря",
+];
+
 export function getCurrentYear() {
   return new Date().getFullYear().toString();
 }
@@ -24,7 +39,7 @@ export function getCurrentMonth() {
 export function formatDate(dateString) {
   const [year, month, day] = dateString.split("-").map(Number);
 
-  return `${day} ${months[month - 1]} ${year}`;
+  return `${day} ${otherMonths[month - 1]} ${year}`;
 }
 
 export function timeToISO(timeStr) {

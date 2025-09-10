@@ -14,8 +14,10 @@ import {
   useLecturesError,
   useLecturesLoading,
 } from "../../store/lecturesStore";
+import { useModal } from "../../context/ModalContext";
 
 function ScheduleToolbar({ year, setYear, month, setMonth }) {
+  const { open: openScheduleLecture } = useModal("scheduleLecture");
   const fetchLectureDates = useFetchLectureDates();
   const dates = useLectureDates();
   const loading = useLecturesLoading();
@@ -80,7 +82,7 @@ function ScheduleToolbar({ year, setYear, month, setMonth }) {
   }, [dates.years, year, month, availableMonths, setYear, setMonth]);
 
   const handlePlan = () => {
-    console.log('Кнопка "Запланировать" нажата');
+    openScheduleLecture();
   };
 
   const handleExport = () => {

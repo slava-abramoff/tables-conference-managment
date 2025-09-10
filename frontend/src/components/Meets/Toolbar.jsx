@@ -73,13 +73,6 @@ function Toolbar({
     debouncedSearch(value);
   };
 
-  const handleSearchKeyDown = (event) => {
-    if (event.key === "Enter") {
-      debouncedSearch.cancel(); // Cancel any pending debounced calls
-      searchMeets({ searchTerm: search, page: 1, limit: 10 });
-    }
-  };
-
   const handleClickSettings = (event) => {
     setAnchorEl(event.currentTarget);
   };
@@ -116,7 +109,6 @@ function Toolbar({
         variant="outlined"
         value={search}
         onChange={(e) => handleSearchChange(e.target.value)}
-        onKeyDown={handleSearchKeyDown}
         sx={{ flex: 1, minWidth: 200 }}
       />
       <FormControl sx={{ minWidth: 120 }}>

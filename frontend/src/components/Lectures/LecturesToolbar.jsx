@@ -14,10 +14,6 @@ import { useState } from "react";
 function LecturesToolbar({
   search,
   setSearch,
-  sortBy,
-  setSortBy,
-  order,
-  setOrder,
   visibleColumns,
   setVisibleColumns,
 }) {

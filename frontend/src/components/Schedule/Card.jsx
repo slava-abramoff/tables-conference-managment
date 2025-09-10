@@ -1,7 +1,9 @@
 import { Card, CardContent, Typography, Button } from "@mui/material";
 import { formatDate } from "../../utils/datetime";
+import { useNavigate } from "react-router-dom";
 
 function ScheduleCard({ date, groups, lecturers }) {
+  const navigate = useNavigate();
   function getUnique(arr) {
     return [
       ...new Set(arr.flatMap((item) => item.split(",").map((el) => el.trim()))),
@@ -11,8 +13,8 @@ function ScheduleCard({ date, groups, lecturers }) {
   return (
     <Card
       sx={{
-        width: 200, // Фиксированная ширина
-        minHeight: 150, // Минимальная высота, может увеличиваться
+        width: 200,
+        minHeight: 150,
         display: "flex",
         flexDirection: "column",
         justifyContent: "space-between",
@@ -26,7 +28,11 @@ function ScheduleCard({ date, groups, lecturers }) {
         <Typography variant="body2">Группы: {getUnique(groups)}</Typography>
         <Typography variant="body2">Лекторы: {getUnique(lecturers)}</Typography>
       </CardContent>
-      <Button variant="outlined" href={`schedule/${date}`} sx={{ m: 2 }}>
+      <Button
+        variant="outlined"
+        onClick={() => navigate(`${date}`)}
+        sx={{ m: 2 }}
+      >
         Расписание
       </Button>
     </Card>

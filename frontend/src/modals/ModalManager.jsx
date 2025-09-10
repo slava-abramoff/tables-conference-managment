@@ -5,12 +5,18 @@ import ConfirmModal from "./ConfirmModal";
 import EditUserModal from "./EditUserModal";
 import CreateMeetModal from "./CreateMeetModal";
 import ConfirmDeleteLectureModal from "./ConfirmDeleteLectureModal";
+import ConfirmDeleteUserModal from "./ConfirmDeleteUserModal";
+import CreateUserModal from "./CreateUserModal";
+import ScheduleLectureModal from "./ScheduleLectureModal";
 
 const modalRegistry = {
   confirm: ConfirmModal,
   editUser: EditUserModal,
   createMeet: CreateMeetModal,
   deleteLecture: ConfirmDeleteLectureModal,
+  createUser: CreateUserModal,
+  deleteUser: ConfirmDeleteUserModal,
+  scheduleLecture: ScheduleLectureModal,
 };
 
 function ModalManager() {

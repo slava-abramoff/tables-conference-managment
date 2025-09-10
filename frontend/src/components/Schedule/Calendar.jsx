@@ -14,8 +14,6 @@ function Calendar({ year, month }) {
   const loading = useLecturesLoading();
   const error = useLecturesError();
 
-  console.log(schedule);
-
   useEffect(() => {
     if (year && month) {
       fetchLecturesByYearMonth({ year, month });
@@ -30,9 +28,14 @@ function Calendar({ year, month }) {
     return <Typography color="error">Ошибка: {error}</Typography>;
   }
 
+  // сортировка по дате
+  const sortedSchedule = [...schedule].sort((a, b) =>
+    b.date.localeCompare(a.date),
+  );
+
   return (
     <Grid container spacing={2}>
-      {schedule.map((day) => (
+      {sortedSchedule.map((day) => (
         <Grid item xs={2.4} key={day.date}>
           <ScheduleCard
             date={day.date}

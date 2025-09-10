@@ -12,7 +12,6 @@ import {
   TextField,
   Select,
   MenuItem,
-  IconButton,
 } from "@mui/material";
 
 import {
@@ -33,10 +32,9 @@ function TableData({ search, status, sortBy, order, visibleColumns }) {
   const fetchMeets = useFetchMeets();
   const searchMeets = useSearchMeets();
   const updateMeet = useUpdateMeet();
-  const [editingCell, setEditingCell] = useState(null); // { rowId, columnId }
-  const [editedValues, setEditedValues] = useState({}); // { rowId: { columnId: value } }
+  const [editingCell, setEditingCell] = useState(null);
+  const [editedValues, setEditedValues] = useState({});
 
-  // Маппинг статусов
   const statusOptions = [
     { value: "new", label: "Новые" },
     { value: "processed", label: "Состоятся" },
@@ -44,7 +42,6 @@ function TableData({ search, status, sortBy, order, visibleColumns }) {
     { value: "rejected", label: "Отклоненные" },
   ];
 
-  // Определение всех возможных колонок из модели Meet
   const allColumns = [
     { id: "eventName", label: "Название" },
     { id: "customerName", label: "ФИО" },
@@ -62,7 +59,6 @@ function TableData({ search, status, sortBy, order, visibleColumns }) {
     { id: "createdAt", label: "Создано" },
   ];
 
-  // Загрузка данных
   useEffect(() => {
     if (search) {
       searchMeets({
@@ -127,19 +123,54 @@ function TableData({ search, status, sortBy, order, visibleColumns }) {
     }
   };
 
-  // Начать редактирование ячейки
-  const handleStartEdit = (rowId, columnId) => {
+  const handleStartEdit = (rowId, columnId, initialValue) => {
     setEditingCell({ rowId, columnId });
+
+    if (columnId === "start" || columnId === "end") {
+      const date = initialValue
+        ? new Date(initialValue).toISOString().slice(0, 10)
+        : "";
+      const time = initialValue
+        ? new Date(initialValue).toISOString().slice(11, 16)
+        : "";
+      setEditedValues((prev) => ({
+        ...prev,
+        [rowId]: {
+          ...prev[rowId],
+          [`${columnId}Date`]: date,
+          [`${columnId}Time`]: time,
+        },
+      }));
+    } else {
+      setEditedValues((prev) => ({
+        ...prev,
+        [rowId]: { ...prev[rowId], [columnId]: initialValue || "" },
+      }));
+    }
   };
 
-  // Завершить редактирование
+  const handleDateTimeChange = (rowId, columnId, type, value) => {
+    setEditedValues((prev) => ({
+      ...prev,
+      [rowId]: { ...prev[rowId], [`${columnId}${type}`]: value },
+    }));
+  };
+
+  const handleDateTimeSave = async (rowId, columnId) => {
+    const { [`${columnId}Date`]: date, [`${columnId}Time`]: time } =
+      editedValues[rowId] || {};
+    if (date && time) {
+      const combined = new Date(`${date}T${time}:00`);
+      await handleFinishEdit(rowId, columnId, combined.toISOString());
+    }
+  };
+
   const handleFinishEdit = async (rowId, columnId, newValue) => {
+    setEditingCell(null);
     setEditedValues((prev) => ({
       ...prev,
       [rowId]: { ...prev[rowId], [columnId]: newValue },
     }));
-    setEditingCell(null);
-
     try {
       await updateMeet(rowId, { [columnId]: newValue });
     } catch (error) {
@@ -147,10 +178,9 @@ function TableData({ search, status, sortBy, order, visibleColumns }) {
     }
   };
 
-  // Получить значение ячейки
   const getCellValue = (meet, columnId) => {
     const edited = editedValues[meet.id]?.[columnId];
-    const value = edited !== undefined ? edited : meet[columnId] || "-";
+    const value = edited !== undefined ? edited : meet[columnId] || "";
     if (columnId === "status") {
       const statusOption = statusOptions.find(
         (option) => option.value === value,
@@ -160,13 +190,8 @@ function TableData({ search, status, sortBy, order, visibleColumns }) {
     return value;
   };
 
-  if (loading) {
-    return <Typography>Загрузка...</Typography>;
-  }
-
-  if (error) {
-    return <Typography color="error">{error}</Typography>;
-  }
+  if (loading) return <Typography>Загрузка...</Typography>;
+  if (error) return <Typography color="error">{error}</Typography>;
 
   return (
     <Paper sx={{ width: "100%", overflow: "hidden" }}>
@@ -191,15 +216,22 @@ function TableData({ search, status, sortBy, order, visibleColumns }) {
                       editingCell?.rowId === meet.id &&
                       editingCell?.columnId === column.id;
                     const value = getCellValue(meet, column.id);
+
                     return (
                       <TableCell
                         key={column.id}
-                        onClick={() => handleStartEdit(meet.id, column.id)}
+                        onClick={() =>
+                          !isEditing &&
+                          column.id !== "createdAt" && // запрещаем редактирование
+                          handleStartEdit(meet.id, column.id, value)
+                        }
                       >
                         {isEditing ? (
                           column.id === "status" ? (
                             <Select
-                              value={value}
+                              value={
+                                editedValues[meet.id]?.[column.id] || value
+                              }
                               onChange={(e) =>
                                 handleFinishEdit(
                                   meet.id,
@@ -207,7 +239,6 @@ function TableData({ search, status, sortBy, order, visibleColumns }) {
                                   e.target.value,
                                 )
                               }
-                              onBlur={() => setEditingCell(null)}
                               autoFocus
                               fullWidth
                             >
@@ -220,17 +251,54 @@ function TableData({ search, status, sortBy, order, visibleColumns }) {
                                 </MenuItem>
                               ))}
                             </Select>
+                          ) : column.id === "start" || column.id === "end" ? (
+                            <div style={{ display: "flex", gap: "4px" }}>
+                              <TextField
+                                type="date"
+                                value={
+                                  editedValues[meet.id]?.[`${column.id}Date`] ||
+                                  ""
+                                }
+                                onChange={(e) =>
+                                  handleDateTimeChange(
+                                    meet.id,
+                                    column.id,
+                                    "Date",
+                                    e.target.value,
+                                  )
+                                }
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") {
+                                    handleDateTimeSave(meet.id, column.id);
+                                  }
+                                }}
+                                autoFocus
+                              />
+                              <TextField
+                                type="time"
+                                value={
+                                  editedValues[meet.id]?.[`${column.id}Time`] ||
+                                  ""
+                                }
+                                onChange={(e) =>
+                                  handleDateTimeChange(
+                                    meet.id,
+                                    column.id,
+                                    "Time",
+                                    e.target.value,
+                                  )
+                                }
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") {
+                                    handleDateTimeSave(meet.id, column.id);
+                                  }
+                                }}
+                              />
+                            </div>
                           ) : (
                             <TextField
                               defaultValue={value}
                               autoFocus
-                              onBlur={(e) =>
-                                handleFinishEdit(
-                                  meet.id,
-                                  column.id,
-                                  e.target.value,
-                                )
-                              }
                               onKeyDown={(e) => {
                                 if (e.key === "Enter") {
                                   handleFinishEdit(
@@ -246,7 +314,7 @@ function TableData({ search, status, sortBy, order, visibleColumns }) {
                         ) : column.id === "start" ||
                           column.id === "end" ||
                           column.id === "createdAt" ? (
-                          value !== "-" ? (
+                          value ? (
                             new Date(value).toLocaleString()
                           ) : (
                             "-"

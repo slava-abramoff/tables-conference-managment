@@ -12,7 +12,7 @@ import {
   IconButton,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
-import { useParams } from "react-router-dom";
+
 import {
   useFetchLecturesByDate,
   useLectures,
@@ -104,26 +104,11 @@ function LecturesTable({ search, sortBy, order, visibleColumns, date }) {
     setEditingCell(null);
 
     try {
-      // Отправляем на сервер именно "чистое" значение, которое пользователь ввёл
-      // Сервер сам конвертирует start/end через timeToISO
       await updateLecture(rowId, { [columnId]: newValue });
     } catch (error) {
       console.error("Ошибка обновления:", error);
     }
   };
-
-  // const handleFinishEdit = async (rowId, columnId, newValue) => {
-  //   setEditedValues((prev) => ({
-  //     ...prev,
-  //     [rowId]: { ...prev[rowId], [columnId]: newValue },
-  //   }));
-  //   setEditingCell(null);
-  //   try {
-  //     await updateLecture(rowId, { [columnId]: newValue });
-  //   } catch (error) {
-  //     console.error("Ошибка обновления:", error);
-  //   }
-  // };
 
   const handleOpenDeleteDialog = (lecture) => {
     openConfirm({
@@ -144,7 +129,7 @@ function LecturesTable({ search, sortBy, order, visibleColumns, date }) {
 
   const getCellValue = (lecture, columnId) => {
     const edited = editedValues[lecture.id]?.[columnId];
-    return edited !== undefined ? edited : lecture[columnId] || "-";
+    return edited !== undefined ? edited : lecture[columnId] || "";
   };
 
   const isValidDate = (value) => {

@@ -5,12 +5,8 @@ import UsersTable from "../../components/Users/UsersTable";
 import Layout from "../../components/Layout/Layout";
 
 function Users() {
-  const [search, setSearch] = useState("");
-  const [sortBy, setSortBy] = useState("");
-  const [order, setOrder] = useState("asc");
   const [visibleColumns, setVisibleColumns] = useState({});
 
-  // Загрузка видимых колонок из localStorage
   useEffect(() => {
     const savedColumns = localStorage.getItem("usersTableColumns");
     if (savedColumns) {
@@ -41,21 +37,10 @@ function Users() {
           Пользователи
         </Typography>
         <UsersToolbar
-          search={search}
-          setSearch={setSearch}
-          sortBy={sortBy}
-          setSortBy={setSortBy}
-          order={order}
-          setOrder={setOrder}
           visibleColumns={visibleColumns}
           setVisibleColumns={setVisibleColumns}
         />
-        <UsersTable
-          search={search}
-          sortBy={sortBy}
-          order={order}
-          visibleColumns={visibleColumns}
-        />
+        <UsersTable visibleColumns={visibleColumns} />
       </Box>
     </Layout>
   );
