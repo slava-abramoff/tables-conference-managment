@@ -13,7 +13,6 @@ function Lectures() {
   const [order, setOrder] = useState("asc");
   const [visibleColumns, setVisibleColumns] = useState({});
 
-  // Загрузка видимых колонок из localStorage
   useEffect(() => {
     const savedColumns = localStorage.getItem("lecturesTableColumns");
     if (savedColumns) {
@@ -65,6 +64,7 @@ function Lectures() {
           setOrder={setOrder}
           visibleColumns={visibleColumns}
           setVisibleColumns={setVisibleColumns}
+          currentDate={date}
         />
         <LecturesTable
           search={search}

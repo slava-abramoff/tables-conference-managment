@@ -10,14 +10,18 @@ import {
 } from "@mui/material";
 import SettingsIcon from "@mui/icons-material/Settings";
 import { useState } from "react";
+import { useAddLecture } from "../../store/lecturesStore";
+import { dateToISO } from "../../utils/datetime";
 
 function LecturesToolbar({
   search,
   setSearch,
   visibleColumns,
   setVisibleColumns,
+  currentDate,
 }) {
   const [anchorEl, setAnchorEl] = useState(null);
+  const createLecture = useAddLecture();
 
   const sortOptions = [
     { value: "group", label: "Группа" },
@@ -55,7 +59,7 @@ function LecturesToolbar({
   };
 
   const handleCreate = () => {
-    console.log('Кнопка "Добавить лекцию" нажата'); // Заглушка
+    createLecture({ date: dateToISO(currentDate) });
   };
 
   const open = Boolean(anchorEl);

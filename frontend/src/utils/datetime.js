@@ -43,12 +43,17 @@ export function formatDate(dateString) {
 }
 
 export function timeToISO(timeStr) {
-  // timeStr ожидается в формате HH:mm
+  console.log(timeStr);
   const [hours, minutes] = timeStr.split(":").map(Number);
 
-  // сегодняшняя дата
   const now = new Date();
   now.setHours(hours, minutes, 0, 0);
 
+  console.log(now.toISOString());
   return now.toISOString();
+}
+
+export function dateToISO(dateStr) {
+  const date = new Date(dateStr);
+  return date.toISOString();
 }

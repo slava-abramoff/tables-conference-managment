@@ -13,7 +13,6 @@ import {
   Autocomplete,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
-
 import {
   useFetchLecturesByDate,
   useLectures,
@@ -26,6 +25,7 @@ import { useModal } from "../../context/ModalContext";
 import ConfirmDeleteLectureModal from "../../modals/ConfirmDeleteLectureModal";
 import { timeToISO } from "../../utils/datetime";
 import { searchUsers } from "../../services/users.service";
+import useAuthStore from "../../store/authStore";
 
 function LecturesTable({ search, sortBy, order, visibleColumns, date }) {
   const fetchLecturesByDate = useFetchLecturesByDate();
@@ -35,6 +35,8 @@ function LecturesTable({ search, sortBy, order, visibleColumns, date }) {
   const updateLecture = useUpdateLecture();
   const removeLecture = useRemoveLecture();
   const { open: openConfirm } = useModal("deleteLecture");
+  const { user } = useAuthStore(); // Получаем данные пользователя из Zustand
+  const isViewer = user?.role === "viewer"; // Проверяем, является ли пользователь viewer
 
   const [editingCell, setEditingCell] = useState(null); // { rowId, columnId }
   const [editedValues, setEditedValues] = useState({}); // { rowId: { columnId: value } }
@@ -100,6 +102,7 @@ function LecturesTable({ search, sortBy, order, visibleColumns, date }) {
     });
 
   const handleStartEdit = (rowId, columnId, initialValue) => {
+    if (isViewer) return; // Блокируем редактирование для viewer
     setEditingCell({ rowId, columnId });
     setEditedValues((prev) => ({
       ...prev,
@@ -108,10 +111,18 @@ function LecturesTable({ search, sortBy, order, visibleColumns, date }) {
   };
 
   const handleFinishEdit = async (rowId, columnId, newValue) => {
-    // Если это время, конвертируем, иначе оставляем как есть
-    const valueToStore = ["start", "end"].includes(columnId)
-      ? timeToISO(newValue)
-      : newValue;
+    if (isViewer) return;
+
+    let valueToStore = newValue;
+
+    if (["start", "end"].includes(columnId)) {
+      const lecture = lectures.find((l) => l.id === rowId);
+      if (!lecture) return;
+      valueToStore = timeToISO(newValue);
+    } else if (columnId === "adminId") {
+      // Сохраняем adminId как есть
+      valueToStore = newValue;
+    }
 
     // Сохраняем в локальное состояние
     setEditedValues((prev) => ({
@@ -123,9 +134,9 @@ function LecturesTable({ search, sortBy, order, visibleColumns, date }) {
 
     try {
       if (columnId === "adminId") {
-        await updateLecture(rowId, { adminId: newValue });
+        await updateLecture(rowId, { adminId: valueToStore });
       } else {
-        await updateLecture(rowId, { [columnId]: newValue });
+        await updateLecture(rowId, { [columnId]: valueToStore });
       }
     } catch (error) {
       console.error("Ошибка обновления:", error);
@@ -133,6 +144,7 @@ function LecturesTable({ search, sortBy, order, visibleColumns, date }) {
   };
 
   const handleOpenDeleteDialog = (lecture) => {
+    if (isViewer) return; // Блокируем удаление для viewer
     openConfirm({
       lectureId: lecture.id,
       group: lecture.group,
@@ -142,6 +154,7 @@ function LecturesTable({ search, sortBy, order, visibleColumns, date }) {
   };
 
   const handleConfirmDelete = async (id) => {
+    if (isViewer) return; // Блокируем удаление для viewer
     try {
       await removeLecture(id);
     } catch (error) {
@@ -207,6 +220,7 @@ function LecturesTable({ search, sortBy, order, visibleColumns, date }) {
                           <IconButton
                             onClick={() => handleOpenDeleteDialog(lecture)}
                             aria-label="Удалить"
+                            disabled={isViewer} // Отключаем кнопку для viewer
                           >
                             <DeleteIcon />
                           </IconButton>
@@ -218,7 +232,8 @@ function LecturesTable({ search, sortBy, order, visibleColumns, date }) {
                       <TableCell
                         key={column.id}
                         onClick={() =>
-                          ["createdAt", "updatedAt"].includes(column.id)
+                          ["createdAt", "updatedAt"].includes(column.id) ||
+                          isViewer
                             ? null
                             : handleStartEdit(lecture.id, column.id, value)
                         }

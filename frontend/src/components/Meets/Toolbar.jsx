@@ -17,7 +17,7 @@ import { useState, useCallback } from "react";
 import { debounce } from "lodash";
 import { useSearchMeets } from "../../store/meetsStore";
 import { useModal } from "../../context/ModalContext";
-
+import useAuthStore from "../../store/authStore";
 function Toolbar({
   search,
   setSearch,
@@ -33,6 +33,8 @@ function Toolbar({
   const [anchorEl, setAnchorEl] = useState(null);
   const searchMeets = useSearchMeets();
   const { open: openCreateMeet } = useModal("createMeet");
+  const { user } = useAuthStore(); // Получаем данные пользователя из Zustand
+  const isViewer = user?.role === "viewer"; // Проверяем, является ли пользователь viewer
 
   const statusOptions = [
     { value: "new", label: "Новые" },
@@ -89,6 +91,7 @@ function Toolbar({
   };
 
   const handleCreate = () => {
+    if (isViewer) return; // Блокируем создание для viewer
     openCreateMeet();
   };
 
@@ -156,6 +159,7 @@ function Toolbar({
         color="primary"
         sx={{ minWidth: 150, height: 56, boxSizing: "border-box" }}
         onClick={handleCreate}
+        disabled={isViewer} // Отключаем кнопку для viewer
       >
         Создать
       </Button>

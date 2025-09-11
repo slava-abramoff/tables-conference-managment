@@ -15,6 +15,7 @@ import {
   useLecturesLoading,
 } from "../../store/lecturesStore";
 import { useModal } from "../../context/ModalContext";
+import useAuthStore from "../../store/authStore";
 
 function ScheduleToolbar({ year, setYear, month, setMonth }) {
   const { open: openScheduleLecture } = useModal("scheduleLecture");
@@ -22,6 +23,8 @@ function ScheduleToolbar({ year, setYear, month, setMonth }) {
   const dates = useLectureDates();
   const loading = useLecturesLoading();
   const error = useLecturesError();
+  const { user } = useAuthStore(); // Получаем данные пользователя из Zustand
+  const isViewer = user?.role === "viewer"; // Проверяем, является ли пользователь viewer
 
   // Маппинг месяцев: строка → номер месяца и обратно
   const monthMapping = {
@@ -82,6 +85,7 @@ function ScheduleToolbar({ year, setYear, month, setMonth }) {
   }, [dates.years, year, month, availableMonths, setYear, setMonth]);
 
   const handlePlan = () => {
+    if (isViewer) return; // Блокируем планирование для viewer
     openScheduleLecture();
   };
 
@@ -158,6 +162,7 @@ function ScheduleToolbar({ year, setYear, month, setMonth }) {
         variant="contained"
         color="primary"
         onClick={handlePlan}
+        disabled={isViewer} // Отключаем кнопку для viewer
         sx={{
           minWidth: 150,
           height: 56,

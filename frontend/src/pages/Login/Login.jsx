@@ -7,17 +7,30 @@ import {
   Paper,
   InputAdornment,
   IconButton,
+  Alert,
 } from "@mui/material";
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
+
+import { useNavigate } from "react-router-dom";
+import useAuthStore from "../../store/authStore";
 
 function Login() {
   const [login, setLogin] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState(null);
+  const { login: loginAction } = useAuthStore();
+  const navigate = useNavigate();
 
-  const handleLogin = () => {
-    console.log("Попытка входа:", { login, password }); // Заглушка для API
+  const handleLogin = async () => {
+    setError(null);
+    const result = await loginAction(login, password);
+    if (result.success) {
+      navigate("/schedule");
+    } else {
+      setError(result.error);
+    }
   };
 
   const handleTogglePasswordVisibility = () => {
@@ -51,6 +64,7 @@ function Login() {
         <Typography variant="h4" align="center" color="primary" gutterBottom>
           Вход
         </Typography>
+        {error && <Alert severity="error">{error}</Alert>}
         <TextField
           label="Логин"
           variant="outlined"
