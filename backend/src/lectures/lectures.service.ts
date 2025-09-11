@@ -212,16 +212,55 @@ export class LecturesService {
 
   async getByDate(date: string) {
     try {
-      const result = await this.prisma.$queryRaw`
-        SELECT * FROM "Lecture"
-        WHERE DATE("date") = ${date}::date
+      const result = await this.prisma.$queryRaw<
+        Array<{
+          id: string;
+          group: string | null;
+          lector: string | null;
+          platform: string | null;
+          unit: string | null;
+          location: string | null;
+          url: string | null;
+          shortUrl: string | null;
+          streamKey: string | null;
+          description: string | null;
+          adminId: string | null;
+          login: string | null;
+          name: string | null;
+          date: Date;
+          start: Date | null;
+          end: Date | null;
+          abnormalTime: string | null;
+          createdAt: Date;
+          updatedAt: Date | null;
+        }>
+      >`
+        SELECT
+          l.*,
+          u.id AS "adminId",
+          u.login AS "login",
+          u.name AS "name"
+        FROM "Lecture" AS l
+        LEFT JOIN "User" AS u ON u.id = l."adminId"
+        WHERE DATE(l."date") = ${date}::date
       `;
+
+      // Преобразуем результат в нужную структуру
+      const formatted = result.map(lecture => {
+        const { adminId, login, name, ...rest } = lecture;
+        return {
+          ...rest,
+          admin: adminId ? { id: adminId, login, name } : null, // если нет admin, возвращаем null
+        };
+      });
+
       this.logger.log(
         `Fetched lectures for date ${date}`,
         LecturesService.name,
         'getByDate'
       );
-      return result;
+
+      return formatted;
     } catch (error) {
       this.handleError(error, LecturesService.name, 'getByDate');
     }
@@ -234,16 +273,25 @@ export class LecturesService {
       const result = await this.prisma.lecture.update({
         where: { id },
         data: { ...dto, ...(shortUrl && { shortUrl }) },
+        include: {
+          admin: {
+            select: {
+              id: true,
+              login: true,
+              name: true,
+            },
+          },
+        },
       });
 
-      if (shortUrl && result) {
-        await this.tasksService.scheduleEmailForLecture(result.id);
-      }
+      // if (shortUrl && result) {
+      //   await this.tasksService.scheduleEmailForLecture(result.id);
+      // }
 
-      if (dto.start && result) {
-        await this.tasksService.cancelEmailTask('lecture', result.id);
-        await this.tasksService.scheduleEmailForLecture(result.id);
-      }
+      // if (dto.start && result) {
+      //   await this.tasksService.cancelEmailTask('lecture', result.id);
+      //   await this.tasksService.scheduleEmailForLecture(result.id);
+      // }
 
       this.logger.log(
         `Updated lecture ID: ${id}`,

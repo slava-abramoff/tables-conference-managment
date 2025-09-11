@@ -15,9 +15,9 @@ export const fetchUsers = async ({ page = 1, limit = 10 } = {}) => {
   };
 };
 
-export const searchUsers = async ({ term = "" } = {}) => {
+export const searchUsers = async ({ searchTerm = "" } = {}) => {
   const response = await api.get(`/users/search`, {
-    params: { term },
+    params: { searchTerm },
   });
   return {
     data: response.data.data,

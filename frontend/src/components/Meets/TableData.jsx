@@ -12,6 +12,7 @@ import {
   TextField,
   Select,
   MenuItem,
+  Autocomplete,
 } from "@mui/material";
 
 import {
@@ -23,6 +24,7 @@ import {
   useSearchMeets,
   useUpdateMeet,
 } from "../../store/meetsStore";
+import { searchUsers } from "../../services/users.service";
 
 function TableData({ search, status, sortBy, order, visibleColumns }) {
   const meets = useMeets();
@@ -32,8 +34,10 @@ function TableData({ search, status, sortBy, order, visibleColumns }) {
   const fetchMeets = useFetchMeets();
   const searchMeets = useSearchMeets();
   const updateMeet = useUpdateMeet();
+
   const [editingCell, setEditingCell] = useState(null);
   const [editedValues, setEditedValues] = useState({});
+  const [adminOptions, setAdminOptions] = useState([]);
 
   const statusOptions = [
     { value: "new", label: "Новые" },
@@ -54,6 +58,7 @@ function TableData({ search, status, sortBy, order, visibleColumns }) {
     { id: "shortUrl", label: "Короткая ссылка" },
     { id: "status", label: "Статус" },
     { id: "description", label: "Описание" },
+    { id: "admin", label: "Админ" },
     { id: "start", label: "Начало" },
     { id: "end", label: "Конец" },
     { id: "createdAt", label: "Создано" },
@@ -85,43 +90,6 @@ function TableData({ search, status, sortBy, order, visibleColumns }) {
     fetchMeets,
     searchMeets,
   ]);
-
-  const handleChangePage = (event, newPage) => {
-    if (search) {
-      searchMeets({
-        searchTerm: search,
-        page: newPage + 1,
-        limit: pagination.itemsPerPage,
-      });
-    } else {
-      fetchMeets({
-        page: newPage + 1,
-        limit: pagination.itemsPerPage,
-        status,
-        sortBy,
-        order,
-      });
-    }
-  };
-
-  const handleChangeRowsPerPage = (event) => {
-    const newRowsPerPage = parseInt(event.target.value, 10);
-    if (search) {
-      searchMeets({
-        searchTerm: search,
-        page: 1,
-        limit: newRowsPerPage,
-      });
-    } else {
-      fetchMeets({
-        page: 1,
-        limit: newRowsPerPage,
-        status,
-        sortBy,
-        order,
-      });
-    }
-  };
 
   const handleStartEdit = (rowId, columnId, initialValue) => {
     setEditingCell({ rowId, columnId });
@@ -171,23 +139,45 @@ function TableData({ search, status, sortBy, order, visibleColumns }) {
       ...prev,
       [rowId]: { ...prev[rowId], [columnId]: newValue },
     }));
+
     try {
-      await updateMeet(rowId, { [columnId]: newValue });
+      if (columnId === "admin") {
+        await updateMeet(rowId, { adminId: newValue });
+      } else {
+        await updateMeet(rowId, { [columnId]: newValue });
+      }
     } catch (error) {
       console.error("Ошибка обновления:", error);
     }
   };
 
   const getCellValue = (meet, columnId) => {
-    const edited = editedValues[meet.id]?.[columnId];
-    const value = edited !== undefined ? edited : meet[columnId] || "";
     if (columnId === "status") {
+      const currentValue = editedValues[meet.id]?.[columnId] ?? meet[columnId];
       const statusOption = statusOptions.find(
-        (option) => option.value === value,
+        (option) => option.value === currentValue,
       );
-      return statusOption ? statusOption.label : value;
+      return statusOption ? statusOption.label : currentValue;
     }
-    return value;
+
+    if (columnId === "admin") {
+      const admin = meet.admin;
+      if (!admin) return "";
+      return admin.name || admin.login || "";
+    }
+
+    const edited = editedValues[meet.id]?.[columnId];
+    return edited !== undefined ? edited : meet[columnId] || "";
+  };
+
+  const handleAdminSearch = async (term) => {
+    if (term.length < 2) return;
+    try {
+      const res = await searchUsers({ term });
+      setAdminOptions(res.data || []);
+    } catch (err) {
+      console.error("Ошибка поиска админов", err);
+    }
   };
 
   if (loading) return <Typography>Загрузка...</Typography>;
@@ -222,95 +212,92 @@ function TableData({ search, status, sortBy, order, visibleColumns }) {
                         key={column.id}
                         onClick={() =>
                           !isEditing &&
-                          column.id !== "createdAt" && // запрещаем редактирование
+                          column.id !== "createdAt" &&
                           handleStartEdit(meet.id, column.id, value)
                         }
                       >
-                        {isEditing ? (
-                          column.id === "status" ? (
-                            <Select
+                        {isEditing && column.id === "admin" ? (
+                          <Autocomplete
+                            options={adminOptions}
+                            getOptionLabel={(option) =>
+                              option.name || option.login || ""
+                            }
+                            onInputChange={(e, newInput) =>
+                              handleAdminSearch(newInput)
+                            }
+                            onChange={(e, newValue) => {
+                              if (newValue) {
+                                handleFinishEdit(meet.id, "admin", newValue.id);
+                              }
+                            }}
+                            renderInput={(params) => (
+                              <TextField
+                                {...params}
+                                autoFocus
+                                placeholder="Поиск админа..."
+                              />
+                            )}
+                          />
+                        ) : isEditing &&
+                          (column.id === "start" || column.id === "end") ? (
+                          <div style={{ display: "flex", gap: "4px" }}>
+                            <TextField
+                              type="date"
                               value={
-                                editedValues[meet.id]?.[column.id] || value
+                                editedValues[meet.id]?.[`${column.id}Date`] ||
+                                ""
                               }
                               onChange={(e) =>
+                                handleDateTimeChange(
+                                  meet.id,
+                                  column.id,
+                                  "Date",
+                                  e.target.value,
+                                )
+                              }
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") {
+                                  handleDateTimeSave(meet.id, column.id);
+                                }
+                              }}
+                              autoFocus
+                            />
+                            <TextField
+                              type="time"
+                              value={
+                                editedValues[meet.id]?.[`${column.id}Time`] ||
+                                ""
+                              }
+                              onChange={(e) =>
+                                handleDateTimeChange(
+                                  meet.id,
+                                  column.id,
+                                  "Time",
+                                  e.target.value,
+                                )
+                              }
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") {
+                                  handleDateTimeSave(meet.id, column.id);
+                                }
+                              }}
+                            />
+                          </div>
+                        ) : isEditing ? (
+                          <TextField
+                            defaultValue={value}
+                            autoFocus
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
                                 handleFinishEdit(
                                   meet.id,
                                   column.id,
                                   e.target.value,
-                                )
+                                );
                               }
-                              autoFocus
-                              fullWidth
-                            >
-                              {statusOptions.map((option) => (
-                                <MenuItem
-                                  key={option.value}
-                                  value={option.value}
-                                >
-                                  {option.label}
-                                </MenuItem>
-                              ))}
-                            </Select>
-                          ) : column.id === "start" || column.id === "end" ? (
-                            <div style={{ display: "flex", gap: "4px" }}>
-                              <TextField
-                                type="date"
-                                value={
-                                  editedValues[meet.id]?.[`${column.id}Date`] ||
-                                  ""
-                                }
-                                onChange={(e) =>
-                                  handleDateTimeChange(
-                                    meet.id,
-                                    column.id,
-                                    "Date",
-                                    e.target.value,
-                                  )
-                                }
-                                onKeyDown={(e) => {
-                                  if (e.key === "Enter") {
-                                    handleDateTimeSave(meet.id, column.id);
-                                  }
-                                }}
-                                autoFocus
-                              />
-                              <TextField
-                                type="time"
-                                value={
-                                  editedValues[meet.id]?.[`${column.id}Time`] ||
-                                  ""
-                                }
-                                onChange={(e) =>
-                                  handleDateTimeChange(
-                                    meet.id,
-                                    column.id,
-                                    "Time",
-                                    e.target.value,
-                                  )
-                                }
-                                onKeyDown={(e) => {
-                                  if (e.key === "Enter") {
-                                    handleDateTimeSave(meet.id, column.id);
-                                  }
-                                }}
-                              />
-                            </div>
-                          ) : (
-                            <TextField
-                              defaultValue={value}
-                              autoFocus
-                              onKeyDown={(e) => {
-                                if (e.key === "Enter") {
-                                  handleFinishEdit(
-                                    meet.id,
-                                    column.id,
-                                    e.target.value,
-                                  );
-                                }
-                              }}
-                              sx={{ width: "100%" }}
-                            />
-                          )
+                            }}
+                            sx={{ width: "100%" }}
+                          />
                         ) : column.id === "start" ||
                           column.id === "end" ||
                           column.id === "createdAt" ? (
@@ -336,8 +323,24 @@ function TableData({ search, status, sortBy, order, visibleColumns }) {
         count={pagination.totalItems}
         rowsPerPage={pagination.itemsPerPage}
         page={pagination.currentPage - 1}
-        onPageChange={handleChangePage}
-        onRowsPerPageChange={handleChangeRowsPerPage}
+        onPageChange={(e, newPage) => {
+          fetchMeets({
+            page: newPage + 1,
+            limit: pagination.itemsPerPage,
+            status,
+            sortBy,
+            order,
+          });
+        }}
+        onRowsPerPageChange={(e) => {
+          fetchMeets({
+            page: 1,
+            limit: parseInt(e.target.value, 10),
+            status,
+            sortBy,
+            order,
+          });
+        }}
       />
     </Paper>
   );

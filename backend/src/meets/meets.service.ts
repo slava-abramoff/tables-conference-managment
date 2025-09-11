@@ -88,6 +88,15 @@ export class MeetsService {
           where,
           skip: offset,
           take: +limit,
+          include: {
+            admin: {
+              select: {
+                id: true,
+                login: true,
+                name: true,
+              },
+            },
+          },
         }),
         this.prisma.meet.count({
           where,
@@ -132,7 +141,15 @@ export class MeetsService {
         this.prisma.meet.findMany({
           where,
           orderBy,
-          include: { admin: true },
+          include: {
+            admin: {
+              select: {
+                id: true,
+                login: true,
+                name: true,
+              },
+            },
+          },
           skip: offset,
           take: +limit,
         }),
@@ -178,6 +195,15 @@ export class MeetsService {
       const updatedMeet = await this.prisma.meet.update({
         where: { id },
         data: updateData,
+        include: {
+          admin: {
+            select: {
+              id: true,
+              login: true,
+              name: true,
+            },
+          },
+        },
       });
 
       if (dto.start) {

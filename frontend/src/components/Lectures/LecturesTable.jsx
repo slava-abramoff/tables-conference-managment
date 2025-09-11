@@ -10,6 +10,7 @@ import {
   Typography,
   TextField,
   IconButton,
+  Autocomplete,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 
@@ -24,6 +25,7 @@ import {
 import { useModal } from "../../context/ModalContext";
 import ConfirmDeleteLectureModal from "../../modals/ConfirmDeleteLectureModal";
 import { timeToISO } from "../../utils/datetime";
+import { searchUsers } from "../../services/users.service";
 
 function LecturesTable({ search, sortBy, order, visibleColumns, date }) {
   const fetchLecturesByDate = useFetchLecturesByDate();
@@ -36,6 +38,7 @@ function LecturesTable({ search, sortBy, order, visibleColumns, date }) {
 
   const [editingCell, setEditingCell] = useState(null); // { rowId, columnId }
   const [editedValues, setEditedValues] = useState({}); // { rowId: { columnId: value } }
+  const [adminOptions, setAdminOptions] = useState([]);
 
   // Определение всех возможных колонок
   const allColumns = [
@@ -64,6 +67,17 @@ function LecturesTable({ search, sortBy, order, visibleColumns, date }) {
     }
   }, [date, fetchLecturesByDate]);
 
+  // Функция поиска администраторов
+  const handleAdminSearch = async (term) => {
+    if (term.length < 2) return;
+    try {
+      const res = await searchUsers({ term });
+      setAdminOptions(res.data || []);
+    } catch (err) {
+      console.error("Ошибка поиска админов", err);
+    }
+  };
+
   // Фильтрация и сортировка на клиенте
   const filteredLectures = lectures
     .filter((lecture) =>
@@ -85,8 +99,12 @@ function LecturesTable({ search, sortBy, order, visibleColumns, date }) {
       return bValue.localeCompare(aValue);
     });
 
-  const handleStartEdit = (rowId, columnId) => {
+  const handleStartEdit = (rowId, columnId, initialValue) => {
     setEditingCell({ rowId, columnId });
+    setEditedValues((prev) => ({
+      ...prev,
+      [rowId]: { ...prev[rowId], [columnId]: initialValue || "" },
+    }));
   };
 
   const handleFinishEdit = async (rowId, columnId, newValue) => {
@@ -104,7 +122,11 @@ function LecturesTable({ search, sortBy, order, visibleColumns, date }) {
     setEditingCell(null);
 
     try {
-      await updateLecture(rowId, { [columnId]: newValue });
+      if (columnId === "adminId") {
+        await updateLecture(rowId, { adminId: newValue });
+      } else {
+        await updateLecture(rowId, { [columnId]: newValue });
+      }
     } catch (error) {
       console.error("Ошибка обновления:", error);
     }
@@ -128,6 +150,11 @@ function LecturesTable({ search, sortBy, order, visibleColumns, date }) {
   };
 
   const getCellValue = (lecture, columnId) => {
+    if (columnId === "adminId") {
+      const admin = lecture.admin;
+      if (!admin) return "";
+      return admin.name || admin.login || "";
+    }
     const edited = editedValues[lecture.id]?.[columnId];
     return edited !== undefined ? edited : lecture[columnId] || "";
   };
@@ -193,10 +220,36 @@ function LecturesTable({ search, sortBy, order, visibleColumns, date }) {
                         onClick={() =>
                           ["createdAt", "updatedAt"].includes(column.id)
                             ? null
-                            : handleStartEdit(lecture.id, column.id)
+                            : handleStartEdit(lecture.id, column.id, value)
                         }
                       >
-                        {isEditing ? (
+                        {isEditing && column.id === "adminId" ? (
+                          <Autocomplete
+                            options={adminOptions}
+                            getOptionLabel={(option) =>
+                              option.name || option.login || ""
+                            }
+                            onInputChange={(e, newInput) =>
+                              handleAdminSearch(newInput)
+                            }
+                            onChange={(e, newValue) => {
+                              if (newValue) {
+                                handleFinishEdit(
+                                  lecture.id,
+                                  "adminId",
+                                  newValue.id,
+                                );
+                              }
+                            }}
+                            renderInput={(params) => (
+                              <TextField
+                                {...params}
+                                autoFocus
+                                placeholder="Поиск админа..."
+                              />
+                            )}
+                          />
+                        ) : isEditing ? (
                           <TextField
                             type={
                               ["start", "end"].includes(column.id)
