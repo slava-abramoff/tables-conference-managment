@@ -43,14 +43,12 @@ export function formatDate(dateString) {
 }
 
 export function timeToISO(timeStr) {
-  console.log(timeStr);
   const [hours, minutes] = timeStr.split(":").map(Number);
 
-  const now = new Date();
-  now.setHours(hours, minutes, 0, 0);
+  // можно взять произвольную дату, например 1970-01-01
+  const date = new Date(1970, 0, 1, hours, minutes, 0, 0);
 
-  console.log(now.toISOString());
-  return now.toISOString();
+  return date.toISOString();
 }
 
 export function dateToISO(dateStr) {

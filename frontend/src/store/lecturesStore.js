@@ -92,13 +92,6 @@ const useLecturesStore = create(
     updateLecture: async (id, data) => {
       set({ loading: true, error: null });
       try {
-        if (data.start) {
-          data.start = timeToISO(data.start);
-        }
-
-        if (data.end) {
-          data.end = timeToISO(data.end);
-        }
 
         const updatedLecture = await updateLecture(id, data);
         set((state) => ({
