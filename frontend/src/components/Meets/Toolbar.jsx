@@ -15,7 +15,7 @@ import {
 import SettingsIcon from "@mui/icons-material/Settings";
 import { useState, useCallback } from "react";
 import { debounce } from "lodash";
-import { useSearchMeets } from "../../store/meetsStore";
+import { useAddMeets, useSearchMeets } from "../../store/meetsStore";
 import { useModal } from "../../context/ModalContext";
 import useAuthStore from "../../store/authStore";
 function Toolbar({
@@ -55,6 +55,7 @@ function Toolbar({
     { value: "shortUrl", label: "Короткая ссылка" },
     { value: "status", label: "Статус" },
     { value: "description", label: "Описание" },
+    { id: "admin", label: "Админ" },
     { value: "start", label: "Начало" },
     { value: "end", label: "Конец" },
     { value: "createdAt", label: "Дата создания" },
@@ -91,7 +92,7 @@ function Toolbar({
   };
 
   const handleCreate = () => {
-    if (isViewer) return; // Блокируем создание для viewer
+    if (isViewer) return;
     openCreateMeet();
   };
 

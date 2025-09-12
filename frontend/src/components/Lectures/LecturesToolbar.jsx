@@ -12,6 +12,7 @@ import SettingsIcon from "@mui/icons-material/Settings";
 import { useState } from "react";
 import { useAddLecture } from "../../store/lecturesStore";
 import { dateToISO } from "../../utils/datetime";
+import { useModal } from "../../context/ModalContext";
 
 function LecturesToolbar({
   search,
@@ -22,6 +23,7 @@ function LecturesToolbar({
 }) {
   const [anchorEl, setAnchorEl] = useState(null);
   const createLecture = useAddLecture();
+  const { open: openGroupLink } = useModal("groupLink");
 
   const sortOptions = [
     { value: "group", label: "Группа" },
@@ -33,7 +35,7 @@ function LecturesToolbar({
     { value: "shortUrl", label: "Короткая ссылка" },
     { value: "streamKey", label: "Ключ стрима" },
     { value: "description", label: "Описание" },
-    { value: "adminId", label: "ID админа" },
+    { value: "adminId", label: "Админ" },
     { value: "start", label: "Начало" },
     { value: "end", label: "Конец" },
     { value: "abnormalTime", label: "Нестандартное время" },
@@ -60,6 +62,10 @@ function LecturesToolbar({
 
   const handleCreate = () => {
     createLecture({ date: dateToISO(currentDate) });
+  };
+
+  const createButton = () => {
+    openGroupLink();
   };
 
   const open = Boolean(anchorEl);
@@ -92,6 +98,14 @@ function LecturesToolbar({
         sx={{ minWidth: 150, height: 56, boxSizing: "border-box" }}
       >
         Добавить лекцию
+      </Button>
+      <Button
+        variant="contained"
+        color="primary"
+        onClick={createButton}
+        sx={{ minWidth: 150, height: 56, boxSizing: "border-box" }}
+      >
+        Установить ссылку для занятий
       </Button>
       <IconButton onClick={handleClickSettings} aria-label="Настройка колонок">
         <SettingsIcon />

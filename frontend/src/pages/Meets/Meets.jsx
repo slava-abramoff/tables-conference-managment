@@ -29,6 +29,7 @@ function Meets() {
         shortUrl: true,
         status: true,
         description: true,
+        admin: true,
         start: true,
         end: true,
         createdAt: true,

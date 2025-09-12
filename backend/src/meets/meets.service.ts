@@ -8,7 +8,6 @@ import { AppLogger } from 'src/app.logger';
 import { YandexApiService } from 'src/yandex-api/yandex-api.service';
 import { TasksService } from 'src/tasks/tasks.service';
 import { MailService } from 'src/mail/mail.service';
-import { tryCatch } from 'bullmq';
 
 export interface MeetsPagination {
   data: Meet[];
@@ -178,23 +177,17 @@ export class MeetsService {
 
   async update(id: string, dto: AddMeetDto): Promise<Meet> {
     try {
-      const { url, ...rest } = dto;
+      const shortUrl = dto.url ? await this.api.shortenUrl(dto.url) : undefined;
 
-      let shortUrl: string | undefined;
-      if (url) {
-        this.logger.debug(`Shortening URL: ${url}`);
-        shortUrl = await this.api.shortenUrl(url);
-      }
-
-      const updateData: AddMeetDto = { ...rest };
-      if (shortUrl) {
-        updateData.shortUrl = shortUrl;
-        updateData.status = Status.processed;
-      }
+      // const updateData: AddMeetDto = { ...rest };
+      // if (shortUrl) {
+      //   updateData.shortUrl = shortUrl;
+      //   updateData.status = Status.processed;
+      // }
 
       const updatedMeet = await this.prisma.meet.update({
         where: { id },
-        data: updateData,
+        data: { ...dto, ...(shortUrl && { shortUrl }) },
         include: {
           admin: {
             select: {
@@ -206,32 +199,32 @@ export class MeetsService {
         },
       });
 
-      if (dto.start) {
-        await this.tasksService.cancelEmailTask('meet', updatedMeet.id);
-        await this.tasksService.scheduleEmailForMeet(updatedMeet.id);
-      }
+      // if (dto.start) {
+      //   await this.tasksService.cancelEmailTask('meet', updatedMeet.id);
+      //   await this.tasksService.scheduleEmailForMeet(updatedMeet.id);
+      // }
 
-      if (dto.status === Status.rejected) {
-        await this.tasksService.cancelEmailTask('meet', updatedMeet.id);
-      }
+      // if (dto.status === Status.rejected) {
+      //   await this.tasksService.cancelEmailTask('meet', updatedMeet.id);
+      // }
 
-      if (
-        shortUrl &&
-        updatedMeet.email &&
-        updatedMeet.start &&
-        updatedMeet.url
-      ) {
-        await this.mailService.notificateAboutCreationLink({
-          email: updatedMeet.email,
-          customer: updatedMeet.customerName ?? 'заказчик',
-          event: updatedMeet.eventName ?? 'Мероприятие',
-          startTime: String(updatedMeet.start),
-          place: updatedMeet.location ?? 'Не указано',
-          url: updatedMeet.url,
-          shortUrl: shortUrl,
-        });
-        await this.tasksService.scheduleEmailForMeet(updatedMeet.id);
-      }
+      // if (
+      //   shortUrl &&
+      //   updatedMeet.email &&
+      //   updatedMeet.start &&
+      //   updatedMeet.url
+      // ) {
+      //   await this.mailService.notificateAboutCreationLink({
+      //     email: updatedMeet.email,
+      //     customer: updatedMeet.customerName ?? 'заказчик',
+      //     event: updatedMeet.eventName ?? 'Мероприятие',
+      //     startTime: String(updatedMeet.start),
+      //     place: updatedMeet.location ?? 'Не указано',
+      //     url: updatedMeet.url,
+      //     shortUrl: shortUrl,
+      //   });
+      //   await this.tasksService.scheduleEmailForMeet(updatedMeet.id);
+      // }
 
       return updatedMeet;
     } catch (error) {

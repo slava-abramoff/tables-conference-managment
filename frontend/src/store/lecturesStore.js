@@ -10,7 +10,7 @@ import {
   getLecturesByYearMonth,
   updateLecture,
 } from "../services/lectures.service";
-import { getCurrentYear, getCurrentMonth, timeToISO } from "../utils/datetime";
+import { getCurrentYear, getCurrentMonth } from "../utils/datetime";
 
 const useLecturesStore = create(
   devtools((set) => ({
@@ -92,7 +92,6 @@ const useLecturesStore = create(
     updateLecture: async (id, data) => {
       set({ loading: true, error: null });
       try {
-
         const updatedLecture = await updateLecture(id, data);
         set((state) => ({
           lectures: state.lectures.map((lecture) =>

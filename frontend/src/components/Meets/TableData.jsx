@@ -35,8 +35,8 @@ function TableData({ search, status, sortBy, order, visibleColumns }) {
   const fetchMeets = useFetchMeets();
   const searchMeets = useSearchMeets();
   const updateMeet = useUpdateMeet();
-  const { user } = useAuthStore(); // Получаем данные пользователя из Zustand
-  const isViewer = user?.role === "viewer"; // Проверяем, является ли пользователь viewer
+  const { user } = useAuthStore();
+  const isViewer = user?.role === "viewer";
 
   const [editingCell, setEditingCell] = useState(null);
   const [editedValues, setEditedValues] = useState({});
@@ -95,7 +95,7 @@ function TableData({ search, status, sortBy, order, visibleColumns }) {
   ]);
 
   const handleStartEdit = (rowId, columnId, initialValue) => {
-    if (isViewer) return; // Блокируем редактирование для viewer
+    if (isViewer) return;
     setEditingCell({ rowId, columnId });
 
     if (columnId === "start" || columnId === "end") {
@@ -122,7 +122,7 @@ function TableData({ search, status, sortBy, order, visibleColumns }) {
   };
 
   const handleDateTimeChange = (rowId, columnId, type, value) => {
-    if (isViewer) return; // Блокируем изменения для viewer
+    if (isViewer) return;
     setEditedValues((prev) => ({
       ...prev,
       [rowId]: { ...prev[rowId], [`${columnId}${type}`]: value },
@@ -130,7 +130,7 @@ function TableData({ search, status, sortBy, order, visibleColumns }) {
   };
 
   const handleDateTimeSave = async (rowId, columnId) => {
-    if (isViewer) return; // Блокируем сохранение для viewer
+    if (isViewer) return;
     const { [`${columnId}Date`]: date, [`${columnId}Time`]: time } =
       editedValues[rowId] || {};
     if (date && time) {
@@ -140,7 +140,7 @@ function TableData({ search, status, sortBy, order, visibleColumns }) {
   };
 
   const handleFinishEdit = async (rowId, columnId, newValue) => {
-    if (isViewer) return; // Блокируем сохранение изменений для viewer
+    if (isViewer) return;
     setEditingCell(null);
     setEditedValues((prev) => ({
       ...prev,
@@ -178,7 +178,7 @@ function TableData({ search, status, sortBy, order, visibleColumns }) {
   };
 
   const handleAdminSearch = async (term) => {
-    if (isViewer) return; // Блокируем поиск для viewer
+    if (isViewer) return;
     if (term.length < 2) return;
     try {
       const res = await searchUsers({ term });
@@ -221,11 +221,30 @@ function TableData({ search, status, sortBy, order, visibleColumns }) {
                         onClick={() =>
                           !isEditing &&
                           column.id !== "createdAt" &&
-                          !isViewer && // Блокируем клик для viewer
+                          !isViewer &&
                           handleStartEdit(meet.id, column.id, value)
                         }
                       >
-                        {isEditing && column.id === "admin" ? (
+                        {isEditing && column.id === "status" ? (
+                          <Select
+                            value={editedValues[meet.id]?.[column.id] || value}
+                            onChange={(e) =>
+                              handleFinishEdit(
+                                meet.id,
+                                column.id,
+                                e.target.value,
+                              )
+                            }
+                            autoFocus
+                            sx={{ width: "100%" }}
+                          >
+                            {statusOptions.map((option) => (
+                              <MenuItem key={option.value} value={option.value}>
+                                {option.label}
+                              </MenuItem>
+                            ))}
+                          </Select>
+                        ) : isEditing && column.id === "admin" ? (
                           <Autocomplete
                             options={adminOptions}
                             getOptionLabel={(option) =>

@@ -70,14 +70,7 @@ function AppRoutes() {
           </PrivateRoute>
         }
       />
-      <Route
-        path="/form"
-        element={
-          <PrivateRoute>
-            <Form />
-          </PrivateRoute>
-        }
-      />
+      <Route path="/" element={<Form />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

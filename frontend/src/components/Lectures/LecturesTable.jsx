@@ -53,7 +53,7 @@ function LecturesTable({ search, sortBy, order, visibleColumns, date }) {
     { id: "shortUrl", label: "Короткая ссылка" },
     { id: "streamKey", label: "Ключ стрима" },
     { id: "description", label: "Описание" },
-    { id: "adminId", label: "ID админа" },
+    { id: "adminId", label: "Админ" },
     { id: "start", label: "Начало" },
     { id: "end", label: "Конец" },
     { id: "abnormalTime", label: "Нестандартное время" },

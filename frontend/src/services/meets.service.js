@@ -46,6 +46,17 @@ export async function createMeets(meets) {
   }
 }
 
+export async function addNewMeet(meet) {
+  try {
+    const response = await api.post("/meets", meet);
+    return response.data; // Meet[]
+  } catch (error) {
+    throw new Error(
+      error.response?.data?.message || "Ошибка создания мероприятия",
+    );
+  }
+}
+
 // Обновить мероприятие
 export async function updateMeet(id, data) {
   try {
