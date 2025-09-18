@@ -119,4 +119,10 @@ export class MailService {
       }
     }
   }
+
+  async infoAboutMeeting() {}
+
+  async soonMeeting() {}
+
+  async soonLecture() {}
 }
