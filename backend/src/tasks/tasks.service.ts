@@ -8,52 +8,52 @@ export class TasksService {
   constructor(
     @InjectQueue('email-queue') private readonly emailQueue: Queue,
     private readonly prisma: PrismaService
-  ) { }
+  ) {}
 
   /**
    * Планирование уведомления за час до начала лекции
    */
-  async scheduleEmailForLecture(lectureId: string) {
-    const lecture = await this.prisma.lecture.findUnique({
-      where: { id: lectureId },
-      include: { admin: true },
-    });
+  // async scheduleEmailForLecture(lectureId: string) {
+  //   const lecture = await this.prisma.lecture.findUnique({
+  //     where: { id: lectureId },
+  //     include: { admin: true },
+  //   });
 
-    if (!lecture || !lecture.start || !lecture.admin?.email) return;
+  //   if (!lecture || !lecture.start || !lecture.admin?.email) return;
 
-    // Получаем текущее локальное время сервера
-    const currentLocalTime = new Date().getTime();
+  //   // Получаем текущее локальное время сервера
+  //   const currentLocalTime = new Date().getTime();
 
-    // Переводим дату встречи в локальное время сервера
-    const lectureStartLocal = new Date(
-      lecture.start.getTime() + new Date().getTimezoneOffset() * 60000
-    );
+  //   // Переводим дату встречи в локальное время сервера
+  //   const lectureStartLocal = new Date(
+  //     lecture.start.getTime() + new Date().getTimezoneOffset() * 60000
+  //   );
 
-    // Время уведомления за 30 минуты до старта
-    const notificationTime = lectureStartLocal.getTime() - 30 * 60 * 1000;
+  //   // Время уведомления за 30 минуты до старта
+  //   const notificationTime = lectureStartLocal.getTime() - 30 * 60 * 1000;
 
-    // Вычисляем задержку
-    const delay = notificationTime - currentLocalTime;
+  //   // Вычисляем задержку
+  //   const delay = notificationTime - currentLocalTime;
 
-    await this.emailQueue.add(
-      `lecture-email-${lectureId}`,
-      {
-        type: 'lecture',
-        id: lectureId,
-        adminEmail: lecture.admin.email,
-        eventName: lecture.group || 'Без группы',
-        place: lecture.location || lecture.platform || 'Не указано',
-        url: lecture.url || '',
-        shortUrl: lecture.shortUrl || '',
-        streamKey: lecture.streamKey || '',
-        date: lecture.start.toLocaleString(),
-      },
-      {
-        delay,
-        jobId: `lecture-email-${lectureId}`, // уникальный ID для задачи
-      }
-    );
-  }
+  //   await this.emailQueue.add(
+  //     `lecture-email-${lectureId}`,
+  //     {
+  //       type: 'lecture',
+  //       id: lectureId,
+  //       adminEmail: lecture.admin.email,
+  //       eventName: lecture.group || 'Без группы',
+  //       place: lecture.location || lecture.platform || 'Не указано',
+  //       url: lecture.url || '',
+  //       shortUrl: lecture.shortUrl || '',
+  //       streamKey: lecture.streamKey || '',
+  //       date: lecture.start.toLocaleString(),
+  //     },
+  //     {
+  //       delay,
+  //       jobId: `lecture-email-${lectureId}`, // уникальный ID для задачи
+  //     }
+  //   );
+  // }
 
   /**
    * Планирование уведомления за час до начала мероприятия

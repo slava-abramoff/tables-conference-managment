@@ -9,120 +9,59 @@ export class MailService {
     private readonly logger: AppLogger
   ) {}
 
-  async notificateAboutCreationLink(letterInfo: {
+  async infoAboutMeeting(data: {
     email: string;
-    customer: string;
-    event: string;
-    startTime: string;
-    place: string;
+    eventName: string;
     url: string;
-    shortUrl?: string;
+    shortUrl: string;
+    dateTime: string;
   }) {
     try {
       await this.mailerService.sendMail({
-        to: letterInfo.email,
-        subject: `Ссылка для подключения ${letterInfo.event}`,
-        template: 'meeting-creation-notification',
+        to: data.email,
+        subject: `Ссылки на мероприятие ${data.eventName}`,
+        template: 'info-about-meeting',
         context: {
-          customer: letterInfo.customer,
-          event: letterInfo.event,
-          place: letterInfo.place,
-          startTime: letterInfo.startTime,
-          url: letterInfo.url,
-          shortUrl: letterInfo.shortUrl ?? '',
+          url: data.url,
+          shortUrl: data.shortUrl,
+          dateTime: data.dateTime,
         },
       });
-      this.logger.log(
-        `Letter send to ${letterInfo.email}`,
-        MailService.name,
-        'notificateAboutCreationLink'
-      );
     } catch (error) {
       this.logger.error(
-        `Failed send letter to: ${letterInfo.email}`,
+        `Failed send letter to: ${data.email}`,
         error.stack,
         MailService.name,
-        'notificateAboutCreationLink'
+        'infoAboutMeeting'
       );
     }
   }
 
-  async notificateAboutStartingSoon(letterInfo: {
-    adminEmail?: string;
-    customerEmail?: string;
-    customerName?: string;
+  async soonMeeting(data: {
+    email: string;
     eventName: string;
-    place: string;
     url: string;
-    shortUrl?: string;
-    streamKey?: string;
-    date: string;
+    shortUrl: string;
+    dateTime: string;
   }) {
-    if (letterInfo.customerEmail && letterInfo.customerName) {
-      try {
-        await this.mailerService.sendMail({
-          to: letterInfo.adminEmail,
-          subject: `30 минут до подключения ${letterInfo.eventName}`,
-          template: 'starting-soon-for-admin',
-          context: {
-            event: letterInfo.eventName,
-            url: letterInfo.url,
-            place: letterInfo.place,
-            shortUrl: letterInfo.shortUrl ?? 'Отсутствует',
-            streamKey: letterInfo.streamKey ?? 'Отсутствует',
-            date: letterInfo.date,
-          },
-        });
-        this.logger.log(
-          `Letter send to ${letterInfo.adminEmail}`,
-          MailService.name,
-          'notificateAboutStartingSoon'
-        );
-      } catch (error) {
-        this.logger.error(
-          `Failed send letter to: ${letterInfo.adminEmail}`,
-          error.stack,
-          MailService.name,
-          'notificateAboutStartingSoon'
-        );
-      }
-    }
-
-    if (letterInfo.adminEmail) {
-      try {
-        await this.mailerService.sendMail({
-          to: letterInfo.customerEmail,
-          subject: `30 минут до начала ${letterInfo.eventName}`,
-          template: 'starting-soon-for-customer',
-          context: {
-            customer: letterInfo.customerName,
-            event: letterInfo.eventName,
-            url: letterInfo.url,
-            place: letterInfo.place,
-            shortUrl: letterInfo.shortUrl ?? 'Отсутствует',
-            streamKey: letterInfo.streamKey ?? 'Отсутствует',
-            date: letterInfo.date,
-          },
-        });
-        this.logger.log(
-          `Letter send to ${letterInfo.customerEmail}`,
-          MailService.name,
-          'notificateAboutStartingSoon'
-        );
-      } catch (error) {
-        this.logger.error(
-          `Failed send letter to: ${letterInfo.customerEmail}`,
-          error.stack,
-          MailService.name,
-          'notificateAboutStartingSoon'
-        );
-      }
+    try {
+      await this.mailerService.sendMail({
+        to: data.email,
+        subject: `Осталось 30 минут до начала ${data.eventName}`,
+        template: 'soon-meeting',
+        context: {
+          url: data.url,
+          shortUrl: data.shortUrl,
+          dateTime: data.dateTime,
+        },
+      });
+    } catch (error) {
+      this.logger.error(
+        `Failed send letter to: ${data.email}`,
+        error.stack,
+        MailService.name,
+        'soonMeeting'
+      );
     }
   }
-
-  async infoAboutMeeting() {}
-
-  async soonMeeting() {}
-
-  async soonLecture() {}
 }
