@@ -12,40 +12,20 @@ export class TasksProcessor extends WorkerHost {
     job: Job<{
       type: 'lecture' | 'meet';
       id: string;
-      adminEmail?: string;
-      customerEmail?: string;
-      customerName?: string;
+      email: string;
       eventName: string;
-      place: string;
       url: string;
-      shortUrl?: string;
-      streamKey?: string;
-      date: string;
+      shortUrl: string;
+      dateTime: string;
     }>
   ) {
-    if (job.data.type === 'lecture') {
-      await this.mailService.notificateAboutStartingSoon({
-        adminEmail: job.data.adminEmail,
-        eventName: job.data.eventName,
-        place: job.data.place,
-        url: job.data.url,
-        shortUrl: job.data.shortUrl,
-        streamKey: job.data.streamKey,
-        date: job.data.date,
-      });
-    }
-
     if (job.data.type === 'meet') {
-      await this.mailService.notificateAboutStartingSoon({
-        adminEmail: job.data.adminEmail,
-        customerEmail: job.data.customerEmail,
-        customerName: job.data.customerName,
+      await this.mailService.soonMeeting({
+        email: job.data.email,
         eventName: job.data.eventName,
-        place: job.data.place,
         url: job.data.url,
         shortUrl: job.data.shortUrl,
-        streamKey: job.data.streamKey,
-        date: job.data.date,
+        dateTime: job.data.dateTime,
       });
     }
   }

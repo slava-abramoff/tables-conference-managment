@@ -63,10 +63,6 @@ function CreateMeetModal() {
           description,
           start,
           end,
-          url,
-          shortUrl,
-          adminId: admin?.id || null,
-          status,
         },
       ]);
       close();
@@ -89,6 +85,26 @@ function CreateMeetModal() {
           value={eventName}
           onChange={(e) => setEventName(e.target.value)}
           fullWidth
+        />
+
+        <TextField
+          label="Начало мероприятия"
+          type="datetime-local"
+          helperText="Укажите дату и время (ISO8601 отправляется на сервер)"
+          value={start ? new Date(start).toISOString().slice(0, 16) : ""}
+          onChange={(e) => setStart(new Date(e.target.value).toISOString())}
+          fullWidth
+          InputLabelProps={{ shrink: true }}
+        />
+
+        <TextField
+          label="Конец мероприятия"
+          type="datetime-local"
+          helperText="Укажите дату и время окончания"
+          value={end ? new Date(end).toISOString().slice(0, 16) : ""}
+          onChange={(e) => setEnd(new Date(e.target.value).toISOString())}
+          fullWidth
+          InputLabelProps={{ shrink: true }}
         />
 
         <TextField
@@ -148,73 +164,6 @@ function CreateMeetModal() {
           multiline
           minRows={3}
         />
-
-        <TextField
-          label="Начало мероприятия"
-          type="datetime-local"
-          helperText="Укажите дату и время (ISO8601 отправляется на сервер)"
-          value={start ? new Date(start).toISOString().slice(0, 16) : ""}
-          onChange={(e) => setStart(new Date(e.target.value).toISOString())}
-          fullWidth
-          InputLabelProps={{ shrink: true }}
-        />
-
-        <TextField
-          label="Конец мероприятия"
-          type="datetime-local"
-          helperText="Укажите дату и время окончания"
-          value={end ? new Date(end).toISOString().slice(0, 16) : ""}
-          onChange={(e) => setEnd(new Date(e.target.value).toISOString())}
-          fullWidth
-          InputLabelProps={{ shrink: true }}
-        />
-
-        <TextField
-          label="Ссылка на конференцию"
-          helperText="Полная ссылка на видеоконференцию"
-          value={url}
-          onChange={(e) => setUrl(e.target.value)}
-          fullWidth
-        />
-
-        <TextField
-          label="Короткая ссылка"
-          helperText="Удобный вариант ссылки для рассылки"
-          value={shortUrl}
-          onChange={(e) => setShortUrl(e.target.value)}
-          fullWidth
-        />
-
-        <Autocomplete
-          options={adminOptions}
-          value={admin}
-          onChange={(e, newValue) => setAdmin(newValue)}
-          onInputChange={(e, newInput) => handleAdminSearch(newInput)}
-          getOptionLabel={(option) => option.name || option.login || ""}
-          renderInput={(params) => (
-            <TextField
-              {...params}
-              label="Администратор"
-              helperText="Начните вводить имя или логин, чтобы найти админа"
-              fullWidth
-            />
-          )}
-        />
-
-        <FormControl fullWidth>
-          <InputLabel id="status-label">Статус</InputLabel>
-          <Select
-            labelId="status-label"
-            value={status}
-            onChange={(e) => setStatus(e.target.value)}
-          >
-            <MenuItem value="new">Новые</MenuItem>
-            <MenuItem value="processed">Состоятся</MenuItem>
-            <MenuItem value="completed">Прошедшие</MenuItem>
-            <MenuItem value="rejected">Отклоненные</MenuItem>
-          </Select>
-          <FormHelperText>Текущий статус мероприятия</FormHelperText>
-        </FormControl>
       </DialogContent>
       <DialogActions>
         <Button onClick={close}>Отмена</Button>

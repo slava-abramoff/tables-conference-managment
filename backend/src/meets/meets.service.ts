@@ -2,7 +2,7 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { GetQueryMeetDto, SearchQueryDto } from './dto/query.dto';
 import { PrismaService } from 'prisma/prisma.service';
 import { AddMeetDto, CreateRequestDto } from './dto/create.dto';
-import { Meet, Prisma, Status } from '@prisma/client';
+import { Meet, Prisma } from '@prisma/client';
 import { Pagination } from 'src/shared/intefaces';
 import { AppLogger } from 'src/app.logger';
 import { YandexApiService } from 'src/yandex-api/yandex-api.service';
@@ -179,12 +179,6 @@ export class MeetsService {
     try {
       const shortUrl = dto.url ? await this.api.shortenUrl(dto.url) : undefined;
 
-      // const updateData: AddMeetDto = { ...rest };
-      // if (shortUrl) {
-      //   updateData.shortUrl = shortUrl;
-      //   updateData.status = Status.processed;
-      // }
-
       const updatedMeet = await this.prisma.meet.update({
         where: { id },
         data: { ...dto, ...(shortUrl && { shortUrl }) },
@@ -199,32 +193,17 @@ export class MeetsService {
         },
       });
 
-      // if (dto.start) {
-      //   await this.tasksService.cancelEmailTask('meet', updatedMeet.id);
-      //   await this.tasksService.scheduleEmailForMeet(updatedMeet.id);
-      // }
+      if (dto.url && updatedMeet.email && updatedMeet.url) {
+        await this.mailService.infoAboutMeeting({
+          email: updatedMeet.email,
+          eventName: updatedMeet.eventName || 'Не указано',
+          url: updatedMeet.url,
+          shortUrl: updatedMeet.shortUrl || 'Не указано',
+          dateTime: String(updatedMeet.start),
+        });
 
-      // if (dto.status === Status.rejected) {
-      //   await this.tasksService.cancelEmailTask('meet', updatedMeet.id);
-      // }
-
-      // if (
-      //   shortUrl &&
-      //   updatedMeet.email &&
-      //   updatedMeet.start &&
-      //   updatedMeet.url
-      // ) {
-      //   await this.mailService.notificateAboutCreationLink({
-      //     email: updatedMeet.email,
-      //     customer: updatedMeet.customerName ?? 'заказчик',
-      //     event: updatedMeet.eventName ?? 'Мероприятие',
-      //     startTime: String(updatedMeet.start),
-      //     place: updatedMeet.location ?? 'Не указано',
-      //     url: updatedMeet.url,
-      //     shortUrl: shortUrl,
-      //   });
-      //   await this.tasksService.scheduleEmailForMeet(updatedMeet.id);
-      // }
+        await this.tasksService.scheduleEmailForMeet(updatedMeet.id);
+      }
 
       return updatedMeet;
     } catch (error) {

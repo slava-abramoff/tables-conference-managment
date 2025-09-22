@@ -50,6 +50,8 @@ function TableData({ search, status, sortBy, order, visibleColumns }) {
   ];
 
   const allColumns = [
+    { id: "start", label: "Начало" },
+    { id: "end", label: "Конец" },
     { id: "eventName", label: "Название" },
     { id: "customerName", label: "ФИО" },
     { id: "email", label: "Email" },
@@ -62,8 +64,6 @@ function TableData({ search, status, sortBy, order, visibleColumns }) {
     { id: "status", label: "Статус" },
     { id: "description", label: "Описание" },
     { id: "admin", label: "Админ" },
-    { id: "start", label: "Начало" },
-    { id: "end", label: "Конец" },
     { id: "createdAt", label: "Создано" },
   ];
 

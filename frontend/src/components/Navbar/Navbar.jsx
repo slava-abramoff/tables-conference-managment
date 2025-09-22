@@ -37,7 +37,7 @@ function NavBar() {
 
   const menuItems = [
     { text: "Конференции", path: "/meets", icon: <ComputerIcon /> },
-    { text: "Расписание", path: "/schedule", icon: <EventIcon /> },
+    { text: "Лекции", path: "/schedule", icon: <EventIcon /> },
     ...(user?.role === "admin"
       ? [{ text: "Пользователи", path: "/users", icon: <PeopleIcon /> }]
       : []),

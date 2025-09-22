@@ -89,14 +89,11 @@ export class TasksService {
       {
         type: 'meet',
         id: meetId,
-        adminEmail: meet.admin?.email || 'edu-ddc@mail.ru',
-        customerEmail: meet.email,
-        customerName: meet.customerName,
+        email: meet.email,
         eventName: meet.eventName || 'Без названия',
-        place: meet.location || meet.platform || 'Не указано',
         url: meet.url || '',
         shortUrl: meet.shortUrl || '',
-        date: meet.start.toLocaleString(),
+        dateTime: meet.start,
       },
       {
         delay,
