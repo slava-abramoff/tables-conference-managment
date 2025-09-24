@@ -19,8 +19,8 @@ const useLecturesStore = create(
     days: [],
     loading: false,
     error: null,
-    currentYear: getCurrentYear(), // Например, 2025
-    currentMonth: getCurrentMonth(), // Например, "сентябрь"
+    currentYear: getCurrentYear(), 
+    currentMonth: getCurrentMonth(), 
 
     fetchLectureDates: async () => {
       set({ loading: true, error: null });
