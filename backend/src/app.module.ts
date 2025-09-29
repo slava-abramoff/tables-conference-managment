@@ -24,15 +24,15 @@ import { TasksModule } from './tasks/tasks.module';
     ConfigModule.forRoot({ isGlobal: true }),
     BullModule.forRoot({
       connection: {
-        host: 'localhost', 
+        host: 'localhost',
         port: 6379,
       },
     }),
-    TasksModule, 
+    TasksModule,
   ],
   controllers: [],
   providers: [AppLogger],
-  exports: [AppLogger], 
+  exports: [AppLogger],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {

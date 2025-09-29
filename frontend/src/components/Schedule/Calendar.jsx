@@ -7,6 +7,7 @@ import {
   useLecturesError,
   useLecturesLoading,
 } from "../../store/lecturesStore";
+import Loader from "../Navbar/Loader";
 
 function Calendar({ year, month }) {
   const fetchLecturesByYearMonth = useFetchLecturesByYearMonth();
@@ -21,7 +22,7 @@ function Calendar({ year, month }) {
   }, [year, month, fetchLecturesByYearMonth]);
 
   if (loading) {
-    return <Typography>Загрузка...</Typography>;
+    return <Loader />;
   }
 
   if (error) {

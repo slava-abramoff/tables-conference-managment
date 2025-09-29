@@ -180,6 +180,7 @@ export default function Form() {
                     value={form.endDate}
                     onChange={handleChange}
                     fullWidth
+                    required
                   />
                   <TextField
                     name="endTime"
@@ -187,6 +188,7 @@ export default function Form() {
                     value={form.endTime}
                     onChange={handleChange}
                     fullWidth
+                    required
                     sx={{ mt: 1 }}
                   />
                 </Grid>
@@ -233,6 +235,7 @@ export default function Form() {
               label="Примечание"
               value={form.description}
               onChange={handleChange}
+              // без required
             />
 
             <Button type="submit" variant="contained" fullWidth>

@@ -6,6 +6,7 @@ import {
   Patch,
   Post,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { MeetsService } from './meets.service';
 import { AddMeetDto, CreateRequestDto } from './dto/create.dto';
@@ -19,6 +20,10 @@ import {
   ApiExtraModels,
   ApiParam,
 } from '@nestjs/swagger';
+import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { Roles } from 'src/auth/roles.decorator';
+import { Role } from '@prisma/client';
+import { RolesGuard } from 'src/auth/roles.guard';
 
 @ApiTags('Мероприятия и онлайн встречи')
 @Controller('meets')
@@ -77,6 +82,7 @@ export class MeetsController {
    * Get Meets
    */
   @Get('find')
+  @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Вывод мероприятий' })
   @ApiResponse({ status: 200, description: 'Список мероприятий' })
   @ApiResponse({ status: 400, description: 'Неверный формат данных' })
@@ -88,6 +94,7 @@ export class MeetsController {
    * Search Meets
    */
   @Get('search')
+  @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Поиск мероприятий мероприятий' })
   @ApiResponse({ status: 200, description: 'Список мероприятий' })
   @ApiResponse({ status: 400, description: 'Неверный формат данных' })
@@ -99,6 +106,8 @@ export class MeetsController {
    * Update Meets
    */
   @Patch(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.admin, Role.moderator)
   @ApiOperation({ summary: 'Обновление мероприятия' })
   @ApiParam({ name: 'id', type: 'string', description: 'ID встречи' })
   @ApiBody({ type: AddMeetDto })

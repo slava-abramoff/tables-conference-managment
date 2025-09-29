@@ -7,6 +7,7 @@ import {
   Patch,
   Post,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { LecturesService } from './lectures.service';
 import { CreateLectureDto, UpdateLectureDto } from './dto/create.dto';
@@ -21,6 +22,10 @@ import {
   getSchemaPath,
 } from '@nestjs/swagger';
 import { UpdateLinksDto } from './dto/update.dto';
+import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { Role } from '@prisma/client';
+import { Roles } from 'src/auth/roles.decorator';
+import { RolesGuard } from 'src/auth/roles.guard';
 
 @ApiTags('Лекции')
 @Controller('lectures')
@@ -31,6 +36,8 @@ export class LecturesController {
    * Create lecture
    */
   @Post()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.admin, Role.moderator)
   @ApiOperation({ summary: 'Создание лекции' })
   @ApiExtraModels(CreateLectureDto)
   @ApiBody({
@@ -54,6 +61,8 @@ export class LecturesController {
    * Create advanced lectures
    */
   @Post('advanced')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.admin, Role.moderator)
   @ApiOperation({ summary: 'Создание расписания лекций' })
   @ApiExtraModels(CreateLectureDto)
   @ApiBody({
@@ -72,6 +81,8 @@ export class LecturesController {
    * Update many links
    */
   @Post('links')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.admin, Role.moderator)
   @ApiOperation({ summary: 'Создание ссылок для групп' })
   @ApiExtraModels(UpdateLinksDto)
   @ApiBody({
@@ -89,6 +100,7 @@ export class LecturesController {
    * Get info about available years and months
    */
   @Get('dates')
+  @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Получение доступных месяцев в расписании' })
   @ApiResponse({ status: 200, description: 'Доступные месяца и года' })
   async getDates() {
@@ -99,6 +111,7 @@ export class LecturesController {
    * Get lectures by year and month
    */
   @Get('days')
+  @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Вывод дней расписания по году и месяцу' })
   @ApiResponse({ status: 200, description: 'Список дней расписания' })
   @ApiResponse({ status: 400, description: 'Неверный формат данных' })
@@ -110,6 +123,7 @@ export class LecturesController {
    * Get lectures by date
    */
   @Get('schedule/:date')
+  @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Получение расписания на день' })
   @ApiParam({ name: 'date', type: 'string', description: 'Дата в расписании' })
   @ApiResponse({ status: 200, description: 'Мероприятие успешно обновлено' })
@@ -123,6 +137,8 @@ export class LecturesController {
    * Update lecture
    */
   @Patch(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.admin, Role.moderator)
   @ApiOperation({ summary: 'Обновление лекции' })
   @ApiParam({ name: 'id', type: 'string', description: 'ID лекции' })
   @ApiBody({ type: CreateLectureDto })
@@ -137,6 +153,8 @@ export class LecturesController {
    * Remove lecture by id
    */
   @Delete(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.admin, Role.moderator)
   @ApiOperation({ summary: 'Удаление лекции' })
   @ApiParam({ name: 'id', type: 'string', description: 'ID лекции' })
   @ApiResponse({ status: 200, description: 'Лекция успешно удалена' })

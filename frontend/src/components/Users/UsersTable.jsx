@@ -26,6 +26,7 @@ import {
   useUpdateUser,
 } from "../../store/usersStore";
 import { useModal } from "../../context/ModalContext";
+import Loader from "../Navbar/Loader";
 
 function UsersTable() {
   const fetchUsers = useFetchUsers();
@@ -94,7 +95,7 @@ function UsersTable() {
   };
 
   if (loading) {
-    return <Typography>Загрузка...</Typography>;
+    return <Loader />;
   }
 
   if (error) {

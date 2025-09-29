@@ -7,6 +7,7 @@ import {
   Patch,
   Post,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create.dto';
@@ -20,7 +21,10 @@ import {
   ApiParam,
   ApiBody,
 } from '@nestjs/swagger';
-import { PaginationRequestDto } from 'src/shared/classes';
+import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { RolesGuard } from 'src/auth/roles.guard';
+import { Role } from '@prisma/client';
+import { Roles } from 'src/auth/roles.decorator';
 
 @ApiTags('Users')
 @Controller('users')
@@ -31,6 +35,8 @@ export class UsersController {
    * Create User
    */
   @Post()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.admin)
   @ApiOperation({ summary: 'Create user' })
   @ApiBody({ type: CreateUserDto })
   @ApiResponse({ status: 201, description: 'User successfully created' })
@@ -43,6 +49,8 @@ export class UsersController {
    * Get Users
    */
   @Get('find')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.admin)
   @ApiOperation({ summary: 'Get users list' })
   // @ApiQuery({ type: PaginationRequestDto })
   @ApiResponse({ status: 200, description: 'List of users returned' })
@@ -62,6 +70,8 @@ export class UsersController {
    * Update User
    */
   @Patch('/:id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.admin)
   @ApiOperation({ summary: 'Update user by ID' })
   @ApiParam({ name: 'id', type: String })
   @ApiBody({ type: UpdateUserDto })
@@ -75,6 +85,8 @@ export class UsersController {
    * Remove User
    */
   @Delete('/:id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.admin)
   @ApiOperation({ summary: 'Delete user by ID' })
   @ApiParam({ name: 'id', type: String })
   @ApiResponse({ status: 200, description: 'User successfully deleted' })

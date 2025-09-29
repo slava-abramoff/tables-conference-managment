@@ -16,6 +16,7 @@ import {
 } from "../../store/lecturesStore";
 import { useModal } from "../../context/ModalContext";
 import useAuthStore from "../../store/authStore";
+import Loader from "../Navbar/Loader";
 
 function ScheduleToolbar({ year, setYear, month, setMonth }) {
   const { open: openScheduleLecture } = useModal("scheduleLecture");
@@ -94,7 +95,7 @@ function ScheduleToolbar({ year, setYear, month, setMonth }) {
   };
 
   if (loading) {
-    return <Typography>Загрузка...</Typography>;
+    return <Loader />;
   }
 
   if (error) {

@@ -26,6 +26,7 @@ import {
 } from "../../store/meetsStore";
 import { searchUsers } from "../../services/users.service";
 import useAuthStore from "../../store/authStore";
+import Loader from "../Navbar/Loader";
 
 function TableData({ search, status, sortBy, order, visibleColumns }) {
   const meets = useMeets();
@@ -188,7 +189,7 @@ function TableData({ search, status, sortBy, order, visibleColumns }) {
     }
   };
 
-  if (loading) return <Typography>Загрузка...</Typography>;
+  if (loading) return <Loader />;
   if (error) return <Typography color="error">{error}</Typography>;
 
   return (

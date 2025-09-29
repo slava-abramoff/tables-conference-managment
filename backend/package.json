@@ -40,6 +40,8 @@
     "csv-stringify": "^6.6.0",
     "iconv-lite": "^0.7.0",
     "nodemailer": "^7.0.5",
+    "passport": "^0.7.0",
+    "passport-jwt": "^4.0.1",
     "prisma": "^6.13.0",
     "pug": "^3.0.3",
     "reflect-metadata": "^0.2.2",
