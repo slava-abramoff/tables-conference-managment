@@ -4,6 +4,23 @@ import { AppLogger } from 'src/app.logger';
 
 @Injectable()
 export class MailService {
+  private formatComplexDate(dateString: string): string {
+    const date = new Date(dateString);
+
+    if (isNaN(date.getTime())) {
+      throw new Error('Неверный формат даты');
+    }
+
+    return date.toLocaleString('ru-RU', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      weekday: 'long',
+    });
+  }
+
   constructor(
     private readonly mailerService: MailerService,
     private readonly logger: AppLogger
@@ -22,9 +39,10 @@ export class MailService {
         subject: `Ссылки на мероприятие ${data.eventName}`,
         template: 'info-about-meeting',
         context: {
+          eventName: data.eventName,
           url: data.url,
           shortUrl: data.shortUrl,
-          dateTime: data.dateTime,
+          dateTime: this.formatComplexDate(data.dateTime),
         },
       });
     } catch (error) {
@@ -50,9 +68,10 @@ export class MailService {
         subject: `Осталось 30 минут до начала ${data.eventName}`,
         template: 'soon-meeting',
         context: {
+          eventName: data.eventName,
           url: data.url,
           shortUrl: data.shortUrl,
-          dateTime: data.dateTime,
+          dateTime: this.formatComplexDate(data.dateTime),
         },
       });
     } catch (error) {

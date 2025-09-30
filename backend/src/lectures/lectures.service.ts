@@ -65,14 +65,12 @@ export class LecturesService {
     const key = month.trim().toLowerCase();
 
     if (toNumber) {
-      // русский → номер месяца
       const found = Object.values(LecturesService.MONTH_MAP).find(
         m => m.ru === key
       );
       return found?.number ?? null;
     }
 
-    // английский → русский
     return LecturesService.MONTH_MAP[key]?.ru ?? null;
   }
 

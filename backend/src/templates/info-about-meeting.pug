@@ -61,13 +61,11 @@ html
       // длинная ссылка
       .row
         input(type="text" readonly value=url id="longLink")
-        button.copy-btn(onclick="copyToClipboard('longLink')") Скопировать
         a.link-btn(href=url target="_blank") Перейти
 
       // короткая ссылка
       .row
         input(type="text" readonly value=shortUrl id="shortLink")
-        button.copy-btn(onclick="copyToClipboard('shortLink')") Скопировать
         a.link-btn(href=shortUrl target="_blank") Перейти
 
     script.

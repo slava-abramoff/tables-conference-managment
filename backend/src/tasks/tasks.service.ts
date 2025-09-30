@@ -66,20 +66,13 @@ export class TasksService {
 
     if (!meet || !meet.start) return;
 
-    // Получаем текущее локальное время сервера
-    const currentLocalTime = new Date().getTime();
+    const currentLocalTime = Date.now();
 
-    // Переводим дату встречи в локальное время сервера
-    const meetStartLocal = new Date(
-      meet.start.getTime() + new Date().getTimezoneOffset() * 60000
-    );
-
-    // Время уведомления за 30 минуты до старта
-    const notificationTime = meetStartLocal.getTime() - 30 * 60 * 1000;
+    // Время уведомления за 30 минут до начала
+    const notificationTime = meet.start.getTime() - 30 * 60 * 1000;
 
     // Вычисляем задержку
     const delay = notificationTime - currentLocalTime;
-
     if (delay <= 0) {
       return;
     }
