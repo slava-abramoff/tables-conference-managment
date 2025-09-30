@@ -62,9 +62,11 @@ export default function ScheduleLectureModal() {
   const moscowDateToUTC = (dateStr) => {
     if (!dateStr) return null;
     const [y, m, d] = dateStr.split("-").map(Number);
-    const dt = new Date(Date.UTC(y, m - 1, d, 0, 0, 0));
-    dt.setUTCHours(dt.getUTCHours() - 3); // вычитаем смещение Москвы (UTC+3)
-    return dt.toISOString();
+    // Создаем дату в московском времени (UTC+3) на 12:00, затем конвертируем в UTC
+    const dt = new Date(y, m - 1, d, 12, 0, 0);
+    // Конвертируем в UTC (это будет 09:00 UTC для 12:00 Москвы)
+    const utcDate = new Date(dt.getTime() - 3 * 60 * 60 * 1000);
+    return utcDate.toISOString();
   };
 
   const moscowTimeToUTC = (timeStr) => {

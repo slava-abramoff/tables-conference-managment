@@ -3,6 +3,29 @@ import { Job } from 'bullmq';
 import { MailService } from '../mail/mail.service';
 import { BotService } from 'src/bot/bot.service';
 
+export interface MeetJob {
+  type: 'meet';
+  id: string;
+  email: string;
+  eventName: string;
+  location: string;
+  url: string;
+  shortUrl: string;
+  dateTime: string;
+}
+
+export interface LectureJob {
+  type: 'lecture';
+  id: string;
+  lector: string;
+  group: string;
+  url: string;
+  unit: string;
+  location: string;
+  shortUrl: string;
+  dateTime: string;
+}
+
 @Processor('email-queue')
 export class TasksProcessor extends WorkerHost {
   constructor(
@@ -12,30 +35,7 @@ export class TasksProcessor extends WorkerHost {
     super();
   }
 
-  async process(
-    job: Job<
-      | {
-          type: 'meet';
-          id: string;
-          email: string;
-          eventName: string;
-          url: string;
-          shortUrl: string;
-          dateTime: string;
-        }
-      | {
-          type: 'lecture';
-          id: string;
-          lector: string;
-          group: string;
-          url: string;
-          unit: string;
-          place: string;
-          shortUrl: string;
-          dateTime: string;
-        }
-    >
-  ) {
+  async process(job: Job<MeetJob | LectureJob>) {
     if (job.data.type === 'meet') {
       await this.mailService.soonMeeting({
         email: job.data.email,
@@ -45,20 +45,9 @@ export class TasksProcessor extends WorkerHost {
         dateTime: job.data.dateTime,
       });
 
-      await this.bot.sendMessageToGroup(`
-        Через 30 минут начнется ВКС ${job.data.eventName}
-        Почта организатора: ${job.data.email}
-        Cсылка: ${job.data.shortUrl}
-        `);
-    } else {
-      await this.bot.sendMessageToGroup(`
-        Лекция начнется через 30 минут
-        Лектор: ${job.data.lector}
-        Группа: ${job.data.group}
-        Корпус: ${job.data.unit}
-        Кабинет: ${job.data.place}
-        ссылка: ${job.data.shortUrl}
-        `);
+      await this.bot.sendNotificate(job.data);
+    } else if (job.data.type === 'lecture') {
+      await this.bot.sendNotificate(job.data);
     }
   }
 

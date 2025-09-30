@@ -22,7 +22,7 @@ export interface SearchResults {
 
 @Injectable()
 export class MeetsService {
-  private handleError(error: any, context: string, method: string): never {
+  private handleError(error: Error, context: string, method: string): never {
     this.logger.error(
       `Error in ${method}: ${error.message}`,
       error.stack,

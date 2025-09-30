@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectBot } from 'nestjs-telegraf';
 import { Telegraf } from 'telegraf';
 import { ConfigService } from '@nestjs/config';
+import { LectureJob, MeetJob } from 'src/tasks/tasks.processor';
 
 @Injectable()
 export class BotService {
@@ -22,5 +23,30 @@ export class BotService {
     await this.bot.telegram.sendMessage(this.groupChatId, text, {
       parse_mode: 'Markdown',
     });
+  }
+
+  async sendNewEvent() {}
+
+  async sendNotificate(event: MeetJob | LectureJob) {
+    if (event.type === 'meet') {
+      await this.sendMessageToGroup(`
+        **ВКС ${event.eventName} через 30 минут!⏰**
+        - Место: *${event.location}* 🚪
+        - Ссылка: ${event.shortUrl} 📶
+        - Время: *${event.dateTime}* 🕒
+      `);
+    } else if (event.type === 'lecture') {
+      await this.sendMessageToGroup(`
+        **Лекция через 30 минут!⏰**
+        - Лектор: *${event.lector}* 🎓
+        - Группа: *${event.group}* 👤
+        - Корпус: *${event.unit}* 🏢
+        - Место: *${event.location}* 🚪
+        - Ссылка: ${event.shortUrl} 📶
+        - Время: *${event.dateTime}* 🕒
+        `);
+    } else {
+      return;
+    }
   }
 }

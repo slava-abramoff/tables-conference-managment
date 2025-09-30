@@ -284,7 +284,7 @@ export class LecturesService {
         },
       });
 
-      await this.tasksService.cancelEmailTask('lecture', result.id);
+      // await this.tasksService.cancelEmailTask('lecture', result.id);
       await this.tasksService.scheduleEmailForLecture(result.id);
 
       if (dto.start) {

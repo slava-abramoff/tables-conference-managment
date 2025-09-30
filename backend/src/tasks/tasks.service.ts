@@ -10,6 +10,19 @@ export class TasksService {
     private readonly prisma: PrismaService
   ) {}
 
+  combineDateWithTime(date: Date, time: Date): Date {
+    const hours = time.getUTCHours();
+    const minutes = time.getUTCMinutes();
+    const seconds = time.getUTCSeconds();
+    const milliseconds = time.getUTCMilliseconds();
+
+    // Создаем новую дату с исходной датой и временем из второго параметра
+    const result = new Date(date);
+    result.setUTCHours(hours, minutes, seconds, milliseconds);
+
+    return result;
+  }
+
   /**
    * Планирование уведомления за 30 минут до начала лекции
    */
@@ -23,8 +36,10 @@ export class TasksService {
 
     const currentLocalTime = Date.now();
 
+    const start = this.combineDateWithTime(lecture.date, lecture.start);
+
     // Время уведомления за 30 минут до начала
-    const notificationTime = lecture.start.getTime() - 30 * 60 * 1000;
+    const notificationTime = start.getTime() - 30 * 60 * 1000;
 
     // Вычисляем задержку
     const delay = notificationTime - currentLocalTime;
@@ -41,13 +56,13 @@ export class TasksService {
         group: lecture.group ?? 'Не указан',
         url: lecture.url ?? 'Не указан',
         unit: lecture.unit ?? 'Не указан',
-        place: lecture.unit ?? 'Не указан',
+        location: lecture.location ?? 'Не указан',
         shortUrl: lecture.shortUrl ?? 'Не указан',
         dateTime: lecture.start,
       },
       {
         delay,
-        jobId: `lectureId-email-${lectureId}`,
+        jobId: `lecture-email-${lectureId}`,
       }
     );
   }
@@ -81,6 +96,7 @@ export class TasksService {
         id: meetId,
         email: meet.email,
         eventName: meet.eventName || 'Без названия',
+        location: meet.location,
         url: meet.url || '',
         shortUrl: meet.shortUrl || '',
         dateTime: meet.start,
