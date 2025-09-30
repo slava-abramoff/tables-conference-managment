@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TelegrafModule } from 'nestjs-telegraf';
-import { BotService } from './bot/bot.service';
-import { BotUpdate } from './bot/bot.update';
+import { BotService } from './bot.service';
+import { BotUpdate } from './bot.update';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 
 @Module({

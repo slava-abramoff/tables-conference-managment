@@ -1,7 +1,7 @@
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
 import { MailService } from '../mail/mail.service';
-import { BotService } from 'src/bot/bot/bot.service';
+import { BotService } from 'src/bot/bot.service';
 
 @Processor('email-queue')
 export class TasksProcessor extends WorkerHost {

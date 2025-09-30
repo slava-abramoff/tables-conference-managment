@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
   Box,
   FormControl,
@@ -11,23 +11,18 @@ import {
 import {
   useFetchLectureDates,
   useLectureDates,
-  useLecturesError,
-  useLecturesLoading,
 } from "../../store/lecturesStore";
 import { useModal } from "../../context/ModalContext";
 import useAuthStore from "../../store/authStore";
-import Loader from "../Navbar/Loader";
 
 function ScheduleToolbar({ year, setYear, month, setMonth }) {
   const { open: openScheduleLecture } = useModal("scheduleLecture");
   const fetchLectureDates = useFetchLectureDates();
   const dates = useLectureDates();
-  const loading = useLecturesLoading();
-  const error = useLecturesError();
-  const { user } = useAuthStore(); // Получаем данные пользователя из Zustand
-  const isViewer = user?.role === "viewer"; // Проверяем, является ли пользователь viewer
+  const { user } = useAuthStore();
+  const [fetched, setFetched] = useState(false);
+  const isViewer = user?.role === "viewer";
 
-  // Маппинг месяцев: строка → номер месяца и обратно
   const monthMapping = {
     январь: 1,
     февраль: 2,
@@ -46,17 +41,14 @@ function ScheduleToolbar({ year, setYear, month, setMonth }) {
     Object.entries(monthMapping).map(([key, value]) => [value, key]),
   );
 
-  // Загрузка данных при монтировании
   useEffect(() => {
-    if (!dates.years?.length) {
-      fetchLectureDates();
+    if (!fetched && !dates.years?.length) {
+      fetchLectureDates().finally(() => setFetched(true));
     }
-  }, [fetchLectureDates, dates.years]);
+  }, [fetched, fetchLectureDates, dates.years]);
 
-  // Получение доступных годов
   const years = dates.years?.length > 0 ? dates.years.map((y) => y.year) : [];
 
-  // Получение доступных месяцев для выбранного года
   const availableMonths = year
     ? dates.years
         ?.find((y) => y.year === year)
@@ -66,14 +58,12 @@ function ScheduleToolbar({ year, setYear, month, setMonth }) {
         })) || []
     : [];
 
-  // Синхронизация начальных значений
   useEffect(() => {
     if (dates.years?.length > 0) {
-      // Если текущий год недоступен, выбираем первый доступный
       if (!years.includes(year)) {
         setYear(years[0] || "");
       }
-      // Если год выбран, синхронизируем месяц
+
       if (year && availableMonths.length > 0) {
         const currentMonthNumber = monthMapping[month.toLowerCase()];
         if (!availableMonths.some((m) => m.value === currentMonthNumber)) {
@@ -86,21 +76,13 @@ function ScheduleToolbar({ year, setYear, month, setMonth }) {
   }, [dates.years, year, month, availableMonths, setYear, setMonth]);
 
   const handlePlan = () => {
-    if (isViewer) return; // Блокируем планирование для viewer
+    if (isViewer) return;
     openScheduleLecture();
   };
 
   const handleExport = () => {
     console.log('Кнопка "Выгрузить" нажата');
   };
-
-  if (loading) {
-    return <Loader />;
-  }
-
-  if (error) {
-    return <Typography color="error">Ошибка: {error}</Typography>;
-  }
 
   return (
     <Box

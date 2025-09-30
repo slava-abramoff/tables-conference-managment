@@ -5,8 +5,7 @@ import { MailModule } from '../mail/mail.module';
 import { TasksProcessor } from './tasks.processor';
 import { PrismaService } from 'prisma/prisma.service';
 import { BotModule } from 'src/bot/bot.module';
-import { BotService } from 'src/bot/bot/bot.service';
-
+import { BotService } from 'src/bot/bot.service';
 @Module({
   imports: [
     BullModule.registerQueue({

@@ -8,7 +8,7 @@ import { AppLogger } from 'src/app.logger';
 import { YandexApiService } from 'src/yandex-api/yandex-api.service';
 import { TasksService } from 'src/tasks/tasks.service';
 import { MailService } from 'src/mail/mail.service';
-import { BotService } from 'src/bot/bot/bot.service';
+import { BotService } from 'src/bot/bot.service';
 
 export interface MeetsPagination {
   data: Meet[];

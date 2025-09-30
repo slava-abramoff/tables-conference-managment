@@ -7,8 +7,7 @@ import { YandexApiService } from 'src/yandex-api/yandex-api.service';
 import { TasksService } from 'src/tasks/tasks.service';
 import { MailService } from 'src/mail/mail.service';
 import { UpdateLinksDto } from './dto/update.dto';
-import { BotService } from 'src/bot/bot/bot.service';
-import { Start } from 'nestjs-telegraf';
+import { BotService } from 'src/bot/bot.service';
 
 @Injectable()
 export class LecturesService {

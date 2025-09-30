@@ -7,7 +7,7 @@ import { YandexApiService } from 'src/yandex-api/yandex-api.service';
 import { TasksModule } from 'src/tasks/tasks.module';
 import { MailService } from 'src/mail/mail.service';
 import { BotModule } from 'src/bot/bot.module';
-import { BotService } from 'src/bot/bot/bot.service';
+import { BotService } from 'src/bot/bot.service';
 
 @Module({
   controllers: [MeetsController],
