@@ -15,7 +15,6 @@ import {
   IconButton,
   Paper,
 } from "@mui/material";
-import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import DeleteIcon from "@mui/icons-material/Delete";
 import AddIcon from "@mui/icons-material/Add";
 import { useModal } from "../context/ModalContext";
@@ -39,7 +38,7 @@ export default function ScheduleLectureModal() {
   });
 
   const [lectures, setLectures] = useState([emptyLecture()]);
-  const [editingCell, setEditingCell] = useState(null); // { rowIndex, field }
+  const [editingCell, setEditingCell] = useState(null);
   const [error, setError] = useState("");
 
   const handleChange = (index, field, value) => {
@@ -60,6 +59,22 @@ export default function ScheduleLectureModal() {
     setLectures((prev) => prev.filter((_, i) => i !== index));
   };
 
+  const moscowDateToUTC = (dateStr) => {
+    if (!dateStr) return null;
+    const [y, m, d] = dateStr.split("-").map(Number);
+    const dt = new Date(Date.UTC(y, m - 1, d, 0, 0, 0));
+    dt.setUTCHours(dt.getUTCHours() - 3); // вычитаем смещение Москвы (UTC+3)
+    return dt.toISOString();
+  };
+
+  const moscowTimeToUTC = (timeStr) => {
+    if (!timeStr) return null;
+    const [h, m] = timeStr.split(":").map(Number);
+    const dt = new Date(Date.UTC(1970, 0, 1, h, m, 0));
+    dt.setUTCHours(dt.getUTCHours() - 3);
+    return dt.toISOString();
+  };
+
   const handleSend = async () => {
     for (let i = 0; i < lectures.length; i++) {
       if (!lectures[i].date) {
@@ -69,13 +84,14 @@ export default function ScheduleLectureModal() {
     }
 
     try {
-      // Преобразуем значения в ISO-8601, если это нужно
       const payload = lectures.map((lec) => ({
         ...lec,
-        date: new Date(lec.date).toISOString(),
-        start: lec.start ? `1970-01-01T${lec.start}:00.000Z` : null,
-        end: lec.end ? `1970-01-01T${lec.end}:00.000Z` : null,
+        date: moscowDateToUTC(lec.date),
+        start: lec.start ? moscowTimeToUTC(lec.start) : null,
+        end: lec.end ? moscowTimeToUTC(lec.end) : null,
       }));
+
+      console.log("payload:", payload);
 
       await createLectures(payload);
       setLectures([emptyLecture()]);
@@ -116,7 +132,6 @@ export default function ScheduleLectureModal() {
       );
     }
 
-    // Выбор типа инпута
     let type = "text";
     if (col.id === "date") type = "date";
     if (col.id === "start" || col.id === "end") type = "time";
