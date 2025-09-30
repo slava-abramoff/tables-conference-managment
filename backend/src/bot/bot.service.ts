@@ -3,6 +3,7 @@ import { InjectBot } from 'nestjs-telegraf';
 import { Telegraf } from 'telegraf';
 import { ConfigService } from '@nestjs/config';
 import { LectureJob, MeetJob } from 'src/tasks/tasks.processor';
+import { Lecture, Meet } from '@prisma/client';
 
 @Injectable()
 export class BotService {
@@ -25,7 +26,13 @@ export class BotService {
     });
   }
 
-  async sendNewEvent() {}
+  async sendNewEvent(type: 'meet' | 'lecture', event: Meet | Lecture) {
+    if (type === 'meet') {
+      await this.sendMessageToGroup(``);
+    } else {
+      await this.sendMessageToGroup(``);
+    }
+  }
 
   async sendNotificate(event: MeetJob | LectureJob) {
     if (event.type === 'meet') {
@@ -35,7 +42,7 @@ export class BotService {
         - Ссылка: ${event.shortUrl} 📶
         - Время: *${event.dateTime}* 🕒
       `);
-    } else if (event.type === 'lecture') {
+    } else {
       await this.sendMessageToGroup(`
         **Лекция через 30 минут!⏰**
         - Лектор: *${event.lector}* 🎓
@@ -45,8 +52,6 @@ export class BotService {
         - Ссылка: ${event.shortUrl} 📶
         - Время: *${event.dateTime}* 🕒
         `);
-    } else {
-      return;
     }
   }
 }
