@@ -6,6 +6,8 @@ import { AppLogger } from 'src/app.logger';
 import { YandexApiService } from 'src/yandex-api/yandex-api.service';
 import { TasksModule } from 'src/tasks/tasks.module';
 import { MailService } from 'src/mail/mail.service';
+import { BotModule } from 'src/bot/bot.module';
+import { BotService } from 'src/bot/bot/bot.service';
 
 @Module({
   controllers: [LecturesController],
@@ -15,7 +17,8 @@ import { MailService } from 'src/mail/mail.service';
     AppLogger,
     YandexApiService,
     MailService,
+    BotService,
   ],
-  imports: [TasksModule],
+  imports: [TasksModule, BotModule],
 })
 export class LecturesModule {}

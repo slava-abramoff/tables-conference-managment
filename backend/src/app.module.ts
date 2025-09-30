@@ -11,6 +11,7 @@ import { YandexApiModule } from './yandex-api/yandex-api.module';
 import { BullModule } from '@nestjs/bullmq';
 import { ConfigModule } from '@nestjs/config';
 import { TasksModule } from './tasks/tasks.module';
+import { BotModule } from './bot/bot.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { TasksModule } from './tasks/tasks.module';
       },
     }),
     TasksModule,
+    BotModule,
   ],
   controllers: [],
   providers: [AppLogger],

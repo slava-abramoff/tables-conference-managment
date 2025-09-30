@@ -7,6 +7,8 @@ import { YandexApiService } from 'src/yandex-api/yandex-api.service';
 import { TasksService } from 'src/tasks/tasks.service';
 import { MailService } from 'src/mail/mail.service';
 import { UpdateLinksDto } from './dto/update.dto';
+import { BotService } from 'src/bot/bot/bot.service';
+import { Start } from 'nestjs-telegraf';
 
 @Injectable()
 export class LecturesService {
@@ -45,7 +47,8 @@ export class LecturesService {
     private readonly logger: AppLogger,
     private readonly api: YandexApiService,
     private readonly tasksService: TasksService,
-    private readonly mailService: MailService
+    private readonly mailService: MailService,
+    private readonly bot: BotService
   ) {}
 
   private handleError(error: any, context: string, method: string): never {
@@ -282,14 +285,17 @@ export class LecturesService {
         },
       });
 
-      // if (shortUrl && result) {
-      //   await this.tasksService.scheduleEmailForLecture(result.id);
-      // }
+      await this.tasksService.cancelEmailTask('lecture', result.id);
+      await this.tasksService.scheduleEmailForLecture(result.id);
 
-      // if (dto.start && result) {
-      //   await this.tasksService.cancelEmailTask('lecture', result.id);
-      //   await this.tasksService.scheduleEmailForLecture(result.id);
-      // }
+      if (dto.start) {
+        await this.bot.sendMessageToGroup(`
+          Лекция на ${String(result.date)}
+          Начало: ${String(result.start)}
+          Группа: ${result.group}
+          Создайте ссылку для подключения
+          `);
+      }
 
       this.logger.log(
         `Updated lecture ID: ${id}`,

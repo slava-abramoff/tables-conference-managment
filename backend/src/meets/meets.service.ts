@@ -8,6 +8,7 @@ import { AppLogger } from 'src/app.logger';
 import { YandexApiService } from 'src/yandex-api/yandex-api.service';
 import { TasksService } from 'src/tasks/tasks.service';
 import { MailService } from 'src/mail/mail.service';
+import { BotService } from 'src/bot/bot/bot.service';
 
 export interface MeetsPagination {
   data: Meet[];
@@ -36,7 +37,8 @@ export class MeetsService {
     private readonly logger: AppLogger,
     private readonly api: YandexApiService,
     private readonly tasksService: TasksService,
-    private readonly mailService: MailService
+    private readonly mailService: MailService,
+    private readonly bot: BotService
   ) {}
 
   async create(dto: CreateRequestDto): Promise<Meet> {
@@ -44,6 +46,16 @@ export class MeetsService {
       const result = await this.prisma.meet.create({
         data: dto,
       });
+
+      await this.bot.sendMessageToGroup(`
+        Новая конференция!
+        Название: ${result.eventName},
+        ФИО: ${result.customerName},
+        Почта: ${result.email},
+        Телефон: ${result.phone},
+        Место: ${result.location},
+        Время: ${String(result.start)},
+        `);
 
       return result;
     } catch (error) {

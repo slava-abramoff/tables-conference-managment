@@ -4,6 +4,8 @@ import { TasksService } from './tasks.service';
 import { MailModule } from '../mail/mail.module';
 import { TasksProcessor } from './tasks.processor';
 import { PrismaService } from 'prisma/prisma.service';
+import { BotModule } from 'src/bot/bot.module';
+import { BotService } from 'src/bot/bot/bot.service';
 
 @Module({
   imports: [
@@ -11,8 +13,9 @@ import { PrismaService } from 'prisma/prisma.service';
       name: 'email-queue',
     }),
     MailModule,
+    BotModule,
   ],
-  providers: [TasksService, TasksProcessor, PrismaService],
+  providers: [TasksService, TasksProcessor, PrismaService, BotService],
   exports: [TasksService],
 })
 export class TasksModule {}
