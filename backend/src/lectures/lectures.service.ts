@@ -104,16 +104,21 @@ export class LecturesService {
     try {
       const shortUrl = await this.api.shortenUrl(data.url);
 
-      const result = await this.prisma.$executeRaw`
+      const result = await this.prisma.$executeRawUnsafe(
+        `
         UPDATE "Lecture"
         SET
-          "url" = ${data.url},
-          "shortUrl" = ${shortUrl ?? null}
+          "url" = $1,
+          "shortUrl" = $2
         WHERE (
-          ',' || REPLACE(LOWER("group"), ' ', '') || ',' ILIKE ${`%,${data.groupName.toLowerCase()},%`}
+          ',' || REPLACE(LOWER("group"), ' ', '') || ',' ILIKE $3
         )
-        AND ("url" IS NULL OR "url" <> ${data.url})
-      `;
+        AND ("url" IS NULL OR "url" <> $1)
+        `,
+        data.url,
+        shortUrl ?? null,
+        `%,${data.groupName.toLowerCase().replace(/\s/g, '')},%`
+      );
       return result;
     } catch (error) {
       this.handleError(error, LecturesService.name, 'createManyLinks');
