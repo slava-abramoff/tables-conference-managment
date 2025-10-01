@@ -9,7 +9,7 @@ import { AppLogger } from './app.logger';
 import { MailModule } from './mail/mail.module';
 import { YandexApiModule } from './yandex-api/yandex-api.module';
 import { BullModule } from '@nestjs/bullmq';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TasksModule } from './tasks/tasks.module';
 import { BotModule } from './bot/bot.module';
 
@@ -22,12 +22,16 @@ import { BotModule } from './bot/bot.module';
     DownloadsModule,
     MailModule,
     YandexApiModule,
-    ConfigModule.forRoot({ isGlobal: true }),
-    BullModule.forRoot({
-      connection: {
-        host: 'localhost',
-        port: 6379,
-      },
+    ConfigModule.forRoot({ isGlobal: true, envFilePath: '.env' }),
+    BullModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: (configService: ConfigService) => ({
+        connection: {
+          host: configService.get<string>('REDIS_HOST', 'localhost'),
+          port: configService.get<number>('REDIS_PORT', 6379),
+        },
+      }),
+      inject: [ConfigService],
     }),
     TasksModule,
     BotModule,

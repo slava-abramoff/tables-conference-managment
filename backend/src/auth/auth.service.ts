@@ -74,7 +74,6 @@ export class AuthService implements OnApplicationBootstrap {
         role: Role.admin,
       };
 
-      // Создаем администратора
       const user = await this.usersService.create(admin);
       if (!user) {
         return;
