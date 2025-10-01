@@ -1,26 +1,10 @@
 import { MailerService } from '@nestjs-modules/mailer';
 import { Injectable } from '@nestjs/common';
 import { AppLogger } from 'src/app.logger';
+import { formatComplexDate } from 'src/shared/utils/dateTime';
 
 @Injectable()
 export class MailService {
-  private formatComplexDate(dateString: string): string {
-    const date = new Date(dateString);
-
-    if (isNaN(date.getTime())) {
-      throw new Error('Неверный формат даты');
-    }
-
-    return date.toLocaleString('ru-RU', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      weekday: 'long',
-    });
-  }
-
   constructor(
     private readonly mailerService: MailerService,
     private readonly logger: AppLogger
@@ -42,7 +26,7 @@ export class MailService {
           eventName: data.eventName,
           url: data.url,
           shortUrl: data.shortUrl,
-          dateTime: this.formatComplexDate(data.dateTime),
+          dateTime: formatComplexDate(data.dateTime),
         },
       });
     } catch (error) {
@@ -71,7 +55,7 @@ export class MailService {
           eventName: data.eventName,
           url: data.url,
           shortUrl: data.shortUrl,
-          dateTime: this.formatComplexDate(data.dateTime),
+          dateTime: formatComplexDate(data.dateTime),
         },
       });
     } catch (error) {

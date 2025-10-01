@@ -81,6 +81,8 @@ export class LecturesService {
       const result = await this.prisma.lecture.create({ data: dto });
       this.logger.log(`Lecture created`, LecturesService.name, 'create');
 
+      await this.bot.sendNewEvent('lecture', result);
+
       return result;
     } catch (error) {
       this.handleError(error, LecturesService.name, 'create');
@@ -268,6 +270,8 @@ export class LecturesService {
 
   async update(id: string, dto: UpdateLectureDto) {
     try {
+      await this.tasksService.cancelEmailTask('lecture', id);
+
       const shortUrl = dto.url ? await this.api.shortenUrl(dto.url) : undefined;
 
       const result = await this.prisma.lecture.update({
@@ -287,12 +291,7 @@ export class LecturesService {
       await this.tasksService.scheduleEmailForLecture(result.id);
 
       if (dto.start) {
-        await this.bot.sendMessageToGroup(`
-          Лекция на ${String(result.date)}
-          Начало: ${String(result.start)}
-          Группа: ${result.group}
-          Создайте ссылку для подключения
-          `);
+        await this.bot.sendNewEvent('lecture', result);
       }
 
       this.logger.log(

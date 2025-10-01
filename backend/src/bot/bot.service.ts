@@ -4,6 +4,10 @@ import { Telegraf } from 'telegraf';
 import { ConfigService } from '@nestjs/config';
 import { LectureJob, MeetJob } from 'src/tasks/tasks.processor';
 import { Lecture, Meet } from '@prisma/client';
+import {
+  formatComplexDate,
+  formatDateToRussian,
+} from 'src/shared/utils/dateTime';
 
 @Injectable()
 export class BotService {
@@ -28,29 +32,37 @@ export class BotService {
 
   async sendNewEvent(type: 'meet' | 'lecture', event: Meet | Lecture) {
     if (type === 'meet') {
-      await this.sendMessageToGroup(``);
-    } else {
-      await this.sendMessageToGroup(``);
+      await this.sendMessageToGroup(`
+        **Создана заявка на ВКС!** 📅
+        - Место: *${event.location}* 🚪
+        - Время: *${formatComplexDate(String(event.start))}* ⏰
+        - Платформа: *${event.platform}* 🖥️
+        `);
+    } else if (type === 'lecture' && 'date' in event) {
+      await this.sendMessageToGroup(`
+        **Создана лекция на ${formatDateToRussian(event.date)}**
+        *Создайте ссылки*
+        `);
     }
   }
 
   async sendNotificate(event: MeetJob | LectureJob) {
     if (event.type === 'meet') {
       await this.sendMessageToGroup(`
-        **ВКС ${event.eventName} через 30 минут!⏰**
+        **ВКС ${event.eventName} через 30 минут!** ⏰
         - Место: *${event.location}* 🚪
         - Ссылка: ${event.shortUrl} 📶
-        - Время: *${event.dateTime}* 🕒
+        - Время: *${formatComplexDate(event.dateTime)}* 🕒
       `);
     } else {
       await this.sendMessageToGroup(`
-        **Лекция через 30 минут!⏰**
+        **Лекция через 30 минут!** ⏰
         - Лектор: *${event.lector}* 🎓
         - Группа: *${event.group}* 👤
         - Корпус: *${event.unit}* 🏢
         - Место: *${event.location}* 🚪
         - Ссылка: ${event.shortUrl} 📶
-        - Время: *${event.dateTime}* 🕒
+        - Время: *${formatComplexDate(event.dateTime)}* 🕒
         `);
     }
   }

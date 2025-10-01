@@ -47,15 +47,7 @@ export class MeetsService {
         data: dto,
       });
 
-      await this.bot.sendMessageToGroup(`
-        Новая конференция!
-        Название: ${result.eventName},
-        ФИО: ${result.customerName},
-        Почта: ${result.email},
-        Телефон: ${result.phone},
-        Место: ${result.location},
-        Время: ${String(result.start)},
-        `);
+      await this.bot.sendNewEvent('meet', result);
 
       return result;
     } catch (error) {
@@ -189,6 +181,7 @@ export class MeetsService {
 
   async update(id: string, dto: AddMeetDto): Promise<Meet> {
     try {
+      await this.tasksService.cancelEmailTask('meet', id);
       const shortUrl = dto.url ? await this.api.shortenUrl(dto.url) : undefined;
 
       const updatedMeet = await this.prisma.meet.update({
