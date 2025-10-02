@@ -7,11 +7,12 @@ import {
   Patch,
   Post,
   Query,
+  Res,
   UseGuards,
 } from '@nestjs/common';
 import { LecturesService } from './lectures.service';
 import { CreateLectureDto, UpdateLectureDto } from './dto/create.dto';
-import { GetLecturesByYearMonth } from './dto/query.dto';
+import { GetExcelLectures, GetLecturesByYearMonth } from './dto/query.dto';
 import {
   ApiBody,
   ApiExtraModels,
@@ -26,11 +27,16 @@ import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { Role } from '@prisma/client';
 import { Roles } from 'src/auth/roles.decorator';
 import { RolesGuard } from 'src/auth/roles.guard';
+import { ExcelService } from 'src/excel/excel.service';
+import { Response } from 'express';
 
 @ApiTags('Лекции')
 @Controller('lectures')
 export class LecturesController {
-  constructor(private readonly lecturesService: LecturesService) {}
+  constructor(
+    private readonly lecturesService: LecturesService,
+    private readonly excel: ExcelService
+  ) {}
 
   /**
    * Create lecture
@@ -147,6 +153,27 @@ export class LecturesController {
   @ApiResponse({ status: 404, description: 'Лекция не найдена' })
   async update(@Param('id') id: string, @Body() dto: UpdateLectureDto) {
     return await this.lecturesService.update(id, dto);
+  }
+
+  @Get('export')
+  async exportExcel(@Query() dto: GetExcelLectures, @Res() res: Response) {
+    const data = await this.lecturesService.exportExcel(dto);
+    const columns: { header: string; key: keyof (typeof data)[0] }[] = [
+      { header: 'Дата', key: 'date' },
+      { header: 'Начало', key: 'start' },
+      { header: 'Конец', key: 'end' },
+      { header: 'Группа', key: 'group' },
+      { header: 'Лектор', key: 'lector' },
+      { header: 'Платформа', key: 'platform' },
+      { header: 'Корпус', key: 'unit' },
+      { header: 'Место', key: 'location' },
+    ];
+    return await this.excel.generateExcelFile(
+      data,
+      columns,
+      'lectures_export',
+      res
+    );
   }
 
   /**

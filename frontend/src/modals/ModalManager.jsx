@@ -9,6 +9,7 @@ import ConfirmDeleteUserModal from "./ConfirmDeleteUserModal";
 import CreateUserModal from "./CreateUserModal";
 import ScheduleLectureModal from "./ScheduleLectureModal";
 import GroupLinkModal from "./GroupLinkModal";
+import ExportLecturesModal from "./ExportLecturesModal";
 
 const modalRegistry = {
   confirm: ConfirmModal,
@@ -19,6 +20,7 @@ const modalRegistry = {
   deleteUser: ConfirmDeleteUserModal,
   scheduleLecture: ScheduleLectureModal,
   groupLink: GroupLinkModal,
+  exportLecture: ExportLecturesModal,
 };
 
 function ModalManager() {

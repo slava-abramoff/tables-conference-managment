@@ -8,6 +8,8 @@ import { TasksModule } from 'src/tasks/tasks.module';
 import { MailService } from 'src/mail/mail.service';
 import { BotModule } from 'src/bot/bot.module';
 import { BotService } from 'src/bot/bot.service';
+import { ExcelModule } from 'src/excel/excel.module';
+import { ExcelService } from 'src/excel/excel.service';
 
 @Module({
   controllers: [LecturesController],
@@ -18,7 +20,8 @@ import { BotService } from 'src/bot/bot.service';
     YandexApiService,
     MailService,
     BotService,
+    ExcelService,
   ],
-  imports: [TasksModule, BotModule],
+  imports: [TasksModule, BotModule, ExcelModule],
 })
 export class LecturesModule {}

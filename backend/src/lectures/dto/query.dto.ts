@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString } from 'class-validator';
+import { IsOptional, IsString } from 'class-validator';
 
 export class GetLecturesByYearMonth {
   @ApiProperty({ description: 'Год', example: '' })
@@ -9,4 +9,21 @@ export class GetLecturesByYearMonth {
   @ApiProperty({ description: 'Месяц', example: '' })
   @IsString()
   month: string;
+}
+
+export class GetExcelLectures {
+  @ApiProperty({ description: 'Начала диапозана' })
+  @IsString()
+  @IsOptional()
+  start: string;
+
+  @ApiProperty({ description: 'Начала диапозана' })
+  @IsString()
+  @IsOptional()
+  end: string;
+
+  @ApiProperty({ description: 'Название группы' })
+  @IsString()
+  @IsOptional()
+  group: string;
 }

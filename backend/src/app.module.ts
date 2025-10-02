@@ -3,7 +3,6 @@ import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { MeetsModule } from './meets/meets.module';
 import { LecturesModule } from './lectures/lectures.module';
-import { DownloadsModule } from './downloads/downloads.module';
 import { LoggerMiddleware } from './middlewares/logger.middleware';
 import { AppLogger } from './app.logger';
 import { MailModule } from './mail/mail.module';
@@ -12,6 +11,7 @@ import { BullModule } from '@nestjs/bullmq';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TasksModule } from './tasks/tasks.module';
 import { BotModule } from './bot/bot.module';
+import { ExcelModule } from './excel/excel.module';
 
 @Module({
   imports: [
@@ -19,7 +19,6 @@ import { BotModule } from './bot/bot.module';
     AuthModule,
     MeetsModule,
     LecturesModule,
-    DownloadsModule,
     MailModule,
     YandexApiModule,
     ConfigModule.forRoot({ isGlobal: true, envFilePath: '.env' }),
@@ -35,6 +34,7 @@ import { BotModule } from './bot/bot.module';
     }),
     TasksModule,
     BotModule,
+    ExcelModule,
   ],
   controllers: [],
   providers: [AppLogger],

@@ -1,13 +1,14 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { PrismaService } from 'prisma/prisma.service';
 import { CreateLectureDto, UpdateLectureDto } from './dto/create.dto';
-import { GetLecturesByYearMonth } from './dto/query.dto';
+import { GetExcelLectures, GetLecturesByYearMonth } from './dto/query.dto';
 import { AppLogger } from 'src/app.logger';
 import { YandexApiService } from 'src/yandex-api/yandex-api.service';
 import { TasksService } from 'src/tasks/tasks.service';
 import { MailService } from 'src/mail/mail.service';
 import { UpdateLinksDto } from './dto/update.dto';
 import { BotService } from 'src/bot/bot.service';
+import { formatDateOrTime } from 'src/shared/utils/dateTime';
 
 @Injectable()
 export class LecturesService {
@@ -326,6 +327,49 @@ export class LecturesService {
       return result;
     } catch (error) {
       this.handleError(error, LecturesService.name, 'remove');
+    }
+  }
+
+  async exportExcel(dto: GetExcelLectures) {
+    try {
+      if ((!dto.start || !dto.end) && !dto.group) return [];
+
+      console.log(dto.start, dto.end);
+
+      const results = await this.prisma.lecture.findMany({
+        where: {
+          date: {
+            gte: dto.start,
+            lte: dto.end,
+          },
+          group: dto.group,
+        },
+        select: {
+          date: true,
+          start: true,
+          end: true,
+          group: true,
+          lector: true,
+          unit: true,
+          platform: true,
+          location: true,
+        },
+      });
+
+      if (!results) return [];
+
+      const formatted = results.map(item => {
+        return {
+          ...item,
+          date: formatDateOrTime(item.date),
+          start: formatDateOrTime(item.start, true),
+          end: formatDateOrTime(item.end, true),
+        };
+      });
+
+      return formatted;
+    } catch (error) {
+      this.handleError(error, LecturesService.name, 'downloads');
     }
   }
 }

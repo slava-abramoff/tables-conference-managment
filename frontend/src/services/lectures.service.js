@@ -81,3 +81,26 @@ export async function deleteLecture(id) {
     throw new Error(error.response?.data?.message || "Ошибка удаления лекции");
   }
 }
+
+export async function exportLectures(dto) {
+  try {
+    const response = await api.get("/lectures/export", {
+      params: dto,
+      responseType: "blob",
+    });
+
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", "lectures_export.xlsx");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+
+    return response;
+  } catch (error) {
+    console.error("Ошибка при экспорте Excel:", error);
+    throw error;
+  }
+}

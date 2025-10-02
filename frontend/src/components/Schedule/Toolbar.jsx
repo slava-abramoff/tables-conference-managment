@@ -20,6 +20,7 @@ function ScheduleToolbar({ year, setYear, month, setMonth }) {
   const fetchLectureDates = useFetchLectureDates();
   const dates = useLectureDates();
   const { user } = useAuthStore();
+  const { open: openExportLecture } = useModal("exportLecture");
   const [fetched, setFetched] = useState(false);
   const isViewer = user?.role === "viewer";
 
@@ -81,7 +82,7 @@ function ScheduleToolbar({ year, setYear, month, setMonth }) {
   };
 
   const handleExport = () => {
-    console.log('Кнопка "Выгрузить" нажата');
+    openExportLecture();
   };
 
   return (
