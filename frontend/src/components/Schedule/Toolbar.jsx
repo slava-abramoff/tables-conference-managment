@@ -46,20 +46,7 @@ function ScheduleToolbar({ year, setYear, month, setMonth }) {
     if (!fetched && !dates.years?.length) {
       fetchLectureDates().finally(() => setFetched(true));
     }
-  }, [fetched, fetchLectureDates, dates.years]);
 
-  const years = dates.years?.length > 0 ? dates.years.map((y) => y.year) : [];
-
-  const availableMonths = year
-    ? dates.years
-        ?.find((y) => y.year === year)
-        ?.months?.map((month) => ({
-          value: monthMapping[month.toLowerCase()],
-          label: month.charAt(0).toUpperCase() + month.slice(1),
-        })) || []
-    : [];
-
-  useEffect(() => {
     if (dates.years?.length > 0) {
       if (!years.includes(year)) {
         setYear(years[0] || "");
@@ -68,13 +55,27 @@ function ScheduleToolbar({ year, setYear, month, setMonth }) {
       if (year && availableMonths.length > 0) {
         const currentMonthNumber = monthMapping[month.toLowerCase()];
         if (!availableMonths.some((m) => m.value === currentMonthNumber)) {
-          setMonth(reverseMonthMapping[availableMonths[0].value] || "");
+          setMonth(
+            reverseMonthMapping[
+              availableMonths[availableMonths.length - 1].value
+            ] || "",
+          );
         }
       } else {
         setMonth("");
       }
     }
-  }, [dates.years, year, month, availableMonths, setYear, setMonth]);
+  }, [fetched, fetchLectureDates, year, month, setYear, setMonth]);
+
+  const years = dates.years?.length > 0 ? dates.years.map((y) => y.year) : [];
+
+  const availableMonths =
+    dates.years
+      ?.find((y) => y.year === year)
+      ?.months?.map((month) => ({
+        value: monthMapping[month.toLowerCase()],
+        label: month.charAt(0).toUpperCase() + month.slice(1),
+      })) || [];
 
   const handlePlan = () => {
     if (isViewer) return;

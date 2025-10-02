@@ -10,7 +10,7 @@ import {
   getLecturesByYearMonth,
   updateLecture,
 } from "../services/lectures.service";
-import { getCurrentYear, getCurrentMonth } from "../utils/datetime";
+// import { getCurrentYear, getCurrentMonth } from "../utils/datetime";
 
 const useLecturesStore = create(
   devtools((set) => ({
@@ -19,14 +19,24 @@ const useLecturesStore = create(
     days: [],
     loading: false,
     error: null,
-    currentYear: getCurrentYear(),
-    currentMonth: getCurrentMonth(),
+    currentYear: "",
+    currentMonth: "",
 
     fetchLectureDates: async () => {
       set({ loading: true, error: null });
       try {
         const response = await getLectureDates();
-        set({ dates: response.data || { years: [] }, loading: false });
+        const dates = response.data || { years: [] };
+
+        const lastYear = dates.years[dates.years.length - 1];
+        const lastMonth = lastYear?.months?.[lastYear.months.length - 1];
+
+        set({
+          dates,
+          currentYear: lastYear?.year || "",
+          currentMonth: lastMonth || "",
+          loading: false,
+        });
       } catch (error) {
         set({ error: error.message, loading: false });
       }
