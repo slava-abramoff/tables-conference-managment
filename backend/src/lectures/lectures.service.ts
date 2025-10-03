@@ -354,6 +354,7 @@ export class LecturesService {
           platform: true,
           location: true,
         },
+        orderBy: [{ date: 'desc' }, { start: 'asc' }],
       });
 
       if (!results) return [];
