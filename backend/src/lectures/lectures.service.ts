@@ -334,15 +334,20 @@ export class LecturesService {
     try {
       if ((!dto.start || !dto.end) && !dto.group) return [];
 
-      console.log(dto.start, dto.end);
-
       const results = await this.prisma.lecture.findMany({
         where: {
           date: {
             gte: dto.start,
             lte: dto.end,
           },
-          group: dto.group,
+          OR: [
+            { group: dto.group },
+            { group: { startsWith: dto.group + ',', mode: 'insensitive' } },
+            { group: { endsWith: ', ' + dto.group, mode: 'insensitive' } },
+            {
+              group: { contains: ', ' + dto.group + ',', mode: 'insensitive' },
+            },
+          ],
         },
         select: {
           date: true,
