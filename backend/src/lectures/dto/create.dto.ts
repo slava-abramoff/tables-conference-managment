@@ -6,6 +6,7 @@ import {
   IsString,
   IsUrl,
   IsUUID,
+  ValidateIf,
 } from 'class-validator';
 
 export class CreateLectureDto {
@@ -62,6 +63,7 @@ export class CreateLectureDto {
   @IsOptional()
   @IsUrl()
   @IsString()
+  @ValidateIf(o => o.url !== '')
   url?: string;
 
   @ApiProperty({
@@ -71,6 +73,7 @@ export class CreateLectureDto {
   })
   @IsOptional()
   @IsString()
+  @ValidateIf(o => o.shortUrl !== '')
   shortUrl?: string;
 
   @ApiProperty({

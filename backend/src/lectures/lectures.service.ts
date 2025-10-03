@@ -276,7 +276,7 @@ export class LecturesService {
 
   async update(id: string, dto: UpdateLectureDto) {
     try {
-      await this.tasksService.cancelEmailTask('lecture', id);
+      // await this.tasksService.cancelEmailTask('lecture', id);
 
       const shortUrl = dto.url ? await this.api.shortenUrl(dto.url) : undefined;
 
@@ -294,11 +294,11 @@ export class LecturesService {
         },
       });
 
-      await this.tasksService.scheduleEmailForLecture(result.id);
+      // await this.tasksService.scheduleEmailForLecture(result.id);
 
-      if (dto.start) {
-        await this.bot.sendNewEvent('lecture', result);
-      }
+      // if (dto.start) {
+      //   await this.bot.sendNewEvent('lecture', result);
+      // }
 
       this.logger.log(
         `Updated lecture ID: ${id}`,
