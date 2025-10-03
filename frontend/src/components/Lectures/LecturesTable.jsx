@@ -44,6 +44,8 @@ function LecturesTable({ search, sortBy, order, visibleColumns, date }) {
 
   // Определение всех возможных колонок
   const allColumns = [
+    { id: "start", label: "Начало" },
+    { id: "end", label: "Конец" },
     { id: "group", label: "Группа" },
     { id: "lector", label: "Лектор" },
     { id: "platform", label: "Платформа" },
@@ -54,8 +56,6 @@ function LecturesTable({ search, sortBy, order, visibleColumns, date }) {
     { id: "streamKey", label: "Ключ стрима" },
     { id: "description", label: "Описание" },
     { id: "adminId", label: "Админ" },
-    { id: "start", label: "Начало" },
-    { id: "end", label: "Конец" },
     { id: "abnormalTime", label: "Нестандартное время" },
     { id: "createdAt", label: "Создано" },
     { id: "updatedAt", label: "Обновлено" },
