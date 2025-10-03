@@ -340,14 +340,19 @@ export class LecturesService {
             gte: dto.start,
             lte: dto.end,
           },
-          OR: [
-            { group: dto.group },
-            { group: { startsWith: dto.group + ',', mode: 'insensitive' } },
-            { group: { endsWith: ', ' + dto.group, mode: 'insensitive' } },
-            {
-              group: { contains: ', ' + dto.group + ',', mode: 'insensitive' },
-            },
-          ],
+          ...(dto.group && {
+            OR: [
+              { group: dto.group },
+              { group: { startsWith: dto.group + ',', mode: 'insensitive' } },
+              { group: { endsWith: ', ' + dto.group, mode: 'insensitive' } },
+              {
+                group: {
+                  contains: ', ' + dto.group + ',',
+                  mode: 'insensitive',
+                },
+              },
+            ],
+          }),
         },
         select: {
           date: true,
