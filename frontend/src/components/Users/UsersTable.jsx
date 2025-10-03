@@ -114,7 +114,12 @@ function UsersTable() {
 
   return (
     <Paper sx={{ width: "100%", overflow: "hidden" }}>
-      <TableContainer sx={{ maxHeight: 440, overflowX: "auto" }}>
+      <TableContainer
+        sx={{
+          maxHeight: "calc(80vh - 200px)",
+          overflowX: "auto",
+        }}
+      >
         <Table stickyHeader>
           <TableHead>
             <TableRow>

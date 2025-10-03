@@ -186,7 +186,12 @@ function LecturesTable({ search, sortBy, order, visibleColumns, date }) {
 
   return (
     <Paper sx={{ width: "100%", overflow: "hidden" }}>
-      <TableContainer sx={{ maxHeight: 440, overflowX: "auto" }}>
+      <TableContainer
+        sx={{
+          maxHeight: "calc(90vh - 200px)", // отнимаем 200px под хедер/футер
+          overflowX: "auto",
+        }}
+      >
         <Table stickyHeader>
           <TableHead>
             <TableRow>
