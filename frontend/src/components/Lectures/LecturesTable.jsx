@@ -26,6 +26,7 @@ import ConfirmDeleteLectureModal from "../../modals/ConfirmDeleteLectureModal";
 import { timeToISO } from "../../utils/datetime";
 import { searchUsers } from "../../services/users.service";
 import useAuthStore from "../../store/authStore";
+import Loader from "../Navbar/Loader";
 
 function LecturesTable({ search, sortBy, order, visibleColumns, date }) {
   const fetchLecturesByDate = useFetchLecturesByDate();
@@ -35,11 +36,12 @@ function LecturesTable({ search, sortBy, order, visibleColumns, date }) {
   const updateLecture = useUpdateLecture();
   const removeLecture = useRemoveLecture();
   const { open: openConfirm } = useModal("deleteLecture");
-  const { user } = useAuthStore(); // Получаем данные пользователя из Zustand
-  const isViewer = user?.role === "viewer"; // Проверяем, является ли пользователь viewer
+  const { open: openErrorModal } = useModal("error");
+  const { user } = useAuthStore();
+  const isViewer = user?.role === "viewer";
 
-  const [editingCell, setEditingCell] = useState(null); // { rowId, columnId }
-  const [editedValues, setEditedValues] = useState({}); // { rowId: { columnId: value } }
+  const [editingCell, setEditingCell] = useState(null);
+  const [editedValues, setEditedValues] = useState({});
   const [adminOptions, setAdminOptions] = useState([]);
 
   // Определение всех возможных колонок
@@ -67,9 +69,12 @@ function LecturesTable({ search, sortBy, order, visibleColumns, date }) {
     if (date) {
       fetchLecturesByDate(date);
     }
-  }, [date, fetchLecturesByDate]);
 
-  // Функция поиска администраторов
+    if (error) {
+      openErrorModal({ error });
+    }
+  }, [date, fetchLecturesByDate, error]);
+
   const handleAdminSearch = async (term) => {
     if (term.length < 2) return;
     try {
@@ -80,7 +85,6 @@ function LecturesTable({ search, sortBy, order, visibleColumns, date }) {
     }
   };
 
-  // Фильтрация и сортировка на клиенте
   const filteredLectures = lectures
     .filter((lecture) =>
       search
@@ -102,7 +106,7 @@ function LecturesTable({ search, sortBy, order, visibleColumns, date }) {
     });
 
   const handleStartEdit = (rowId, columnId, initialValue) => {
-    if (isViewer) return; // Блокируем редактирование для viewer
+    if (isViewer) return;
     setEditingCell({ rowId, columnId });
     setEditedValues((prev) => ({
       ...prev,
@@ -120,11 +124,9 @@ function LecturesTable({ search, sortBy, order, visibleColumns, date }) {
       if (!lecture) return;
       valueToStore = timeToISO(newValue);
     } else if (columnId === "adminId") {
-      // Сохраняем adminId как есть
       valueToStore = newValue;
     }
 
-    // Сохраняем в локальное состояние
     setEditedValues((prev) => ({
       ...prev,
       [rowId]: { ...prev[rowId], [columnId]: valueToStore },
@@ -154,7 +156,7 @@ function LecturesTable({ search, sortBy, order, visibleColumns, date }) {
   };
 
   const handleConfirmDelete = async (id) => {
-    if (isViewer) return; // Блокируем удаление для viewer
+    if (isViewer) return;
     try {
       await removeLecture(id);
     } catch (error) {
@@ -177,11 +179,11 @@ function LecturesTable({ search, sortBy, order, visibleColumns, date }) {
   };
 
   if (loading) {
-    return <Typography>Загрузка...</Typography>;
+    return <Loader />;
   }
 
   if (error) {
-    return <Typography color="error">Ошибка: {error}</Typography>;
+    return;
   }
 
   return (

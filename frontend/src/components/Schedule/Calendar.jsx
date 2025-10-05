@@ -8,28 +8,33 @@ import {
   useLecturesLoading,
 } from "../../store/lecturesStore";
 import Loader from "../Navbar/Loader";
+import { useModal } from "../../context/ModalContext";
 
 function Calendar({ year, month }) {
   const fetchLecturesByYearMonth = useFetchLecturesByYearMonth();
   const schedule = useLectureDays();
   const loading = useLecturesLoading();
+  const { open: openErrorModal } = useModal("error");
   const error = useLecturesError();
 
   useEffect(() => {
     if (year && month) {
       fetchLecturesByYearMonth({ year, month });
     }
-  }, [year, month, fetchLecturesByYearMonth]);
+
+    if (error) {
+      openErrorModal({ error });
+    }
+  }, [year, month, fetchLecturesByYearMonth, error]);
 
   if (loading) {
     return <Loader />;
   }
 
   if (error) {
-    return <Typography color="error">Ошибка: {error}</Typography>;
+    return;
   }
 
-  // сортировка по дате
   const sortedSchedule = [...schedule].sort((a, b) =>
     b.date.localeCompare(a.date),
   );

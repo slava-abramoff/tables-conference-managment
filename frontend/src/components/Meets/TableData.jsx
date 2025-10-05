@@ -27,6 +27,7 @@ import {
 import { searchUsers } from "../../services/users.service";
 import useAuthStore from "../../store/authStore";
 import Loader from "../Navbar/Loader";
+import { useModal } from "../../context/ModalContext";
 
 function TableData({ search, status, sortBy, order, visibleColumns }) {
   const meets = useMeets();
@@ -37,6 +38,7 @@ function TableData({ search, status, sortBy, order, visibleColumns }) {
   const searchMeets = useSearchMeets();
   const updateMeet = useUpdateMeet();
   const { user } = useAuthStore();
+  const { open: openErrorModal } = useModal("error");
   const isViewer = user?.role === "viewer";
 
   const [editingCell, setEditingCell] = useState(null);
@@ -84,6 +86,10 @@ function TableData({ search, status, sortBy, order, visibleColumns }) {
         order,
       });
     }
+
+    if (error) {
+      openErrorModal({ error });
+    }
   }, [
     pagination.currentPage,
     pagination.itemsPerPage,
@@ -91,6 +97,7 @@ function TableData({ search, status, sortBy, order, visibleColumns }) {
     status,
     sortBy,
     order,
+    error,
     fetchMeets,
     searchMeets,
   ]);
@@ -190,7 +197,7 @@ function TableData({ search, status, sortBy, order, visibleColumns }) {
   };
 
   if (loading) return <Loader />;
-  if (error) return <Typography color="error">{error}</Typography>;
+  if (error) return;
 
   return (
     <Paper sx={{ width: "100%", overflow: "hidden" }}>

@@ -10,6 +10,7 @@ import CreateUserModal from "./CreateUserModal";
 import ScheduleLectureModal from "./ScheduleLectureModal";
 import GroupLinkModal from "./GroupLinkModal";
 import ExportLecturesModal from "./ExportLecturesModal";
+import ErrorModal from "./ErrorModal";
 
 const modalRegistry = {
   confirm: ConfirmModal,
@@ -21,6 +22,7 @@ const modalRegistry = {
   scheduleLecture: ScheduleLectureModal,
   groupLink: GroupLinkModal,
   exportLecture: ExportLecturesModal,
+  error: ErrorModal,
 };
 
 function ModalManager() {
