@@ -31,9 +31,7 @@ function Calendar({ year, month }) {
     return <Loader />;
   }
 
-  if (error) {
-    return;
-  }
+  if (error) return <Typography color="error">{error}</Typography>;
 
   const sortedSchedule = [...schedule].sort((a, b) =>
     b.date.localeCompare(a.date),

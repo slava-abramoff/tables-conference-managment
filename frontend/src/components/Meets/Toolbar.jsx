@@ -15,7 +15,7 @@ import {
 import SettingsIcon from "@mui/icons-material/Settings";
 import { useState, useCallback } from "react";
 import { debounce } from "lodash";
-import { useAddMeets, useSearchMeets } from "../../store/meetsStore";
+import { useSearchMeets } from "../../store/meetsStore";
 import { useModal } from "../../context/ModalContext";
 import useAuthStore from "../../store/authStore";
 function Toolbar({
@@ -33,8 +33,8 @@ function Toolbar({
   const [anchorEl, setAnchorEl] = useState(null);
   const searchMeets = useSearchMeets();
   const { open: openCreateMeet } = useModal("createMeet");
-  const { user } = useAuthStore(); // Получаем данные пользователя из Zustand
-  const isViewer = user?.role === "viewer"; // Проверяем, является ли пользователь viewer
+  const { user } = useAuthStore();
+  const isViewer = user?.role === "viewer";
 
   const statusOptions = [
     { value: "new", label: "Новые" },
@@ -55,7 +55,7 @@ function Toolbar({
     { value: "shortUrl", label: "Короткая ссылка" },
     { value: "status", label: "Статус" },
     { value: "description", label: "Описание" },
-    { id: "admin", label: "Админ" },
+    { value: "admin", label: "Админ" },
     { value: "start", label: "Начало" },
     { value: "end", label: "Конец" },
     { value: "createdAt", label: "Дата создания" },
@@ -70,6 +70,23 @@ function Toolbar({
     }, 300),
     [searchMeets],
   );
+
+  const changeFilter = (option, value) => {
+    if (option === "status") {
+      setStatus(value);
+      localStorage.setItem("status", value);
+    }
+
+    if (option === "sortBy") {
+      setSortBy(value);
+      localStorage.setItem("sortBy", value);
+    }
+
+    if (option === "order") {
+      setOrder(value);
+      localStorage.setItem("order", value);
+    }
+  };
 
   const handleSearchChange = (value) => {
     setSearch(value);
@@ -119,7 +136,7 @@ function Toolbar({
         <InputLabel>Статус</InputLabel>
         <Select
           value={status}
-          onChange={(e) => setStatus(e.target.value)}
+          onChange={(e) => changeFilter("status", e.target.value)}
           label="Статус"
         >
           {statusOptions.map((option) => (
@@ -133,7 +150,7 @@ function Toolbar({
         <InputLabel>Сортировать по</InputLabel>
         <Select
           value={sortBy}
-          onChange={(e) => setSortBy(e.target.value)}
+          onChange={(e) => changeFilter("sortBy", e.target.value)}
           label="Сортировать по"
         >
           <MenuItem value="">Без сортировки</MenuItem>
@@ -148,7 +165,7 @@ function Toolbar({
         <InputLabel>Порядок</InputLabel>
         <Select
           value={order}
-          onChange={(e) => setOrder(e.target.value)}
+          onChange={(e) => changeFilter("order", e.target.value)}
           label="Порядок"
         >
           <MenuItem value="asc">По возрастанию</MenuItem>

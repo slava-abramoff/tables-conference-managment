@@ -9,7 +9,6 @@ const useAuthStore = create((set) => ({
       const response = await api.post("/auth/login", { login, password });
       const { user, accessToken, refreshToken } = response.data;
 
-      // Сохраняем данные в localStorage
       localStorage.setItem("accessToken", accessToken);
       localStorage.setItem("refreshToken", refreshToken);
       localStorage.setItem(
@@ -21,7 +20,6 @@ const useAuthStore = create((set) => ({
         }),
       );
 
-      // Устанавливаем токен в заголовки axios
       api.defaults.headers.common["Authorization"] = `Bearer ${accessToken}`;
 
       set({
@@ -43,7 +41,6 @@ const useAuthStore = create((set) => ({
     }
   },
   logout: () => {
-    // Очищаем localStorage и состояние
     localStorage.removeItem("accessToken");
     localStorage.removeItem("refreshToken");
     localStorage.removeItem("user");

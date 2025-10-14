@@ -182,9 +182,7 @@ function LecturesTable({ search, sortBy, order, visibleColumns, date }) {
     return <Loader />;
   }
 
-  if (error) {
-    return;
-  }
+  if (error) return <Typography color="error">{error}</Typography>;
 
   return (
     <Paper sx={{ width: "100%", overflow: "hidden" }}>

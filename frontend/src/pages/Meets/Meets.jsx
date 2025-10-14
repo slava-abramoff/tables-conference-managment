@@ -11,8 +11,17 @@ function Meets() {
   const [order, setOrder] = useState("asc");
   const [visibleColumns, setVisibleColumns] = useState({});
 
-  // Загрузка видимых колонок из localStorage
   useEffect(() => {
+    const status = localStorage.getItem("status");
+    const sortBy = localStorage.getItem("sortBy");
+    const order = localStorage.getItem("order");
+
+    if (status && sortBy && order) {
+      setOrder(order);
+      setStatus(status);
+      setSortBy(sortBy);
+    }
+
     const savedColumns = localStorage.getItem("conferencesTableColumns");
     if (savedColumns) {
       setVisibleColumns(JSON.parse(savedColumns));
@@ -38,7 +47,6 @@ function Meets() {
     }
   }, []);
 
-  // Сохранение видимых колонок в localStorage
   useEffect(() => {
     if (Object.keys(visibleColumns).length > 0) {
       localStorage.setItem(
