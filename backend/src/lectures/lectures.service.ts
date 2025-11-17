@@ -364,7 +364,9 @@ export class LecturesService {
           platform: true,
           location: true,
           admin: {
-            name: true
+            select: {
+              name: true,
+            }
           },
           url: true
         },
