@@ -167,7 +167,7 @@ export class LecturesController {
       { header: 'Платформа', key: 'platform' },
       { header: 'Корпус', key: 'unit' },
       { header: 'Место', key: 'location' },
-      { header: 'Админ', key: 'name' },
+      { header: 'Админ', key: 'admin' },
       { header: 'Ссылка', key: 'url' },
     ];
     return await this.excel.generateExcelFile(
