@@ -363,6 +363,10 @@ export class LecturesService {
           unit: true,
           platform: true,
           location: true,
+          admin: {
+            name: true
+          },
+          url: true
         },
         orderBy: [{ date: 'desc' }, { start: 'asc' }],
       });
