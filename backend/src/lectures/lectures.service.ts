@@ -378,7 +378,7 @@ export class LecturesService {
       const formatted = results.map(item => {
         return {
           ...item,
-          admin: this.formatAdmin(item.admin),
+          admin: item.admin.name ?? item.admin.login,
           date: formatDateOrTime(item.date),
           start: formatDateOrTime(item.start, true),
           end: formatDateOrTime(item.end, true),
@@ -389,12 +389,5 @@ export class LecturesService {
     } catch (error) {
       this.handleError(error, LecturesService.name, 'downloads');
     }
-  }
-
-  /**
-   * TODO: убрать эту функцию, временное решение для корректного xlxs файла
-   */
-  formatAdmin(admin: any) {
-    return admin.name
   }
 }
