@@ -368,7 +368,7 @@ export class LecturesService {
           },
           url: true
         },
-        orderBy: [{ date: 'desc' }, { start: 'asc' }],
+        orderBy: [{ date: 'asc' }, { start: 'asc' }],
       });
 
       if (!results) return [];
