@@ -378,7 +378,7 @@ export class LecturesService {
       const formatted = results.map(item => {
         return {
           ...item,
-          admin: item.admin.name ?? item.admin.login,
+          admin: item.admin ? item.admin.name ?? "без имени" : "",
           date: formatDateOrTime(item.date),
           start: formatDateOrTime(item.start, true),
           end: formatDateOrTime(item.end, true),
