@@ -1,8 +1,8 @@
-package user
+package entitys
 
 type User struct {
 	Login    string
-	Name     string
+	Name     *string
 	Role     string
 	Password string
 }

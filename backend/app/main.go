@@ -5,13 +5,14 @@ import (
 	"log"
 	"net/http"
 	"table-api/internal/handler"
+	"table-api/internal/repository"
 	"table-api/internal/router"
-	"table-api/internal/service"
 )
 
 func main() {
 
-	uHandler := handler.NewUserHandlers(&service.MockUserService{})
+	repository.Init()
+	uHandler := handler.NewUserHandlers(&repository.MockUserRepo{})
 	router := router.NewRouter(uHandler)
 
 	fmt.Println("Server is started...")

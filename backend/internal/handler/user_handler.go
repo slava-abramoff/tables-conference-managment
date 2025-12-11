@@ -4,33 +4,34 @@ import (
 	"encoding/json"
 	"net/http"
 	"strconv"
-	"table-api/internal/domain/user"
 	"table-api/internal/handler/dto"
 	"table-api/internal/mappers"
+	"table-api/internal/service"
 	httprespond "table-api/pkg/http"
 
 	"github.com/julienschmidt/httprouter"
 )
 
 type UserHandlers struct {
-	service user.UserService
+	service service.UserService
 }
 
-func NewUserHandlers(service user.UserService) *UserHandlers {
+func NewUserHandlers(service service.UserService) *UserHandlers {
 	return &UserHandlers{service: service}
 }
 
 func (u *UserHandlers) Create(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	var body user.User
+	var dtoBody dto.CreateUserRequest
 
-	err := json.NewDecoder(r.Body).Decode(&body)
+	err := json.NewDecoder(r.Body).Decode(&dtoBody)
 	if err != nil {
 		httprespond.ErrorResponse(w, "Bad request", http.StatusBadRequest)
 		return
 	}
 
-	user := u.service.Create(body)
-	data := dto.UserResponse(user)
+	body := mappers.DtoCreateRequestToUser(dtoBody)
+	newUser := u.service.Create(body)
+	data := dto.UserResponse(newUser)
 
 	httprespond.JsonResponse(w, data, http.StatusOK)
 }
@@ -74,30 +75,24 @@ func (u *UserHandlers) Search(w http.ResponseWriter, r *http.Request, _ httprout
 }
 
 func (u *UserHandlers) Update(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	var body user.User
+	var dtobody dto.UpdateUserRequest
 	userId := ps.ByName("id")
 
-	err := json.NewDecoder(r.Body).Decode(&body)
+	err := json.NewDecoder(r.Body).Decode(&dtobody)
 	if err != nil {
 		httprespond.ErrorResponse(w, "Bad request", http.StatusBadRequest)
 		return
 	}
 
-	user := u.service.Update(userId, body)
-	data := dto.UserResponse(user)
+	body := mappers.DtoUpdateRequestToUser(dtobody)
+	updatedUser := u.service.Update(userId, body)
+	data := dto.UserResponse(updatedUser)
 
 	httprespond.JsonResponse(w, data, http.StatusOK)
 }
 
 func (u *UserHandlers) Remove(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	var body user.User
 	userId := ps.ByName("id")
-
-	err := json.NewDecoder(r.Body).Decode(&body)
-	if err != nil {
-		httprespond.ErrorResponse(w, "Bad request", http.StatusBadRequest)
-		return
-	}
 
 	user := u.service.Remove(userId)
 	data := dto.UserResponse(user)
