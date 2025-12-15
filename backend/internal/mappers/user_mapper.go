@@ -17,10 +17,10 @@ func ToUserResponse(u models.User) dto.UserResponse {
 	}
 }
 
-func ToUsersResponse(users []models.User) []dto.UserResponse {
+func ToUsersResponse(users []*models.User) []dto.UserResponse {
 	resp := make([]dto.UserResponse, 0, len(users))
 	for _, u := range users {
-		resp = append(resp, ToUserResponse(u))
+		resp = append(resp, ToUserResponse(*u))
 	}
 	return resp
 }
