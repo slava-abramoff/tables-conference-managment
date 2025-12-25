@@ -8,7 +8,7 @@ import (
 
 func ToUserResponse(u models.User) dto.UserResponse {
 	return dto.UserResponse{
-		ID:        u.ID,
+		ID:        u.ID.String(),
 		Login:     u.Login,
 		Name:      u.Name,
 		Role:      u.Role,

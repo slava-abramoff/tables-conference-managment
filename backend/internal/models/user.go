@@ -13,7 +13,4 @@ type User struct {
 	Role      string    `gorm:"not null"`
 	Password  string    `gorm:"not null"`
 	CreatedAt time.Time `gorm:"autoCreateTime"`
-
-	Meet     []Meet    `gorm:"foreignKey:UserID"`
-	Lectures []Lecture `gorm:"foreignKey:UserID"`
 }

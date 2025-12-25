@@ -2,8 +2,6 @@ package models
 
 import (
 	"time"
-
-	"github.com/google/uuid"
 )
 
 type Status string
@@ -30,8 +28,7 @@ type Meet struct {
 	Status      Status  `gorm:"type:text;default:'new'"`
 	Description *string `gorm:"type:text"`
 
-	AdminID *uuid.UUID `gorm:"type:uuid"`
-	Admin   *User      `gorm:"foreignKey:AdminID"`
+	Admin *string `gorm:"type:text;"`
 
 	Start     *time.Time
 	End       *time.Time

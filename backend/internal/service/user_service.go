@@ -57,7 +57,7 @@ func (u *UserSerivce) Search(
 
 func (u *UserSerivce) Update(ctx context.Context, id string, user entitys.User) (*models.User, error) {
 	data := mappers.UserToModel(user)
-	data.ID = id
+	data.ID = id.
 	updatedUser, err := u.repo.Update(ctx, &data)
 	if err != nil {
 		return nil, err
