@@ -4,15 +4,19 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"table-api/internal/database"
 	"table-api/internal/handler"
 	"table-api/internal/repository"
 	"table-api/internal/router"
 	"table-api/internal/service"
+	"table-api/pkg/validator"
 )
 
 func main() {
+	db := database.ConnectDB()
+	validator.Init()
 
-	uRepo := repository.NewUserRepoMock()
+	uRepo := repository.NewUserRepository(db)
 	uService := service.NewUserService(uRepo)
 	uHandler := handler.NewUserHandlers(uService)
 	router := router.NewRouter(uHandler)

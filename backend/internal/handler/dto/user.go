@@ -12,15 +12,15 @@ type UserResponse struct {
 }
 
 type CreateUserRequest struct {
-	Login    string  `json:"login" validate:"required,min=3,max=50"`
-	Name     *string `json:"name,omitempty" validate:"min=2,max=50"`
-	Role     *string `json:"role,omitempty"`
-	Password string  `json:"password" validate:"required,min=6"`
+	Login    string  `json:"login"    validate:"required,min=3,max=50,alphanum"`
+	Name     *string `json:"name,omitempty"    validate:"omitempty,min=2,max=100"`
+	Role     *string `json:"role,omitempty"    validate:"omitempty,oneof=admin editor viewer manager"`
+	Password string  `json:"password" validate:"required,min=6,max=72"` // 72 — разумный лимит для bcrypt
 }
 
 type UpdateUserRequest struct {
-	Login    *string `json:"login,omitempty" validate:"omitempty,min=3,max=50"`
-	Name     *string `json:"name,omitempty" validate:"omitempty,min=2,max=50"`
-	Role     *string `json:"role,omitempty"`
-	Password *string `json:"password,omitempty" validate:"omitempty,min=6"`
+	Login    *string `json:"login,omitempty"    validate:"omitempty,min=3,max=50,alphanum"`
+	Name     *string `json:"name,omitempty"     validate:"omitempty,min=2,max=100"`
+	Role     *string `json:"role,omitempty"     validate:"omitempty,oneof=admin editor viewer manager"`
+	Password *string `json:"password,omitempty" validate:"omitempty,min=6,max=72"`
 }

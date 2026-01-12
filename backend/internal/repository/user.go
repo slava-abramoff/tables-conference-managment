@@ -12,7 +12,7 @@ import (
 
 type UserRepo interface {
 	Create(ctx context.Context, user *models.User) (*models.User, error)
-	GetByID(ctx context.Context, id string) (*models.User, error)
+	GetByID(ctx context.Context, id uuid.UUID) (*models.User, error)
 	GetByLogin(ctx context.Context, login string) (*models.User, error)
 	List(
 		ctx context.Context,
@@ -20,8 +20,8 @@ type UserRepo interface {
 		limit int,
 	) ([]*models.User, *entitys.Pagination, error)
 	Search(ctx context.Context, searchTerm string) ([]*models.User, error)
-	Update(ctx context.Context, user *models.User) (*models.User, error)
-	Delete(ctx context.Context, id string) (*models.User, error)
+	Update(ctx context.Context, id uuid.UUID, updates map[string]interface{}) (*models.User, error)
+	Delete(ctx context.Context, id uuid.UUID) (*models.User, error)
 }
 
 type UserRepository struct {
@@ -40,7 +40,7 @@ func (u *UserRepository) Create(ctx context.Context, user *models.User) (*models
 	return user, nil
 }
 
-func (u *UserRepository) GetByID(ctx context.Context, id string) (*models.User, error) {
+func (u *UserRepository) GetByID(ctx context.Context, id uuid.UUID) (*models.User, error) {
 	var user models.User
 
 	if err := u.db.First(&user, id).Error; err != nil {
@@ -105,55 +105,28 @@ func (u *UserRepository) Search(ctx context.Context, searchTerm string) ([]*mode
 	return users, nil
 }
 
-func (u *UserRepository) Update(ctx context.Context, user *models.User) (*models.User, error) {
-	if user.ID == uuid.Nil {
-		return nil, common.ErrInvalidInput
-	}
-
-	updates := map[string]interface{}{}
-
-	if user.Login != "" {
-		updates["login"] = user.Login
-	}
-
-	if user.Name != nil {
-		updates["name"] = *user.Name
-	}
-
-	if user.Password != "" {
-		updates["password"] = user.Password
-	}
-
+func (r *UserRepository) Update(ctx context.Context, id uuid.UUID, updates map[string]interface{}) (*models.User, error) {
 	if len(updates) == 0 {
-		var currentUser models.User
-		if err := u.db.First(&currentUser, user.ID).Error; err != nil {
-			return nil, err
-		}
-		return &currentUser, nil
+		return r.GetByID(ctx, id)
 	}
 
-	result := u.db.
+	result := r.db.
+		WithContext(ctx).
 		Model(&models.User{}).
-		Where("id = ?", user.ID).
+		Where("id = ?", id).
 		Updates(updates)
 
 	if result.Error != nil {
 		return nil, result.Error
 	}
-
 	if result.RowsAffected == 0 {
 		return nil, common.ErrNotFound
 	}
 
-	var updatedUser models.User
-	if err := u.db.First(&updatedUser, user.ID).Error; err != nil {
-		return nil, err
-	}
-
-	return &updatedUser, nil
+	return r.GetByID(ctx, id)
 }
 
-func (u *UserRepository) Delete(ctx context.Context, id string) (*models.User, error) {
+func (u *UserRepository) Delete(ctx context.Context, id uuid.UUID) (*models.User, error) {
 	var user models.User
 
 	if err := u.db.First(&user, "id = ?", id).Error; err != nil {

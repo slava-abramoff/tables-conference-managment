@@ -42,15 +42,6 @@ func DtoCreateRequestToUser(user dto.CreateUserRequest) entitys.User {
 	}
 }
 
-func DtoUpdateRequestToUser(user dto.UpdateUserRequest) entitys.User {
-	return entitys.User{
-		Login:    *user.Login,
-		Name:     user.Name,
-		Role:     *user.Role,
-		Password: *user.Password,
-	}
-}
-
 func UserToModel(user entitys.User) models.User {
 	return models.User{
 		Login:    user.Login,
