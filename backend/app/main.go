@@ -10,9 +10,16 @@ import (
 	"table-api/internal/router"
 	"table-api/internal/service"
 	"table-api/pkg/validator"
+
+	"github.com/joho/godotenv"
 )
 
 func main() {
+	err := godotenv.Load(".env")
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+
 	db := database.ConnectDB()
 	validator.Init()
 
