@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"context"
 	"encoding/json"
 	"net/http"
 	"strconv"
@@ -9,7 +8,6 @@ import (
 	"table-api/internal/mappers"
 	"table-api/internal/service"
 	httprespond "table-api/pkg/http"
-	"time"
 
 	"github.com/julienschmidt/httprouter"
 )
@@ -25,8 +23,8 @@ func NewUserHandlers(service service.UserService) *UserHandlers {
 const TIMEOUT = 3
 
 func (u *UserHandlers) Create(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	ctx, cancel := context.WithTimeout(r.Context(), TIMEOUT*time.Second)
-	defer cancel()
+	// ctx, cancel := context.WithTimeout(r.Context(), TIMEOUT*time.Second)
+	// defer cancel()
 	var dtoBody dto.CreateUserRequest
 
 	err := json.NewDecoder(r.Body).Decode(&dtoBody)
@@ -47,8 +45,8 @@ func (u *UserHandlers) Create(w http.ResponseWriter, r *http.Request, _ httprout
 }
 
 func (u *UserHandlers) FindMany(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	ctx, cancel := context.WithTimeout(r.Context(), TIMEOUT*time.Second)
-	defer cancel()
+	// ctx, cancel := context.WithTimeout(r.Context(), TIMEOUT*time.Second)
+	// defer cancel()
 
 	page := r.URL.Query().Get("page")
 	limit := r.URL.Query().Get("limit")
@@ -83,8 +81,8 @@ func (u *UserHandlers) FindMany(w http.ResponseWriter, r *http.Request, _ httpro
 }
 
 func (u *UserHandlers) Search(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	ctx, cancel := context.WithTimeout(r.Context(), TIMEOUT*time.Second)
-	defer cancel()
+	// ctx, cancel := context.WithTimeout(r.Context(), TIMEOUT*time.Second)
+	// defer cancel()
 
 	searchTerm := r.URL.Query().Get("searchTerm")
 
@@ -97,8 +95,8 @@ func (u *UserHandlers) Search(w http.ResponseWriter, r *http.Request, _ httprout
 }
 
 func (u *UserHandlers) Update(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	ctx, cancel := context.WithTimeout(r.Context(), TIMEOUT*time.Second)
-	defer cancel()
+	// ctx, cancel := context.WithTimeout(r.Context(), TIMEOUT*time.Second)
+	// defer cancel()
 
 	var dtobody dto.UpdateUserRequest
 	userId := ps.ByName("id")
@@ -121,8 +119,8 @@ func (u *UserHandlers) Update(w http.ResponseWriter, r *http.Request, ps httprou
 }
 
 func (u *UserHandlers) Remove(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	ctx, cancel := context.WithTimeout(r.Context(), TIMEOUT*time.Second)
-	defer cancel()
+	// ctx, cancel := context.WithTimeout(r.Context(), TIMEOUT*time.Second)
+	// defer cancel()
 
 	userId := ps.ByName("id")
 

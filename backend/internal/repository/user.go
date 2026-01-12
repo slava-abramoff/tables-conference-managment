@@ -4,7 +4,9 @@ import (
 	"context"
 	"table-api/internal/entitys"
 	"table-api/internal/models"
+	common "table-api/pkg"
 
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -51,10 +53,9 @@ func (u *UserRepository) GetByID(ctx context.Context, id string) (*models.User, 
 func (u *UserRepository) GetByLogin(ctx context.Context, login string) (*models.User, error) {
 	var user models.User
 
-	if err := u.db.First(&user, id).Error; err != nil {
+	if err := u.db.Where("login = ?", login).First(&user).Error; err != nil {
 		return nil, err
 	}
-
 	return &user, nil
 }
 
@@ -87,9 +88,81 @@ func (u *UserRepository) List(
 }
 
 func (u *UserRepository) Search(ctx context.Context, searchTerm string) ([]*models.User, error) {
+	var users []*models.User
 
+	searchPattern := "%" + searchTerm + "%"
+
+	err := u.db.
+		Where("login ILIKE ?", searchPattern).
+		Or("name ILIKE ?", searchPattern).
+		Find(&users).
+		Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	return users, nil
 }
 
-func (u *UserRepository) Update() {}
+func (u *UserRepository) Update(ctx context.Context, user *models.User) (*models.User, error) {
+	if user.ID == uuid.Nil {
+		return nil, common.ErrInvalidInput
+	}
 
-func (u *UserRepository) Delete() {}
+	updates := map[string]interface{}{}
+
+	if user.Login != "" {
+		updates["login"] = user.Login
+	}
+
+	if user.Name != nil {
+		updates["name"] = *user.Name
+	}
+
+	if user.Password != "" {
+		updates["password"] = user.Password
+	}
+
+	if len(updates) == 0 {
+		var currentUser models.User
+		if err := u.db.First(&currentUser, user.ID).Error; err != nil {
+			return nil, err
+		}
+		return &currentUser, nil
+	}
+
+	result := u.db.
+		Model(&models.User{}).
+		Where("id = ?", user.ID).
+		Updates(updates)
+
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	if result.RowsAffected == 0 {
+		return nil, common.ErrNotFound
+	}
+
+	var updatedUser models.User
+	if err := u.db.First(&updatedUser, user.ID).Error; err != nil {
+		return nil, err
+	}
+
+	return &updatedUser, nil
+}
+
+func (u *UserRepository) Delete(ctx context.Context, id string) (*models.User, error) {
+	var user models.User
+
+	if err := u.db.First(&user, "id = ?", id).Error; err != nil {
+		return nil, common.ErrNotFound
+	}
+
+	if err := u.db.Delete(&user).Error; err != nil {
+		return nil, err
+	}
+
+	return &user, nil
+}
