@@ -23,10 +23,17 @@ func main() {
 	db := database.ConnectDB()
 	validator.Init()
 
+	// Users
 	uRepo := repository.NewUserRepository(db)
 	uService := service.NewUserService(uRepo)
 	uHandler := handler.NewUserHandlers(uService)
-	router := router.NewRouter(uHandler)
+
+	// Auth
+	aRepo := repository.NewRefreshTokenRepository(db)
+	aService := service.NewAuthService(uRepo, aRepo)
+	aHandler := handler.NewAuthHandlers(aService)
+
+	router := router.NewRouter(uHandler, aHandler)
 
 	fmt.Println("Server is started...")
 	log.Fatal(http.ListenAndServe(":8080", router))

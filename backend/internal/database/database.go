@@ -35,6 +35,7 @@ func ConnectDB() *gorm.DB {
 			&models.Meet{},
 			&models.Lecture{},
 			&models.ShortLink{},
+			&models.RefreshToken{},
 		)
 		if err != nil {
 			log.Fatal("failed to migrate database:", err)
