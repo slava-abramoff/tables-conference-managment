@@ -48,6 +48,7 @@ func (u *UserHandlers) Create(w http.ResponseWriter, r *http.Request, _ httprout
 	newUser, err := u.service.Create(ctx, body)
 	if err != nil {
 		httprespond.HandleErrorResponse(w, err)
+		return
 	}
 
 	data := mappers.ToUserResponse(*newUser)
@@ -72,6 +73,7 @@ func (u *UserHandlers) FindMany(w http.ResponseWriter, r *http.Request, _ httpro
 	users, pagination, err := u.service.FindMany(ctx, pageInt, limitInt)
 	if err != nil {
 		httprespond.HandleErrorResponse(w, err)
+		return
 	}
 
 	usersData := mappers.ToUsersResponse(users)
@@ -100,6 +102,7 @@ func (u *UserHandlers) Search(w http.ResponseWriter, r *http.Request, _ httprout
 	data, err := u.service.Search(ctx, searchTerm)
 	if err != nil {
 		httprespond.HandleErrorResponse(w, err)
+		return
 	}
 
 	httprespond.JsonResponse(w, data, http.StatusOK)
@@ -153,6 +156,7 @@ func (u *UserHandlers) Remove(w http.ResponseWriter, r *http.Request, ps httprou
 	deleted, err := u.service.Remove(ctx, id)
 	if err != nil {
 		httprespond.HandleErrorResponse(w, err)
+		return
 	}
 
 	resp := mappers.ToUserResponse(*deleted)

@@ -2,13 +2,17 @@ package service
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"table-api/internal/entitys"
 	"table-api/internal/handler/dto"
 	"table-api/internal/mappers"
 	"table-api/internal/models"
 	"table-api/internal/repository"
+	common "table-api/pkg"
 
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 type UserService interface {
@@ -28,6 +32,17 @@ func NewUserService(repo repository.UserRepo) *UserSerivce {
 }
 
 func (u *UserSerivce) Create(ctx context.Context, user entitys.User) (*models.User, error) {
+	fmt.Println("start")
+	existUser, err := u.repo.GetByLogin(ctx, user.Login)
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		fmt.Println("Failed gorm")
+		return nil, fmt.Errorf("failed to check login existence: %w", err)
+	}
+	if existUser != nil {
+		fmt.Println("User exist")
+		return nil, common.ErrAlreadyExists
+	}
+
 	data := mappers.UserToModel(user)
 
 	newUser, err := u.repo.Create(ctx, &data)
