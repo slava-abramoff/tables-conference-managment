@@ -23,15 +23,15 @@ type UserService interface {
 	Remove(ctx context.Context, id uuid.UUID) (*models.User, error)
 }
 
-type UserSerivce struct {
+type userService struct {
 	repo repository.UserRepo
 }
 
-func NewUserService(repo repository.UserRepo) *UserSerivce {
-	return &UserSerivce{repo: repo}
+func NewUserService(repo repository.UserRepo) UserService {
+	return &userService{repo: repo}
 }
 
-func (u *UserSerivce) Create(ctx context.Context, user entitys.User) (*models.User, error) {
+func (u *userService) Create(ctx context.Context, user entitys.User) (*models.User, error) {
 	fmt.Println("start")
 	existUser, err := u.repo.GetByLogin(ctx, user.Login)
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
@@ -52,7 +52,7 @@ func (u *UserSerivce) Create(ctx context.Context, user entitys.User) (*models.Us
 	return newUser, nil
 }
 
-func (u *UserSerivce) FindMany(ctx context.Context, page int, limit int) ([]*models.User, *entitys.Pagination, error) {
+func (u *userService) FindMany(ctx context.Context, page int, limit int) ([]*models.User, *entitys.Pagination, error) {
 	if page < 1 {
 		page = 1
 	}
@@ -71,14 +71,14 @@ func (u *UserSerivce) FindMany(ctx context.Context, page int, limit int) ([]*mod
 	return users, pagination, nil
 }
 
-func (u *UserSerivce) Search(
+func (u *userService) Search(
 	ctx context.Context,
 	searchTerm string,
 ) ([]*models.User, error) {
 	return u.repo.Search(ctx, searchTerm)
 }
 
-func (u *UserSerivce) Update(ctx context.Context, id uuid.UUID, dto dto.UpdateUserRequest) (*models.User, error) {
+func (u *userService) Update(ctx context.Context, id uuid.UUID, dto dto.UpdateUserRequest) (*models.User, error) {
 	updates := map[string]interface{}{}
 
 	if dto.Login != nil {
@@ -101,7 +101,7 @@ func (u *UserSerivce) Update(ctx context.Context, id uuid.UUID, dto dto.UpdateUs
 	return u.repo.Update(ctx, id, updates)
 }
 
-func (u *UserSerivce) Remove(ctx context.Context, id uuid.UUID) (*models.User, error) {
+func (u *userService) Remove(ctx context.Context, id uuid.UUID) (*models.User, error) {
 	deletedUser, err := u.repo.Delete(ctx, id)
 	if err != nil {
 		return nil, err

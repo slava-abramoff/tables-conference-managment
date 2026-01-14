@@ -35,3 +35,8 @@ type UpdateLectureRequest struct {
 	End          *string    `json:"end,omitempty"         validate:"omitempty,time"` // "15:04"
 	AbnormalTime *string    `json:"abnormalTime,omitempty" validate:"omitempty,max=100"`
 }
+
+type UpdateManyLinksRequest struct {
+	GroupName string `json:"groupName"`
+	Url       string `json:"url"`
+}

@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-func DtoToLecture(dto dto.CreateLectureRequest) (models.Lecture, error) {
+func DtoToLecture(dto dto.CreateLectureRequest) (*models.Lecture, error) {
 	lecture := models.Lecture{
 		Group:        dto.Group,
 		Lector:       dto.Lector,
@@ -26,7 +26,7 @@ func DtoToLecture(dto dto.CreateLectureRequest) (models.Lecture, error) {
 	if dto.Start != nil {
 		t, err := time.Parse("15:04", *dto.Start)
 		if err != nil {
-			return models.Lecture{}, common.ErrInvalidInput
+			return nil, common.ErrInvalidInput
 		}
 		lecture.Start = &t
 	}
@@ -34,10 +34,24 @@ func DtoToLecture(dto dto.CreateLectureRequest) (models.Lecture, error) {
 	if dto.End != nil {
 		t, err := time.Parse("15:04", *dto.End)
 		if err != nil {
-			return models.Lecture{}, common.ErrInvalidInput
+			return nil, common.ErrInvalidInput
 		}
 		lecture.End = &t
 	}
 
-	return lecture, nil
+	return &lecture, nil
+}
+
+func DtoToManyLecture(dtos []dto.CreateLectureRequest) ([]*models.Lecture, error) {
+	var lectures []*models.Lecture
+	for _, v := range dtos {
+		lecture, err := DtoToLecture(v)
+		if err != nil {
+			return nil, err
+		}
+
+		lectures = append(lectures, lecture)
+	}
+
+	return lectures, nil
 }

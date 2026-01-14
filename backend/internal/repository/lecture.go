@@ -11,42 +11,27 @@ import (
 	"gorm.io/gorm"
 )
 
-type LectureRepo interface {
-	// CREATE
-	Create(lecture *models.Lecture) (*models.Lecture, error)
-	CreateMany(lecture []*models.Lecture) ([]*models.Lecture, error)
-
-	// UPDATE
-	Update(id int, updates map[string]interface{}) (*models.Lecture, error)
-
-	// // DELETE
-	Delete(id int) (*models.Lecture, error)
-
-	// BULK UPDATE
-	UpdateURLsByGroup(
-		groupName string,
-		url string,
-		shortURL *string,
-	) ([]*models.Lecture, error)
-
-	// READ
-	FindByDateRange(start, end time.Time) ([]*models.Lecture, error)
-	FindByExactDate(date time.Time) ([]*models.Lecture, error)
-	FindForSchedule(year, month string) ([]*models.Lecture, error)
-
-	// AGGREGATES
-	FindWithUniqueDates() ([]*models.Lecture, error)
+type LectureRepository interface {
+	Create(ctx context.Context, lecture *models.Lecture) (*models.Lecture, error)
+	CreateMany(ctx context.Context, lectures []*models.Lecture) ([]*models.Lecture, error)
+	Update(ctx context.Context, id int, updates map[string]interface{}) (*models.Lecture, error)
+	Delete(ctx context.Context, id int) (*models.Lecture, error)
+	UpdateURLsByGroup(ctx context.Context, groupName string, url string, shortURL string) ([]*models.Lecture, error)
+	FindByDateRange(ctx context.Context, start, end time.Time) ([]*models.Lecture, error)
+	FindByExactDate(ctx context.Context, date time.Time) ([]*models.Lecture, error)
+	FindForSchedule(ctx context.Context, year, month string) ([]*models.Lecture, error)
+	FindWithUniqueDates(ctx context.Context) ([]*models.Lecture, error)
 }
 
-type LectureRepository struct {
+type lectureRepository struct {
 	db *gorm.DB
 }
 
-func NewLectureRepository(db *gorm.DB) *LectureRepository {
-	return &LectureRepository{db: db}
+func NewLectureRepository(db *gorm.DB) LectureRepository {
+	return &lectureRepository{db: db}
 }
 
-func (l *LectureRepository) Create(ctx context.Context, lecture *models.Lecture) (*models.Lecture, error) {
+func (l *lectureRepository) Create(ctx context.Context, lecture *models.Lecture) (*models.Lecture, error) {
 	if err := l.db.Create(lecture).Error; err != nil {
 		return nil, err
 	}
@@ -54,7 +39,7 @@ func (l *LectureRepository) Create(ctx context.Context, lecture *models.Lecture)
 	return lecture, nil
 }
 
-func (l *LectureRepository) CreateMany(ctx context.Context, lectures []*models.Lecture) ([]*models.Lecture, error) {
+func (l *lectureRepository) CreateMany(ctx context.Context, lectures []*models.Lecture) ([]*models.Lecture, error) {
 	if len(lectures) == 0 {
 		return nil, nil
 	}
@@ -67,7 +52,7 @@ func (l *LectureRepository) CreateMany(ctx context.Context, lectures []*models.L
 	return lectures, nil
 }
 
-func (l *LectureRepository) GetByID(ctx context.Context, id int) (*models.Lecture, error) {
+func (l *lectureRepository) GetByID(ctx context.Context, id int) (*models.Lecture, error) {
 	var lecture models.Lecture
 
 	if err := l.db.First(&lecture, id).Error; err != nil {
@@ -77,7 +62,7 @@ func (l *LectureRepository) GetByID(ctx context.Context, id int) (*models.Lectur
 	return &lecture, nil
 }
 
-func (l *LectureRepository) Update(ctx context.Context, id int, updates map[string]interface{}) (*models.Lecture, error) {
+func (l *lectureRepository) Update(ctx context.Context, id int, updates map[string]interface{}) (*models.Lecture, error) {
 	if len(updates) == 0 {
 		return l.GetByID(ctx, id)
 	}
@@ -99,7 +84,7 @@ func (l *LectureRepository) Update(ctx context.Context, id int, updates map[stri
 	return l.GetByID(ctx, id)
 }
 
-func (l *LectureRepository) Delete(ctx context.Context, id int) (*models.Lecture, error) {
+func (l *lectureRepository) Delete(ctx context.Context, id int) (*models.Lecture, error) {
 	var lecture models.Lecture
 
 	if _, err := l.GetByID(ctx, id); err != nil {
@@ -113,7 +98,7 @@ func (l *LectureRepository) Delete(ctx context.Context, id int) (*models.Lecture
 	return &lecture, nil
 }
 
-func (l *LectureRepository) UpdateURLsByGroup(
+func (l *lectureRepository) UpdateURLsByGroup(
 	ctx context.Context,
 	groupName string,
 	url string,
@@ -151,7 +136,7 @@ func (l *LectureRepository) UpdateURLsByGroup(
 	return updatedLectures, nil
 }
 
-func (l *LectureRepository) FindByDateRange(ctx context.Context, startDate, endDate time.Time) ([]*models.Lecture, error) {
+func (l *lectureRepository) FindByDateRange(ctx context.Context, startDate, endDate time.Time) ([]*models.Lecture, error) {
 	var lectures []*models.Lecture
 
 	err := l.db.
@@ -168,7 +153,7 @@ func (l *LectureRepository) FindByDateRange(ctx context.Context, startDate, endD
 	return lectures, nil
 }
 
-func (l *LectureRepository) FindByExactDate(ctx context.Context, date time.Time) ([]*models.Lecture, error) {
+func (l *lectureRepository) FindByExactDate(ctx context.Context, date time.Time) ([]*models.Lecture, error) {
 	startOfDay := time.Date(date.Year(), date.Month(), date.Day(), 0, 0, 0, 0, date.Location())
 	endOfDay := startOfDay.Add(24*time.Hour - time.Second)
 
@@ -187,7 +172,7 @@ func (l *LectureRepository) FindByExactDate(ctx context.Context, date time.Time)
 	return lectures, nil
 }
 
-func (l *LectureRepository) FindForSchedule(
+func (l *lectureRepository) FindForSchedule(
 	ctx context.Context,
 	year, month string,
 ) ([]*models.Lecture, error) {
@@ -219,7 +204,7 @@ func (l *LectureRepository) FindForSchedule(
 	return lectures, nil
 }
 
-func (l *LectureRepository) FindWithUniqueDates(ctx context.Context) ([]*models.Lecture, error) {
+func (l *lectureRepository) FindWithUniqueDates(ctx context.Context) ([]*models.Lecture, error) {
 	var lectures []*models.Lecture
 
 	err := l.db.WithContext(ctx).
