@@ -7,21 +7,25 @@ import (
 	"gorm.io/gorm"
 )
 
-type ShortLinkRepo interface {
+type ShortLinkRepository interface {
 	Create(ctx context.Context, url, code string) (*models.ShortLink, error)
 	GetByCode(ctx context.Context, code string) (*models.ShortLink, error)
-	IsUnique(code string) bool
+	IsUnique(ctx context.Context, code string) bool
+	IncrementClickCount(
+		ctx context.Context,
+		id int,
+	) error
 }
 
-type ShortLinkRepository struct {
+type shortLinkRepository struct {
 	db *gorm.DB
 }
 
-func NewShortLinkRepository(db *gorm.DB) *ShortLinkRepository {
-	return &ShortLinkRepository{db: db}
+func NewShortLinkRepository(db *gorm.DB) ShortLinkRepository {
+	return &shortLinkRepository{db: db}
 }
 
-func (s *ShortLinkRepository) Create(ctx context.Context, url, code string) (*models.ShortLink, error) {
+func (s *shortLinkRepository) Create(ctx context.Context, url, code string) (*models.ShortLink, error) {
 	link := &models.ShortLink{
 		URL:        url,
 		Code:       code,
@@ -35,21 +39,17 @@ func (s *ShortLinkRepository) Create(ctx context.Context, url, code string) (*mo
 	return link, nil
 }
 
-func (s *ShortLinkRepository) GetByCode(ctx context.Context, code string) (*models.ShortLink, error) {
+func (s *shortLinkRepository) GetByCode(ctx context.Context, code string) (*models.ShortLink, error) {
 	var shortLink models.ShortLink
 
 	if err := s.db.Where("code = ?", code).First(&shortLink).Error; err != nil {
 		return nil, err
 	}
 
-	if err := s.IncrementClickCount(ctx, shortLink.ID); err != nil {
-		return nil, err
-	}
-
 	return &shortLink, nil
 }
 
-func (s *ShortLinkRepository) IsUnique(ctx context.Context, code string) bool {
+func (s *shortLinkRepository) IsUnique(ctx context.Context, code string) bool {
 	return s.db.WithContext(ctx).
 		Select("1").
 		Where("code = ?", code).
@@ -58,7 +58,7 @@ func (s *ShortLinkRepository) IsUnique(ctx context.Context, code string) bool {
 		Error == gorm.ErrRecordNotFound
 }
 
-func (s *ShortLinkRepository) IncrementClickCount(
+func (s *shortLinkRepository) IncrementClickCount(
 	ctx context.Context,
 	id int,
 ) error {
