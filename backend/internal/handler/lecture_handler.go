@@ -28,7 +28,7 @@ func (l *LectureHandlers) Create(w http.ResponseWriter, r *http.Request, _ httpr
 
 	var req dto.CreateLectureRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		httprespond.ErrorResponse(w, "не удалось прочитать тело запроса", http.StatusBadRequest)
+		httprespond.ErrorResponse(w, "Bad request", http.StatusBadRequest)
 		return
 	}
 
@@ -52,7 +52,7 @@ func (l *LectureHandlers) CreateMany(w http.ResponseWriter, r *http.Request, _ h
 
 	var req dto.CreateLecturesRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		httprespond.ErrorResponse(w, "не удалось прочитать тело запроса", http.StatusBadRequest)
+		httprespond.ErrorResponse(w, "Bad request", http.StatusBadRequest)
 		return
 	}
 
@@ -89,7 +89,7 @@ func (l *LectureHandlers) GetByDates(w http.ResponseWriter, r *http.Request, ps 
 	dateStr := ps.ByName("date")
 	parsedDate, err := time.Parse("2006-01-02", dateStr)
 	if err != nil {
-		httprespond.ErrorResponse(w, "не удалось прочитать тело запроса", http.StatusBadRequest)
+		httprespond.ErrorResponse(w, "Bad request", http.StatusBadRequest)
 		return
 	}
 

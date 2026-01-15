@@ -5,6 +5,7 @@ import (
 	"table-api/internal/entitys"
 	"table-api/internal/handler/dto"
 	"table-api/internal/models"
+	"table-api/internal/repository/gormerrors"
 	common "table-api/pkg"
 
 	"gorm.io/gorm"
@@ -27,7 +28,7 @@ func NewMeetRepository(db *gorm.DB) MeetRepository {
 
 func (m *meetRepository) Create(ctx context.Context, meet *models.Meet) (*models.Meet, error) {
 	if err := m.db.Create(meet).Error; err != nil {
-		return nil, err
+		return nil, gormerrors.Map(err)
 	}
 
 	return meet, nil
@@ -45,7 +46,7 @@ func (m *meetRepository) Update(ctx context.Context, id int, updates map[string]
 		Updates(updates)
 
 	if result.Error != nil {
-		return nil, result.Error
+		return nil, gormerrors.Map(result.Error)
 	}
 	if result.RowsAffected == 0 {
 		return nil, common.ErrNotFound
@@ -58,7 +59,7 @@ func (m *meetRepository) GetByID(ctx context.Context, id int) (*models.Meet, err
 	var meet models.Meet
 
 	if err := m.db.First(&meet, id).Error; err != nil {
-		return nil, err
+		return nil, gormerrors.Map(err)
 	}
 
 	return &meet, nil
@@ -84,7 +85,7 @@ func (m *meetRepository) List(
 	}
 
 	if err := query.Count(&totalItems).Error; err != nil {
-		return nil, nil, err
+		return nil, nil, gormerrors.Map(err)
 	}
 
 	if filter.SortBy != nil && filter.Order != nil {
@@ -124,7 +125,7 @@ func (m *meetRepository) List(
 		Offset(offset).
 		Find(&meets).
 		Error; err != nil {
-		return nil, nil, err
+		return nil, nil, gormerrors.Map(err)
 	}
 
 	pagination := entitys.BuildPagination(page, limit, totalItems)

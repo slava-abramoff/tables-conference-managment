@@ -27,10 +27,10 @@ type AuthService interface {
 
 type authService struct {
 	userRepo    repository.UserRepository
-	refreshRepo repository.RefreshTokenRepo
+	refreshRepo repository.RefreshTokenRepository
 }
 
-func NewAuthService(userRepo repository.UserRepository, refreshRepo repository.RefreshTokenRepo) AuthService {
+func NewAuthService(userRepo repository.UserRepository, refreshRepo repository.RefreshTokenRepository) AuthService {
 	return &authService{userRepo: userRepo, refreshRepo: refreshRepo}
 }
 
@@ -41,7 +41,7 @@ func (a *authService) Login(ctx context.Context, login, password string) (*model
 	}
 
 	if password != user.Password {
-		return nil, "", "", common.ErrForbidden // TODO: invalid credentials
+		return nil, "", "", common.ErrForbidden
 	}
 
 	accessToken, err := a.generateAccessToken(user)
@@ -60,7 +60,7 @@ func (a *authService) Login(ctx context.Context, login, password string) (*model
 func (a *authService) Refresh(ctx context.Context, refreshToken string) (string, string, error) {
 	rt, err := a.refreshRepo.GetByToken(ctx, refreshToken)
 	if err != nil || rt.ExpiresAt.Before(time.Now()) {
-		return "", "", common.ErrForbidden // TODO: invalid credentials
+		return "", "", common.ErrForbidden
 	}
 
 	user, err := a.userRepo.GetByID(ctx, rt.UserID)

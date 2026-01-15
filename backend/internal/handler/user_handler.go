@@ -33,7 +33,7 @@ func (u *UserHandlers) Create(w http.ResponseWriter, r *http.Request, _ httprout
 	var dto dto.CreateUserRequest
 
 	if err := json.NewDecoder(r.Body).Decode(&dto); err != nil {
-		httprespond.ErrorResponse(w, "не удалось прочитать тело запроса", http.StatusBadRequest)
+		httprespond.ErrorResponse(w, "Bad request", http.StatusBadRequest)
 		return
 	}
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"table-api/internal/entitys"
 	"table-api/internal/models"
+	"table-api/internal/repository/gormerrors"
 	common "table-api/pkg"
 
 	"github.com/google/uuid"
@@ -34,7 +35,7 @@ func NewUserRepository(db *gorm.DB) UserRepository {
 
 func (u *userRepository) Create(ctx context.Context, user *models.User) (*models.User, error) {
 	if err := u.db.Create(user).Error; err != nil {
-		return nil, err
+		return nil, gormerrors.Map(err)
 	}
 
 	return user, nil
@@ -44,7 +45,7 @@ func (u *userRepository) GetByID(ctx context.Context, id uuid.UUID) (*models.Use
 	var user models.User
 
 	if err := u.db.First(&user, id).Error; err != nil {
-		return nil, err
+		return nil, gormerrors.Map(err)
 	}
 
 	return &user, nil
@@ -54,7 +55,7 @@ func (u *userRepository) GetByLogin(ctx context.Context, login string) (*models.
 	var user models.User
 
 	if err := u.db.Where("login = ?", login).First(&user).Error; err != nil {
-		return nil, err
+		return nil, gormerrors.Map(err)
 	}
 	return &user, nil
 }
@@ -73,12 +74,12 @@ func (u *userRepository) List(
 
 	// get total count
 	if err := u.db.Model(&models.User{}).Count(&totalItems).Error; err != nil {
-		return nil, nil, err
+		return nil, nil, gormerrors.Map(err)
 	}
 
 	// get users
 	if err := u.db.Limit(limit).Offset(offset).Find(&users).Error; err != nil {
-		return nil, nil, err
+		return nil, nil, gormerrors.Map(err)
 	}
 
 	// compute pagination
@@ -99,7 +100,7 @@ func (u *userRepository) Search(ctx context.Context, searchTerm string) ([]*mode
 		Error
 
 	if err != nil {
-		return nil, err
+		return nil, gormerrors.Map(err)
 	}
 
 	return users, nil
@@ -117,7 +118,7 @@ func (r *userRepository) Update(ctx context.Context, id uuid.UUID, updates map[s
 		Updates(updates)
 
 	if result.Error != nil {
-		return nil, result.Error
+		return nil, gormerrors.Map(result.Error)
 	}
 	if result.RowsAffected == 0 {
 		return nil, common.ErrNotFound
@@ -130,11 +131,11 @@ func (u *userRepository) Delete(ctx context.Context, id uuid.UUID) (*models.User
 	var user models.User
 
 	if err := u.db.First(&user, "id = ?", id).Error; err != nil {
-		return nil, common.ErrNotFound
+		return nil, gormerrors.Map(err)
 	}
 
 	if err := u.db.Delete(&user).Error; err != nil {
-		return nil, err
+		return nil, gormerrors.Map(err)
 	}
 
 	return &user, nil

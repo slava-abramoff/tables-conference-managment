@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"table-api/internal/models"
+	"table-api/internal/repository/gormerrors"
 
 	"gorm.io/gorm"
 )
@@ -33,7 +34,7 @@ func (s *shortLinkRepository) Create(ctx context.Context, url, code string) (*mo
 	}
 
 	if err := s.db.WithContext(ctx).Create(link).Error; err != nil {
-		return nil, err
+		return nil, gormerrors.Map(err)
 	}
 
 	return link, nil
@@ -43,7 +44,7 @@ func (s *shortLinkRepository) GetByCode(ctx context.Context, code string) (*mode
 	var shortLink models.ShortLink
 
 	if err := s.db.Where("code = ?", code).First(&shortLink).Error; err != nil {
-		return nil, err
+		return nil, gormerrors.Map(err)
 	}
 
 	return &shortLink, nil
@@ -75,7 +76,7 @@ func (s *shortLinkRepository) IncrementClickCount(
 		UpdateColumn("click_count", gorm.Expr("click_count + 1"))
 
 	if res.Error != nil {
-		return res.Error
+		return gormerrors.Map(res.Error)
 	}
 
 	if res.RowsAffected == 0 {

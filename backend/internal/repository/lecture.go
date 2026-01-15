@@ -2,8 +2,8 @@ package repository
 
 import (
 	"context"
-	"errors"
 	"table-api/internal/models"
+	"table-api/internal/repository/gormerrors"
 	common "table-api/pkg"
 	"time"
 
@@ -32,7 +32,7 @@ func NewLectureRepository(db *gorm.DB) LectureRepository {
 
 func (l *lectureRepository) Create(ctx context.Context, lecture *models.Lecture) (*models.Lecture, error) {
 	if err := l.db.Create(lecture).Error; err != nil {
-		return nil, err
+		return nil, gormerrors.Map(err)
 	}
 
 	return lecture, nil
@@ -45,7 +45,7 @@ func (l *lectureRepository) CreateMany(ctx context.Context, lectures []*models.L
 
 	result := l.db.WithContext(ctx).Create(lectures)
 	if result.Error != nil {
-		return nil, result.Error
+		return nil, gormerrors.Map(result.Error)
 	}
 
 	return lectures, nil
@@ -55,7 +55,7 @@ func (l *lectureRepository) GetByID(ctx context.Context, id int) (*models.Lectur
 	var lecture models.Lecture
 
 	if err := l.db.WithContext(ctx).First(&lecture, id).Error; err != nil {
-		return nil, err
+		return nil, gormerrors.Map(err)
 	}
 
 	return &lecture, nil
@@ -73,7 +73,7 @@ func (l *lectureRepository) Update(ctx context.Context, id int, updates map[stri
 		Updates(updates)
 
 	if result.Error != nil {
-		return nil, result.Error
+		return nil, gormerrors.Map(result.Error)
 	}
 
 	if result.RowsAffected == 0 {
@@ -87,14 +87,11 @@ func (l *lectureRepository) Delete(ctx context.Context, id int) (*models.Lecture
 	var lecture models.Lecture
 
 	if err := l.db.WithContext(ctx).First(&lecture, id).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, common.ErrNotFound
-		}
-		return nil, err
+		return nil, gormerrors.Map(err)
 	}
 
 	if err := l.db.Delete(&lecture).Error; err != nil {
-		return nil, err
+		return nil, gormerrors.Map(err)
 	}
 
 	return &lecture, nil
@@ -118,11 +115,11 @@ func (l *lectureRepository) UpdateURLsByGroup(
 		Updates(updates)
 
 	if result.Error != nil {
-		return nil, result.Error
+		return nil, gormerrors.Map(result.Error)
 	}
 
 	if result.RowsAffected == 0 {
-		return nil, nil
+		return nil, common.ErrNotFound
 	}
 
 	var updatedLectures []*models.Lecture
@@ -132,7 +129,7 @@ func (l *lectureRepository) UpdateURLsByGroup(
 		Find(&updatedLectures).Error
 
 	if err != nil {
-		return nil, err
+		return nil, gormerrors.Map(err)
 	}
 
 	return updatedLectures, nil
@@ -149,7 +146,7 @@ func (l *lectureRepository) FindByDateRange(ctx context.Context, startDate, endD
 		Error
 
 	if err != nil {
-		return nil, err
+		return nil, gormerrors.Map(err)
 	}
 
 	return lectures, nil
@@ -168,7 +165,7 @@ func (l *lectureRepository) FindByExactDate(ctx context.Context, date time.Time)
 		Error
 
 	if err != nil {
-		return nil, err
+		return nil, gormerrors.Map(err)
 	}
 
 	return lectures, nil
@@ -191,7 +188,7 @@ func (l *lectureRepository) FindForSchedule(
 		Error
 
 	if err != nil {
-		return nil, err
+		return nil, gormerrors.Map(err)
 	}
 
 	return lectures, nil
@@ -207,7 +204,7 @@ func (l *lectureRepository) FindWithUniqueDates(ctx context.Context) ([]*models.
 		Error
 
 	if err != nil {
-		return nil, err
+		return nil, gormerrors.Map(err)
 	}
 
 	return lectures, nil
