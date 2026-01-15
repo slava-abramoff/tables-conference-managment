@@ -32,14 +32,11 @@ func NewUserService(repo repository.UserRepo) UserService {
 }
 
 func (u *userService) Create(ctx context.Context, user entitys.User) (*models.User, error) {
-	fmt.Println("start")
 	existUser, err := u.repo.GetByLogin(ctx, user.Login)
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
-		fmt.Println("Failed gorm")
 		return nil, fmt.Errorf("failed to check login existence: %w", err)
 	}
 	if existUser != nil {
-		fmt.Println("User exist")
 		return nil, common.ErrAlreadyExists
 	}
 

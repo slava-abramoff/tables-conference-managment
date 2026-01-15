@@ -15,7 +15,7 @@ type shortLinkService struct {
 	repo repository.ShortLinkRepository
 }
 
-func NewShortLinkRepository(repo repository.ShortLinkRepository) ShortLinkService {
+func NewShortLinkService(repo repository.ShortLinkRepository) ShortLinkService {
 	return &shortLinkService{repo: repo}
 }
 
@@ -34,16 +34,17 @@ func (s *shortLinkService) GetUrl(ctx context.Context, code string) (*string, er
 
 func (s *shortLinkService) ShortUrl(ctx context.Context, url string) (*string, error) {
 	var code string
-	isUnique := false
 
-	for isUnique {
+	for {
 		newCode, err := utils.GenerateCode(3)
 		if err != nil {
 			return nil, err
 		}
 
-		isUnique = s.repo.IsUnique(ctx, newCode)
-		code = newCode
+		if s.repo.IsUnique(ctx, newCode) {
+			code = newCode
+			break
+		}
 	}
 
 	shortLink, err := s.repo.Create(ctx, url, code)
@@ -51,5 +52,5 @@ func (s *shortLinkService) ShortUrl(ctx context.Context, url string) (*string, e
 		return nil, err
 	}
 
-	return &shortLink.URL, nil
+	return &shortLink.Code, nil
 }

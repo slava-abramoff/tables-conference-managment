@@ -49,13 +49,19 @@ func (s *shortLinkRepository) GetByCode(ctx context.Context, code string) (*mode
 	return &shortLink, nil
 }
 
-func (s *shortLinkRepository) IsUnique(ctx context.Context, code string) bool {
-	return s.db.WithContext(ctx).
-		Select("1").
+func (r *shortLinkRepository) IsUnique(ctx context.Context, code string) bool {
+	var count int64
+
+	err := r.db.WithContext(ctx).
+		Model(&models.ShortLink{}).
 		Where("code = ?", code).
-		Limit(1).
-		Take(&struct{}{}).
-		Error == gorm.ErrRecordNotFound
+		Count(&count).Error
+
+	if err != nil {
+		return false
+	}
+
+	return count == 0
 }
 
 func (s *shortLinkRepository) IncrementClickCount(

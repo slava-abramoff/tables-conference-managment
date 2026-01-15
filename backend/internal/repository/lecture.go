@@ -2,8 +2,6 @@ package repository
 
 import (
 	"context"
-	"fmt"
-	"strconv"
 	"table-api/internal/models"
 	common "table-api/pkg"
 	"time"
@@ -19,7 +17,7 @@ type LectureRepository interface {
 	UpdateURLsByGroup(ctx context.Context, groupName string, url string, shortURL string) ([]*models.Lecture, error)
 	FindByDateRange(ctx context.Context, start, end time.Time) ([]*models.Lecture, error)
 	FindByExactDate(ctx context.Context, date time.Time) ([]*models.Lecture, error)
-	FindForSchedule(ctx context.Context, year, month string) ([]*models.Lecture, error)
+	FindForSchedule(ctx context.Context, year, month int) ([]*models.Lecture, error)
 	FindWithUniqueDates(ctx context.Context) ([]*models.Lecture, error)
 }
 
@@ -105,13 +103,14 @@ func (l *lectureRepository) UpdateURLsByGroup(
 	shortURL string,
 ) ([]*models.Lecture, error) {
 	updates := map[string]interface{}{
-		"url": url,
+		"URL":      url,
+		"ShortURL": shortURL,
 	}
 
 	result := l.db.
 		WithContext(ctx).
 		Model(&models.Lecture{}).
-		Where("group = ?", groupName).
+		Where(`"group" = ?`, groupName).
 		Updates(updates)
 
 	if result.Error != nil {
@@ -125,9 +124,8 @@ func (l *lectureRepository) UpdateURLsByGroup(
 	var updatedLectures []*models.Lecture
 	err := l.db.
 		WithContext(ctx).
-		Where("group = ?", groupName).
-		Find(&updatedLectures).
-		Error
+		Where(`"group" = ?`, groupName).
+		Find(&updatedLectures).Error
 
 	if err != nil {
 		return nil, err
@@ -174,24 +172,15 @@ func (l *lectureRepository) FindByExactDate(ctx context.Context, date time.Time)
 
 func (l *lectureRepository) FindForSchedule(
 	ctx context.Context,
-	year, month string,
+	year, month int,
 ) ([]*models.Lecture, error) {
-	y, err := strconv.Atoi(year)
-	if err != nil {
-		return nil, fmt.Errorf("invalid year format: %w", err)
-	}
 
-	m, err := strconv.Atoi(month)
-	if err != nil || m < 1 || m > 12 {
-		return nil, fmt.Errorf("invalid month format: %w", err)
-	}
-
-	start := time.Date(y, time.Month(m), 1, 0, 0, 0, 0, time.UTC)
+	start := time.Date(year, time.Month(month), 1, 0, 0, 0, 0, time.UTC)
 	end := start.AddDate(0, 1, 0).Add(-time.Second)
 
 	var lectures []*models.Lecture
 
-	err = l.db.WithContext(ctx).
+	err := l.db.WithContext(ctx).
 		Where("date >= ? AND date <= ?", start, end).
 		Order("date ASC, start ASC").
 		Find(&lectures).

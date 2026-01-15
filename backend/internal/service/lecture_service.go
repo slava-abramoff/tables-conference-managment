@@ -16,21 +16,29 @@ type LectureService interface {
 	CreateMany(ctx context.Context, dtos []dto.CreateLectureRequest) ([]*models.Lecture, error)
 	CreateManyLinks(ctx context.Context, dto dto.UpdateManyLinksRequest) ([]*models.Lecture, error)
 	GetDates(ctx context.Context) (*entitys.LectureDates, error)
-	GetSchedule(ctx context.Context, year, month string) ([]*entitys.DailySchedule, error)
+	GetSchedule(ctx context.Context, year, month int) ([]*entitys.DailySchedule, error)
 	GetByDate(ctx context.Context, date time.Time) ([]*models.Lecture, error)
 	Update(ctx context.Context, id int, dto dto.UpdateLectureRequest) (*models.Lecture, error)
 
 	// ExportExcel(dto GetExcelLecturesDTO) ([]map[string]interface{}, error)
+	// GetAll(ctx context.Context, page, limit int) ([]*models.Lecture, *entitys.Pagination, error)
 
 	Remove(ctx context.Context, id int) (*models.Lecture, error)
 }
 
 type lectureService struct {
-	repo repository.LectureRepository
+	repo  repository.LectureRepository
+	short ShortLinkService
 }
 
-func NewLectureService(repo repository.LectureRepository) LectureService {
-	return &lectureService{repo: repo}
+func NewLectureService(
+	repo repository.LectureRepository,
+	s ShortLinkService,
+) LectureService {
+	return &lectureService{
+		repo:  repo,
+		short: s,
+	}
 }
 
 func (l *lectureService) Create(ctx context.Context, dto dto.CreateLectureRequest) (*models.Lecture, error) {
@@ -40,7 +48,12 @@ func (l *lectureService) Create(ctx context.Context, dto dto.CreateLectureReques
 	}
 
 	if newLecture.URL != nil {
-		// TODO: shorted url
+		shortUrl, err := l.short.ShortUrl(ctx, *newLecture.URL)
+		if err != nil {
+			return nil, err
+		}
+
+		newLecture.ShortURL = shortUrl
 	}
 
 	return l.repo.Create(ctx, newLecture)
@@ -56,8 +69,12 @@ func (l *lectureService) CreateMany(ctx context.Context, dto []dto.CreateLecture
 }
 
 func (l *lectureService) CreateManyLinks(ctx context.Context, dto dto.UpdateManyLinksRequest) ([]*models.Lecture, error) {
-	// TODO: shorted url
-	return l.repo.UpdateURLsByGroup(ctx, dto.GroupName, dto.Url, "Short")
+	shortUrl, err := l.short.ShortUrl(ctx, dto.Url)
+	if err != nil {
+		return nil, err
+	}
+
+	return l.repo.UpdateURLsByGroup(ctx, dto.GroupName, dto.Url, *shortUrl)
 }
 
 func (l *lectureService) GetDates(ctx context.Context) (*entitys.LectureDates, error) {
@@ -98,7 +115,7 @@ func (l *lectureService) GetDates(ctx context.Context) (*entitys.LectureDates, e
 	return result, nil
 }
 
-func (l *lectureService) GetSchedule(ctx context.Context, year, month string) ([]*entitys.DailySchedule, error) {
+func (l *lectureService) GetSchedule(ctx context.Context, year, month int) ([]*entitys.DailySchedule, error) {
 	lectures, err := l.repo.FindForSchedule(ctx, year, month)
 	if err != nil {
 		return nil, err
@@ -135,6 +152,15 @@ func (l *lectureService) GetByDate(ctx context.Context, date time.Time) ([]*mode
 
 func (l *lectureService) Update(ctx context.Context, id int, dto dto.UpdateLectureRequest) (*models.Lecture, error) {
 	updates := map[string]interface{}{}
+
+	if dto.URL != nil && dto.ShortURL == nil {
+		shortUrl, err := l.short.ShortUrl(ctx, *dto.URL)
+		if err != nil {
+			return nil, err
+		}
+
+		dto.ShortURL = shortUrl
+	}
 
 	v := reflect.ValueOf(dto)
 	t := reflect.TypeOf(dto)

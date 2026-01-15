@@ -13,10 +13,14 @@ type CreateLectureRequest struct {
 	StreamKey    *string   `json:"streamKey,omitempty"   validate:"omitempty,max=100"`
 	Description  *string   `json:"description,omitempty" validate:"omitempty,max=2000"`
 	Admin        *string   `json:"admin,omitempty"       validate:"omitempty,max=100"`
-	Date         time.Time `json:"date"                  validate:"required"`       // ← единственное обязательное поле
-	Start        *string   `json:"start,omitempty"       validate:"omitempty,time"` // формат "15:04"
-	End          *string   `json:"end,omitempty"         validate:"omitempty,time"` // формат "15:04"
+	Date         time.Time `json:"date"                  validate:"required"`
+	Start        *string   `json:"start,omitempty" validate:"omitempty,max=10"`
+	End          *string   `json:"end,omitempty"   validate:"omitempty,max=10"`
 	AbnormalTime *string   `json:"abnormalTime,omitempty" validate:"omitempty,max=100"`
+}
+
+type CreateLecturesRequest struct {
+	Lectures []CreateLectureRequest `json:"lectures" validate:"required,dive"`
 }
 
 type UpdateLectureRequest struct {
@@ -30,9 +34,9 @@ type UpdateLectureRequest struct {
 	StreamKey    *string    `json:"streamKey,omitempty"   validate:"omitempty,max=100"`
 	Description  *string    `json:"description,omitempty" validate:"omitempty,max=2000"`
 	Admin        *string    `json:"admin,omitempty"       validate:"omitempty,max=100"`
-	Date         *time.Time `json:"date,omitempty"        validate:"omitempty"`      // теперь опционально
-	Start        *string    `json:"start,omitempty"       validate:"omitempty,time"` // "15:04"
-	End          *string    `json:"end,omitempty"         validate:"omitempty,time"` // "15:04"
+	Date         *time.Time `json:"date,omitempty"        validate:"omitempty"`
+	Start        *string    `json:"start,omitempty"       validate:"omitempty,time"`
+	End          *string    `json:"end,omitempty"         validate:"omitempty,time"`
 	AbnormalTime *string    `json:"abnormalTime,omitempty" validate:"omitempty,max=100"`
 }
 

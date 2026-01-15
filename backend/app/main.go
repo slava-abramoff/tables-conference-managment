@@ -23,6 +23,16 @@ func main() {
 	db := database.ConnectDB()
 	validator.Init()
 
+	//ShortLink
+	sRepo := repository.NewShortLinkRepository(db)
+	sService := service.NewShortLinkService(sRepo)
+	// shortenHandler
+
+	// Lectures
+	lRepo := repository.NewLectureRepository(db)
+	lService := service.NewLectureService(lRepo, sService)
+	lHandler := handler.NewLectureHandlers(lService)
+
 	// Users
 	uRepo := repository.NewUserRepository(db)
 	uService := service.NewUserService(uRepo)
@@ -33,7 +43,7 @@ func main() {
 	aService := service.NewAuthService(uRepo, aRepo)
 	aHandler := handler.NewAuthHandlers(aService)
 
-	router := router.NewRouter(uHandler, aHandler)
+	router := router.NewRouter(uHandler, aHandler, lHandler)
 
 	fmt.Println("Server is started...")
 	log.Fatal(http.ListenAndServe(":8080", router))

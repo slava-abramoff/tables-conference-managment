@@ -6,11 +6,11 @@ type LoginRequest struct {
 }
 
 type LogoutRequest struct {
-	RefreshToken string `json:"refreshToken" validate:"required,len=43"`
+	RefreshToken string `json:"refreshToken" validate:"required"`
 }
 
 type RefreshRequest struct {
-	RefreshToken string `json:"refreshToken" validate:"required,len=43"`
+	RefreshToken string `json:"refreshToken" validate:"required"`
 }
 
 type TokenResponse struct {
