@@ -19,22 +19,22 @@ const (
 	refreshTokenTTL = 7 * 24 * time.Hour
 )
 
-type AuthServiceInterface interface {
+type AuthService interface {
 	Login(ctx context.Context, login, password string) (*models.User, string, string, error)
 	Refresh(ctx context.Context, refreshToken string) (newAccessToken string, newRefreshToken string, err error)
 	Logout(ctx context.Context, refreshToken string) error
 }
 
-type AuthService struct {
-	userRepo    repository.UserRepo
+type authService struct {
+	userRepo    repository.UserRepository
 	refreshRepo repository.RefreshTokenRepo
 }
 
-func NewAuthService(userRepo repository.UserRepo, refreshRepo repository.RefreshTokenRepo) *AuthService {
-	return &AuthService{userRepo: userRepo, refreshRepo: refreshRepo}
+func NewAuthService(userRepo repository.UserRepository, refreshRepo repository.RefreshTokenRepo) AuthService {
+	return &authService{userRepo: userRepo, refreshRepo: refreshRepo}
 }
 
-func (a *AuthService) Login(ctx context.Context, login, password string) (*models.User, string, string, error) {
+func (a *authService) Login(ctx context.Context, login, password string) (*models.User, string, string, error) {
 	user, err := a.userRepo.GetByLogin(ctx, login)
 	if err != nil {
 		return nil, "", "", common.ErrNotFound
@@ -57,7 +57,7 @@ func (a *AuthService) Login(ctx context.Context, login, password string) (*model
 	return user, accessToken, refreshToken, nil
 }
 
-func (a *AuthService) Refresh(ctx context.Context, refreshToken string) (string, string, error) {
+func (a *authService) Refresh(ctx context.Context, refreshToken string) (string, string, error) {
 	rt, err := a.refreshRepo.GetByToken(ctx, refreshToken)
 	if err != nil || rt.ExpiresAt.Before(time.Now()) {
 		return "", "", common.ErrForbidden // TODO: invalid credentials
@@ -82,7 +82,7 @@ func (a *AuthService) Refresh(ctx context.Context, refreshToken string) (string,
 	return newAccess, newRefresh, nil
 }
 
-func (a *AuthService) generateAccessToken(user *models.User) (string, error) {
+func (a *authService) generateAccessToken(user *models.User) (string, error) {
 	claims := jwt.MapClaims{
 		"sub":  user.ID.String(),
 		"role": user.Role,
@@ -92,7 +92,7 @@ func (a *AuthService) generateAccessToken(user *models.User) (string, error) {
 	return token.SignedString([]byte(config.JwtSecret))
 }
 
-func (a *AuthService) generateRefreshToken(ctx context.Context, userID uuid.UUID) (string, error) {
+func (a *authService) generateRefreshToken(ctx context.Context, userID uuid.UUID) (string, error) {
 	buf := make([]byte, 32)
 	if _, err := rand.Read(buf); err != nil {
 		return "", err
@@ -110,6 +110,6 @@ func (a *AuthService) generateRefreshToken(ctx context.Context, userID uuid.UUID
 	return token, nil
 }
 
-func (a *AuthService) Logout(ctx context.Context, refreshToken string) error {
+func (a *authService) Logout(ctx context.Context, refreshToken string) error {
 	return a.refreshRepo.DeleteByToken(ctx, refreshToken)
 }

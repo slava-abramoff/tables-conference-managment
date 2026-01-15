@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"reflect"
+	"strings"
 	"table-api/internal/entitys"
 	"table-api/internal/handler/dto"
 	"table-api/internal/mappers"
@@ -27,8 +28,8 @@ type LectureService interface {
 }
 
 type lectureService struct {
-	repo  repository.LectureRepository
-	short ShortLinkService
+	lectureRepo      repository.LectureRepository
+	shortLinkService ShortLinkService
 }
 
 func NewLectureService(
@@ -36,8 +37,8 @@ func NewLectureService(
 	s ShortLinkService,
 ) LectureService {
 	return &lectureService{
-		repo:  repo,
-		short: s,
+		lectureRepo:      repo,
+		shortLinkService: s,
 	}
 }
 
@@ -48,7 +49,7 @@ func (l *lectureService) Create(ctx context.Context, dto dto.CreateLectureReques
 	}
 
 	if newLecture.URL != nil {
-		shortUrl, err := l.short.ShortUrl(ctx, *newLecture.URL)
+		shortUrl, err := l.shortLinkService.ShortUrl(ctx, *newLecture.URL)
 		if err != nil {
 			return nil, err
 		}
@@ -56,7 +57,7 @@ func (l *lectureService) Create(ctx context.Context, dto dto.CreateLectureReques
 		newLecture.ShortURL = shortUrl
 	}
 
-	return l.repo.Create(ctx, newLecture)
+	return l.lectureRepo.Create(ctx, newLecture)
 }
 
 func (l *lectureService) CreateMany(ctx context.Context, dto []dto.CreateLectureRequest) ([]*models.Lecture, error) {
@@ -65,20 +66,20 @@ func (l *lectureService) CreateMany(ctx context.Context, dto []dto.CreateLecture
 		return nil, err
 	}
 
-	return l.repo.CreateMany(ctx, newLectures)
+	return l.lectureRepo.CreateMany(ctx, newLectures)
 }
 
 func (l *lectureService) CreateManyLinks(ctx context.Context, dto dto.UpdateManyLinksRequest) ([]*models.Lecture, error) {
-	shortUrl, err := l.short.ShortUrl(ctx, dto.Url)
+	shortUrl, err := l.shortLinkService.ShortUrl(ctx, dto.Url)
 	if err != nil {
 		return nil, err
 	}
 
-	return l.repo.UpdateURLsByGroup(ctx, dto.GroupName, dto.Url, *shortUrl)
+	return l.lectureRepo.UpdateURLsByGroup(ctx, dto.GroupName, dto.Url, *shortUrl)
 }
 
 func (l *lectureService) GetDates(ctx context.Context) (*entitys.LectureDates, error) {
-	lectures, err := l.repo.FindWithUniqueDates(ctx)
+	lectures, err := l.lectureRepo.FindWithUniqueDates(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -116,7 +117,7 @@ func (l *lectureService) GetDates(ctx context.Context) (*entitys.LectureDates, e
 }
 
 func (l *lectureService) GetSchedule(ctx context.Context, year, month int) ([]*entitys.DailySchedule, error) {
-	lectures, err := l.repo.FindForSchedule(ctx, year, month)
+	lectures, err := l.lectureRepo.FindForSchedule(ctx, year, month)
 	if err != nil {
 		return nil, err
 	}
@@ -147,18 +148,22 @@ func (l *lectureService) GetSchedule(ctx context.Context, year, month int) ([]*e
 }
 
 func (l *lectureService) GetByDate(ctx context.Context, date time.Time) ([]*models.Lecture, error) {
-	return l.repo.FindByExactDate(ctx, date)
+	return l.lectureRepo.FindByExactDate(ctx, date)
 }
 
-func (l *lectureService) Update(ctx context.Context, id int, dto dto.UpdateLectureRequest) (*models.Lecture, error) {
+func (l *lectureService) Update(
+	ctx context.Context,
+	id int,
+	dto dto.UpdateLectureRequest,
+) (*models.Lecture, error) {
+
 	updates := map[string]interface{}{}
 
 	if dto.URL != nil && dto.ShortURL == nil {
-		shortUrl, err := l.short.ShortUrl(ctx, *dto.URL)
+		shortUrl, err := l.shortLinkService.ShortUrl(ctx, *dto.URL)
 		if err != nil {
 			return nil, err
 		}
-
 		dto.ShortURL = shortUrl
 	}
 
@@ -166,17 +171,27 @@ func (l *lectureService) Update(ctx context.Context, id int, dto dto.UpdateLectu
 	t := reflect.TypeOf(dto)
 
 	for i := 0; i < v.NumField(); i++ {
-		fieldName := t.Field(i).Name
-		fieldValue := v.Field(i).Interface()
+		fieldValue := v.Field(i)
 
-		if fieldValue != nil && fieldValue != "" {
-			updates[fieldName] = fieldValue
+		if fieldValue.Kind() != reflect.Ptr || fieldValue.IsNil() {
+			continue
 		}
+
+		fieldType := t.Field(i)
+
+		jsonTag := fieldType.Tag.Get("json")
+		column := strings.Split(jsonTag, ",")[0]
+
+		if column == "" || column == "-" {
+			continue
+		}
+
+		updates[column] = fieldValue.Interface()
 	}
 
-	return l.repo.Update(ctx, id, updates)
+	return l.lectureRepo.Update(ctx, id, updates)
 }
 
 func (l *lectureService) Remove(ctx context.Context, id int) (*models.Lecture, error) {
-	return l.repo.Delete(ctx, id)
+	return l.lectureRepo.Delete(ctx, id)
 }

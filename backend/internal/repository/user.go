@@ -10,7 +10,7 @@ import (
 	"gorm.io/gorm"
 )
 
-type UserRepo interface {
+type UserRepository interface {
 	Create(ctx context.Context, user *models.User) (*models.User, error)
 	GetByID(ctx context.Context, id uuid.UUID) (*models.User, error)
 	GetByLogin(ctx context.Context, login string) (*models.User, error)
@@ -24,15 +24,15 @@ type UserRepo interface {
 	Delete(ctx context.Context, id uuid.UUID) (*models.User, error)
 }
 
-type UserRepository struct {
+type userRepository struct {
 	db *gorm.DB
 }
 
-func NewUserRepository(db *gorm.DB) *UserRepository {
-	return &UserRepository{db: db}
+func NewUserRepository(db *gorm.DB) UserRepository {
+	return &userRepository{db: db}
 }
 
-func (u *UserRepository) Create(ctx context.Context, user *models.User) (*models.User, error) {
+func (u *userRepository) Create(ctx context.Context, user *models.User) (*models.User, error) {
 	if err := u.db.Create(user).Error; err != nil {
 		return nil, err
 	}
@@ -40,7 +40,7 @@ func (u *UserRepository) Create(ctx context.Context, user *models.User) (*models
 	return user, nil
 }
 
-func (u *UserRepository) GetByID(ctx context.Context, id uuid.UUID) (*models.User, error) {
+func (u *userRepository) GetByID(ctx context.Context, id uuid.UUID) (*models.User, error) {
 	var user models.User
 
 	if err := u.db.First(&user, id).Error; err != nil {
@@ -50,7 +50,7 @@ func (u *UserRepository) GetByID(ctx context.Context, id uuid.UUID) (*models.Use
 	return &user, nil
 }
 
-func (u *UserRepository) GetByLogin(ctx context.Context, login string) (*models.User, error) {
+func (u *userRepository) GetByLogin(ctx context.Context, login string) (*models.User, error) {
 	var user models.User
 
 	if err := u.db.Where("login = ?", login).First(&user).Error; err != nil {
@@ -59,7 +59,7 @@ func (u *UserRepository) GetByLogin(ctx context.Context, login string) (*models.
 	return &user, nil
 }
 
-func (u *UserRepository) List(
+func (u *userRepository) List(
 	ctx context.Context,
 	page int,
 	limit int,
@@ -87,7 +87,7 @@ func (u *UserRepository) List(
 	return users, &pagination, nil
 }
 
-func (u *UserRepository) Search(ctx context.Context, searchTerm string) ([]*models.User, error) {
+func (u *userRepository) Search(ctx context.Context, searchTerm string) ([]*models.User, error) {
 	var users []*models.User
 
 	searchPattern := "%" + searchTerm + "%"
@@ -105,7 +105,7 @@ func (u *UserRepository) Search(ctx context.Context, searchTerm string) ([]*mode
 	return users, nil
 }
 
-func (r *UserRepository) Update(ctx context.Context, id uuid.UUID, updates map[string]interface{}) (*models.User, error) {
+func (r *userRepository) Update(ctx context.Context, id uuid.UUID, updates map[string]interface{}) (*models.User, error) {
 	if len(updates) == 0 {
 		return r.GetByID(ctx, id)
 	}
@@ -126,7 +126,7 @@ func (r *UserRepository) Update(ctx context.Context, id uuid.UUID, updates map[s
 	return r.GetByID(ctx, id)
 }
 
-func (u *UserRepository) Delete(ctx context.Context, id uuid.UUID) (*models.User, error) {
+func (u *userRepository) Delete(ctx context.Context, id uuid.UUID) (*models.User, error) {
 	var user models.User
 
 	if err := u.db.First(&user, "id = ?", id).Error; err != nil {

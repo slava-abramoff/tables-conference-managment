@@ -18,11 +18,11 @@ import (
 )
 
 type AuthHandlers struct {
-	service service.AuthServiceInterface
+	authService service.AuthService
 }
 
-func NewAuthHandlers(service service.AuthServiceInterface) *AuthHandlers {
-	return &AuthHandlers{service: service}
+func NewAuthHandlers(service service.AuthService) *AuthHandlers {
+	return &AuthHandlers{authService: service}
 }
 
 func (a *AuthHandlers) Login(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
@@ -38,7 +38,7 @@ func (a *AuthHandlers) Login(w http.ResponseWriter, r *http.Request, _ httproute
 		return
 	}
 
-	user, access, refresh, err := a.service.Login(r.Context(), req.Login, req.Password)
+	user, access, refresh, err := a.authService.Login(r.Context(), req.Login, req.Password)
 	if err != nil {
 		httprespond.HandleErrorResponse(w, err)
 		return
@@ -63,7 +63,7 @@ func (a *AuthHandlers) Refresh(w http.ResponseWriter, r *http.Request, _ httprou
 		return
 	}
 
-	access, refresh, err := a.service.Refresh(r.Context(), req.RefreshToken)
+	access, refresh, err := a.authService.Refresh(r.Context(), req.RefreshToken)
 	if err != nil {
 		httprespond.HandleErrorResponse(w, err)
 		return
@@ -89,7 +89,7 @@ func (a *AuthHandlers) Logout(w http.ResponseWriter, r *http.Request, _ httprout
 		return
 	}
 
-	err := a.service.Logout(ctx, req.RefreshToken)
+	err := a.authService.Logout(ctx, req.RefreshToken)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			httprespond.JsonResponse(w, map[string]string{"message": "Logged out"}, http.StatusOK)

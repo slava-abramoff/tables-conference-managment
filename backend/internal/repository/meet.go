@@ -10,26 +10,22 @@ import (
 	"gorm.io/gorm"
 )
 
-type MeetRepo interface {
-
-	// // CREATE
+type MeetRepository interface {
 	Create(ctx context.Context, meet *models.Meet) (*models.Meet, error)
-	// // UPDATE
 	Update(ctx context.Context, id int, updates map[string]interface{}) (*models.Meet, error)
-	// // READ
-	List(page, limit int, filter dto.GetQueryMeetDto) ([]*models.Meet, *entitys.Pagination, error)
+	List(ctx context.Context, page, limit int, filter dto.GetQueryMeetDto) ([]*models.Meet, *entitys.Pagination, error)
 	GetByID(ctx context.Context, id int) (*models.Meet, error)
 }
 
-type MeetRepository struct {
+type meetRepository struct {
 	db *gorm.DB
 }
 
-func NewMeetRepository(db *gorm.DB) *MeetRepository {
-	return &MeetRepository{db: db}
+func NewMeetRepository(db *gorm.DB) MeetRepository {
+	return &meetRepository{db: db}
 }
 
-func (m *MeetRepository) Create(ctx context.Context, meet *models.Meet) (*models.Meet, error) {
+func (m *meetRepository) Create(ctx context.Context, meet *models.Meet) (*models.Meet, error) {
 	if err := m.db.Create(meet).Error; err != nil {
 		return nil, err
 	}
@@ -37,7 +33,7 @@ func (m *MeetRepository) Create(ctx context.Context, meet *models.Meet) (*models
 	return meet, nil
 }
 
-func (m *MeetRepository) Update(ctx context.Context, id int, updates map[string]interface{}) (*models.Meet, error) {
+func (m *meetRepository) Update(ctx context.Context, id int, updates map[string]interface{}) (*models.Meet, error) {
 	if len(updates) == 0 {
 		return m.GetByID(ctx, id)
 	}
@@ -58,7 +54,7 @@ func (m *MeetRepository) Update(ctx context.Context, id int, updates map[string]
 	return m.GetByID(ctx, id)
 }
 
-func (m *MeetRepository) GetByID(ctx context.Context, id int) (*models.Meet, error) {
+func (m *meetRepository) GetByID(ctx context.Context, id int) (*models.Meet, error) {
 	var meet models.Meet
 
 	if err := m.db.First(&meet, id).Error; err != nil {
@@ -68,7 +64,7 @@ func (m *MeetRepository) GetByID(ctx context.Context, id int) (*models.Meet, err
 	return &meet, nil
 }
 
-func (m *MeetRepository) List(
+func (m *meetRepository) List(
 	ctx context.Context,
 	page int,
 	limit int,

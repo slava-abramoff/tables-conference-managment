@@ -16,11 +16,11 @@ import (
 )
 
 type LectureHandlers struct {
-	service service.LectureService
+	lectureService service.LectureService
 }
 
 func NewLectureHandlers(s service.LectureService) *LectureHandlers {
-	return &LectureHandlers{service: s}
+	return &LectureHandlers{lectureService: s}
 }
 
 func (l *LectureHandlers) Create(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
@@ -38,7 +38,7 @@ func (l *LectureHandlers) Create(w http.ResponseWriter, r *http.Request, _ httpr
 		return
 	}
 
-	resp, err := l.service.Create(ctx, req)
+	resp, err := l.lectureService.Create(ctx, req)
 	if err != nil {
 		httprespond.HandleErrorResponse(w, err)
 		return
@@ -62,7 +62,7 @@ func (l *LectureHandlers) CreateMany(w http.ResponseWriter, r *http.Request, _ h
 		return
 	}
 
-	resp, err := l.service.CreateMany(ctx, req.Lectures)
+	resp, err := l.lectureService.CreateMany(ctx, req.Lectures)
 	if err != nil {
 		httprespond.HandleErrorResponse(w, err)
 		return
@@ -74,7 +74,7 @@ func (l *LectureHandlers) CreateMany(w http.ResponseWriter, r *http.Request, _ h
 func (l *LectureHandlers) GetDates(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	ctx := r.Context()
 
-	resp, err := l.service.GetDates(ctx)
+	resp, err := l.lectureService.GetDates(ctx)
 	if err != nil {
 		httprespond.HandleErrorResponse(w, err)
 		return
@@ -93,7 +93,7 @@ func (l *LectureHandlers) GetByDates(w http.ResponseWriter, r *http.Request, ps 
 		return
 	}
 
-	resp, err := l.service.GetByDate(ctx, parsedDate)
+	resp, err := l.lectureService.GetByDate(ctx, parsedDate)
 	if err != nil {
 		httprespond.HandleErrorResponse(w, err)
 		return
@@ -110,7 +110,7 @@ func (l *LectureHandlers) GetSchedule(w http.ResponseWriter, r *http.Request, _ 
 
 	parsedYear, parsedMonth, err := utils.ParseYearMonth(year, month)
 
-	resp, err := l.service.GetSchedule(ctx, parsedYear, parsedMonth)
+	resp, err := l.lectureService.GetSchedule(ctx, parsedYear, parsedMonth)
 	if err != nil {
 		httprespond.HandleErrorResponse(w, err)
 		return
@@ -141,7 +141,7 @@ func (l *LectureHandlers) Update(w http.ResponseWriter, r *http.Request, ps http
 		return
 	}
 
-	resp, err := l.service.Update(ctx, id, req)
+	resp, err := l.lectureService.Update(ctx, id, req)
 	if err != nil {
 		httprespond.HandleErrorResponse(w, err)
 		return
@@ -165,7 +165,7 @@ func (l *LectureHandlers) CreateManyLinks(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	resp, err := l.service.CreateManyLinks(ctx, req)
+	resp, err := l.lectureService.CreateManyLinks(ctx, req)
 	if err != nil {
 		httprespond.HandleErrorResponse(w, err)
 		return
@@ -184,7 +184,7 @@ func (l *LectureHandlers) Remove(w http.ResponseWriter, r *http.Request, ps http
 		return
 	}
 
-	resp, err := l.service.Remove(ctx, id)
+	resp, err := l.lectureService.Remove(ctx, id)
 	if err != nil {
 		httprespond.HandleErrorResponse(w, err)
 		return

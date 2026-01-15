@@ -24,15 +24,15 @@ type UserService interface {
 }
 
 type userService struct {
-	repo repository.UserRepo
+	userRepo repository.UserRepository
 }
 
-func NewUserService(repo repository.UserRepo) UserService {
-	return &userService{repo: repo}
+func NewUserService(repo repository.UserRepository) UserService {
+	return &userService{userRepo: repo}
 }
 
 func (u *userService) Create(ctx context.Context, user entitys.User) (*models.User, error) {
-	existUser, err := u.repo.GetByLogin(ctx, user.Login)
+	existUser, err := u.userRepo.GetByLogin(ctx, user.Login)
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, fmt.Errorf("failed to check login existence: %w", err)
 	}
@@ -42,7 +42,7 @@ func (u *userService) Create(ctx context.Context, user entitys.User) (*models.Us
 
 	data := mappers.UserToModel(user)
 
-	newUser, err := u.repo.Create(ctx, &data)
+	newUser, err := u.userRepo.Create(ctx, &data)
 	if err != nil {
 		return nil, err
 	}
@@ -60,7 +60,7 @@ func (u *userService) FindMany(ctx context.Context, page int, limit int) ([]*mod
 		limit = 100
 	}
 
-	users, pagination, err := u.repo.List(ctx, page, limit)
+	users, pagination, err := u.userRepo.List(ctx, page, limit)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -72,7 +72,7 @@ func (u *userService) Search(
 	ctx context.Context,
 	searchTerm string,
 ) ([]*models.User, error) {
-	return u.repo.Search(ctx, searchTerm)
+	return u.userRepo.Search(ctx, searchTerm)
 }
 
 func (u *userService) Update(ctx context.Context, id uuid.UUID, dto dto.UpdateUserRequest) (*models.User, error) {
@@ -92,14 +92,14 @@ func (u *userService) Update(ctx context.Context, id uuid.UUID, dto dto.UpdateUs
 	}
 
 	if len(updates) == 0 {
-		return u.repo.GetByID(ctx, id)
+		return u.userRepo.GetByID(ctx, id)
 	}
 
-	return u.repo.Update(ctx, id, updates)
+	return u.userRepo.Update(ctx, id, updates)
 }
 
 func (u *userService) Remove(ctx context.Context, id uuid.UUID) (*models.User, error) {
-	deletedUser, err := u.repo.Delete(ctx, id)
+	deletedUser, err := u.userRepo.Delete(ctx, id)
 	if err != nil {
 		return nil, err
 	}

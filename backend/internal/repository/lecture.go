@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"errors"
 	"table-api/internal/models"
 	common "table-api/pkg"
 	"time"
@@ -53,7 +54,7 @@ func (l *lectureRepository) CreateMany(ctx context.Context, lectures []*models.L
 func (l *lectureRepository) GetByID(ctx context.Context, id int) (*models.Lecture, error) {
 	var lecture models.Lecture
 
-	if err := l.db.First(&lecture, id).Error; err != nil {
+	if err := l.db.WithContext(ctx).First(&lecture, id).Error; err != nil {
 		return nil, err
 	}
 
@@ -85,8 +86,11 @@ func (l *lectureRepository) Update(ctx context.Context, id int, updates map[stri
 func (l *lectureRepository) Delete(ctx context.Context, id int) (*models.Lecture, error) {
 	var lecture models.Lecture
 
-	if _, err := l.GetByID(ctx, id); err != nil {
-		return nil, common.ErrNotFound
+	if err := l.db.WithContext(ctx).First(&lecture, id).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, common.ErrNotFound
+		}
+		return nil, err
 	}
 
 	if err := l.db.Delete(&lecture).Error; err != nil {

@@ -35,8 +35,8 @@ type UpdateLectureRequest struct {
 	Description  *string    `json:"description,omitempty" validate:"omitempty,max=2000"`
 	Admin        *string    `json:"admin,omitempty"       validate:"omitempty,max=100"`
 	Date         *time.Time `json:"date,omitempty"        validate:"omitempty"`
-	Start        *string    `json:"start,omitempty"       validate:"omitempty,time"`
-	End          *string    `json:"end,omitempty"         validate:"omitempty,time"`
+	Start        *string    `json:"start,omitempty"       validate:"omitempty"`
+	End          *string    `json:"end,omitempty"         validate:"omitempty"`
 	AbnormalTime *string    `json:"abnormalTime,omitempty" validate:"omitempty,max=100"`
 }
 

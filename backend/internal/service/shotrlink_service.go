@@ -12,20 +12,20 @@ type ShortLinkService interface {
 }
 
 type shortLinkService struct {
-	repo repository.ShortLinkRepository
+	shortLinkRepo repository.ShortLinkRepository
 }
 
 func NewShortLinkService(repo repository.ShortLinkRepository) ShortLinkService {
-	return &shortLinkService{repo: repo}
+	return &shortLinkService{shortLinkRepo: repo}
 }
 
 func (s *shortLinkService) GetUrl(ctx context.Context, code string) (*string, error) {
-	shortLink, err := s.repo.GetByCode(ctx, code)
+	shortLink, err := s.shortLinkRepo.GetByCode(ctx, code)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := s.repo.IncrementClickCount(ctx, shortLink.ID); err != nil {
+	if err := s.shortLinkRepo.IncrementClickCount(ctx, shortLink.ID); err != nil {
 		return nil, err
 	}
 
@@ -41,13 +41,13 @@ func (s *shortLinkService) ShortUrl(ctx context.Context, url string) (*string, e
 			return nil, err
 		}
 
-		if s.repo.IsUnique(ctx, newCode) {
+		if s.shortLinkRepo.IsUnique(ctx, newCode) {
 			code = newCode
 			break
 		}
 	}
 
-	shortLink, err := s.repo.Create(ctx, url, code)
+	shortLink, err := s.shortLinkRepo.Create(ctx, url, code)
 	if err != nil {
 		return nil, err
 	}
