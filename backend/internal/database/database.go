@@ -22,6 +22,7 @@ func ConnectDB() *gorm.DB {
 
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
+		// TODO: return error
 		log.Fatal("failed to connect to database:", err)
 	}
 
@@ -29,6 +30,7 @@ func ConnectDB() *gorm.DB {
 		log.Fatal("failed to enable pgcrypto:", err)
 	}
 
+	// TODO: Ручные миграции, отдельным скриптом
 	if os.Getenv("AUTO_MIGRATE") == "true" {
 		err = db.AutoMigrate(
 			&models.User{},

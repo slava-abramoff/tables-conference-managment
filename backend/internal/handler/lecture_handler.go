@@ -18,6 +18,7 @@ type LectureHandlers struct {
 	lectureService service.LectureService
 }
 
+// TODO: локальные интерфейсы
 func NewLectureHandlers(s service.LectureService) *LectureHandlers {
 	return &LectureHandlers{lectureService: s}
 }
@@ -31,6 +32,7 @@ func (l *LectureHandlers) Create(w http.ResponseWriter, r *http.Request, _ httpr
 		return
 	}
 
+	// TODO: проверять типизированную ошибку
 	if message, err := dto.Validate(w, req); err != nil {
 		httprespond.ErrorResponse(w, message, http.StatusBadRequest)
 		return

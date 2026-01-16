@@ -27,7 +27,7 @@ func NewMeetRepository(db *gorm.DB) MeetRepository {
 }
 
 func (m *meetRepository) Create(ctx context.Context, meet *models.Meet) (*models.Meet, error) {
-	if err := m.db.Create(meet).Error; err != nil {
+	if err := m.db.WithContext(ctx).Create(meet).Error; err != nil {
 		return nil, gormerrors.Map(err)
 	}
 
@@ -58,7 +58,7 @@ func (m *meetRepository) Update(ctx context.Context, id int, updates map[string]
 func (m *meetRepository) GetByID(ctx context.Context, id int) (*models.Meet, error) {
 	var meet models.Meet
 
-	if err := m.db.First(&meet, id).Error; err != nil {
+	if err := m.db.WithContext(ctx).First(&meet, id).Error; err != nil {
 		return nil, gormerrors.Map(err)
 	}
 

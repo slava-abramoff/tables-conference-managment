@@ -20,6 +20,8 @@ func main() {
 		log.Fatal("Error loading .env file")
 	}
 
+	// TODO: slog logger
+
 	db := database.ConnectDB()
 	validator.Init()
 

@@ -6,6 +6,8 @@ import (
 	"time"
 )
 
+// TODO: реализовать через обращение к бд
+
 type Task struct {
 	Exec     func(ctx context.Context)
 	ExecTime time.Time

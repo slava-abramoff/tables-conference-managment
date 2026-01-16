@@ -31,7 +31,7 @@ func NewLectureRepository(db *gorm.DB) LectureRepository {
 }
 
 func (l *lectureRepository) Create(ctx context.Context, lecture *models.Lecture) (*models.Lecture, error) {
-	if err := l.db.Create(lecture).Error; err != nil {
+	if err := l.db.WithContext(ctx).Create(lecture).Error; err != nil {
 		return nil, gormerrors.Map(err)
 	}
 
