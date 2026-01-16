@@ -1,6 +1,9 @@
 package dto
 
-import "time"
+import (
+	"table-api/internal/entitys"
+	"time"
+)
 
 type CreateLectureRequest struct {
 	Group        *string   `json:"group,omitempty"       validate:"omitempty,min=1,max=100"`
@@ -43,4 +46,8 @@ type UpdateLectureRequest struct {
 type UpdateManyLinksRequest struct {
 	GroupName string `json:"groupName"`
 	Url       string `json:"url"`
+}
+
+type DailySchedulesResponse struct {
+	Data []*entitys.DailySchedule `json:"data"`
 }

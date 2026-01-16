@@ -42,6 +42,37 @@ func DtoToLecture(dto dto.CreateLectureRequest) (*models.Lecture, error) {
 	return &lecture, nil
 }
 
+func LectureToDto(lecture *models.Lecture) *dto.CreateLectureRequest {
+	var startStr, endStr *string
+
+	if lecture.Start != nil {
+		s := lecture.Start.Format("15:04")
+		startStr = &s
+	}
+
+	if lecture.End != nil {
+		e := lecture.End.Format("15:04")
+		endStr = &e
+	}
+
+	return &dto.CreateLectureRequest{
+		Group:        lecture.Group,
+		Lector:       lecture.Lector,
+		Platform:     lecture.Platform,
+		Unit:         lecture.Unit,
+		Location:     lecture.Location,
+		URL:          lecture.URL,
+		ShortURL:     lecture.ShortURL,
+		StreamKey:    lecture.StreamKey,
+		Description:  lecture.Description,
+		Admin:        lecture.Admin,
+		Date:         lecture.Date,
+		Start:        startStr,
+		End:          endStr,
+		AbnormalTime: lecture.AbnormalTime,
+	}
+}
+
 func DtoToManyLecture(dtos []dto.CreateLectureRequest) ([]*models.Lecture, error) {
 	var lectures []*models.Lecture
 	for _, v := range dtos {
@@ -54,4 +85,15 @@ func DtoToManyLecture(dtos []dto.CreateLectureRequest) ([]*models.Lecture, error
 	}
 
 	return lectures, nil
+}
+
+func ManyLectureToDto(lectures []*models.Lecture) []dto.CreateLectureRequest {
+	var dtos []dto.CreateLectureRequest
+	for _, v := range lectures {
+		lecture := LectureToDto(v)
+
+		dtos = append(dtos, *lecture)
+	}
+
+	return dtos
 }

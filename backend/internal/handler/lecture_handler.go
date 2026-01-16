@@ -4,12 +4,11 @@ import (
 	"encoding/json"
 	"net/http"
 	"strconv"
-	"strings"
 	"table-api/internal/handler/dto"
+	"table-api/internal/mappers"
 	"table-api/internal/service"
 	httprespond "table-api/pkg/http"
 	"table-api/pkg/utils"
-	"table-api/pkg/validator"
 	"time"
 
 	"github.com/julienschmidt/httprouter"
@@ -32,18 +31,18 @@ func (l *LectureHandlers) Create(w http.ResponseWriter, r *http.Request, _ httpr
 		return
 	}
 
-	if err := validator.Get().Struct(&req); err != nil {
-		errors := validator.FormatValidationErrors(err)
-		httprespond.ErrorResponse(w, strings.Join(errors, "; "), http.StatusBadRequest)
+	if message, err := dto.Validate(w, req); err != nil {
+		httprespond.ErrorResponse(w, message, http.StatusBadRequest)
 		return
 	}
 
-	resp, err := l.lectureService.Create(ctx, req)
+	newLecture, err := l.lectureService.Create(ctx, req)
 	if err != nil {
 		httprespond.HandleErrorResponse(w, err)
 		return
 	}
 
+	resp := mappers.LectureToDto(newLecture)
 	httprespond.JsonResponse(w, resp, 201)
 }
 
@@ -56,18 +55,18 @@ func (l *LectureHandlers) CreateMany(w http.ResponseWriter, r *http.Request, _ h
 		return
 	}
 
-	if err := validator.Get().Struct(&req); err != nil {
-		errors := validator.FormatValidationErrors(err)
-		httprespond.ErrorResponse(w, strings.Join(errors, "; "), http.StatusBadRequest)
+	if message, err := dto.Validate(w, req); err != nil {
+		httprespond.ErrorResponse(w, message, http.StatusBadRequest)
 		return
 	}
 
-	resp, err := l.lectureService.CreateMany(ctx, req.Lectures)
+	newLectures, err := l.lectureService.CreateMany(ctx, req.Lectures)
 	if err != nil {
 		httprespond.HandleErrorResponse(w, err)
 		return
 	}
 
+	resp := mappers.ManyLectureToDto(newLectures)
 	httprespond.JsonResponse(w, resp, 201)
 }
 
@@ -110,11 +109,13 @@ func (l *LectureHandlers) GetSchedule(w http.ResponseWriter, r *http.Request, _ 
 
 	parsedYear, parsedMonth, err := utils.ParseYearMonth(year, month)
 
-	resp, err := l.lectureService.GetSchedule(ctx, parsedYear, parsedMonth)
+	schedule, err := l.lectureService.GetSchedule(ctx, parsedYear, parsedMonth)
 	if err != nil {
 		httprespond.HandleErrorResponse(w, err)
 		return
 	}
+
+	resp := dto.DailySchedulesResponse{Data: schedule}
 
 	httprespond.JsonResponse(w, resp, 200)
 }
@@ -135,9 +136,8 @@ func (l *LectureHandlers) Update(w http.ResponseWriter, r *http.Request, ps http
 		return
 	}
 
-	if err := validator.Get().Struct(&req); err != nil {
-		errors := validator.FormatValidationErrors(err)
-		httprespond.ErrorResponse(w, strings.Join(errors, "; "), http.StatusBadRequest)
+	if message, err := dto.Validate(w, req); err != nil {
+		httprespond.ErrorResponse(w, message, http.StatusBadRequest)
 		return
 	}
 
@@ -159,9 +159,8 @@ func (l *LectureHandlers) CreateManyLinks(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	if err := validator.Get().Struct(&req); err != nil {
-		errors := validator.FormatValidationErrors(err)
-		httprespond.ErrorResponse(w, strings.Join(errors, "; "), http.StatusBadRequest)
+	if message, err := dto.Validate(w, req); err != nil {
+		httprespond.ErrorResponse(w, message, http.StatusBadRequest)
 		return
 	}
 

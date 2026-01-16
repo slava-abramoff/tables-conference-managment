@@ -1,17 +1,13 @@
 package handler
 
 import (
-	"context"
 	"encoding/json"
 	"net/http"
 	"strconv"
-	"strings"
 	"table-api/internal/handler/dto"
 	"table-api/internal/mappers"
 	"table-api/internal/service"
 	httprespond "table-api/pkg/http"
-	"table-api/pkg/validator"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/julienschmidt/httprouter"
@@ -28,37 +24,34 @@ func NewUserHandlers(service service.UserService) *UserHandlers {
 }
 
 func (u *UserHandlers) Create(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	ctx, cancel := context.WithTimeout(r.Context(), TIMEOUT*time.Second)
-	defer cancel()
-	var dto dto.CreateUserRequest
+	ctx := r.Context()
 
-	if err := json.NewDecoder(r.Body).Decode(&dto); err != nil {
+	var req dto.CreateUserRequest
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		httprespond.ErrorResponse(w, "Bad request", http.StatusBadRequest)
 		return
 	}
 
-	// Валидация
-	if err := validator.Get().Struct(&dto); err != nil {
-		errors := validator.FormatValidationErrors(err)
-		httprespond.ErrorResponse(w, strings.Join(errors, "; "), http.StatusBadRequest)
+	if message, err := dto.Validate(w, req); err != nil {
+		httprespond.ErrorResponse(w, message, http.StatusBadRequest)
 		return
 	}
 
-	body := mappers.DtoCreateRequestToUser(dto)
+	body := mappers.DtoCreateRequestToUser(req)
 	newUser, err := u.service.Create(ctx, body)
 	if err != nil {
 		httprespond.HandleErrorResponse(w, err)
 		return
 	}
 
-	data := mappers.ToUserResponse(*newUser)
+	resp := mappers.ToUserResponse(*newUser)
 
-	httprespond.JsonResponse(w, data, http.StatusOK)
+	httprespond.JsonResponse(w, resp, http.StatusOK)
 }
 
 func (u *UserHandlers) FindMany(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	ctx, cancel := context.WithTimeout(r.Context(), TIMEOUT*time.Second)
-	defer cancel()
+	ctx := r.Context()
 
 	page := r.URL.Query().Get("page")
 	limit := r.URL.Query().Get("limit")
@@ -94,8 +87,7 @@ func (u *UserHandlers) FindMany(w http.ResponseWriter, r *http.Request, _ httpro
 }
 
 func (u *UserHandlers) Search(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	ctx, cancel := context.WithTimeout(r.Context(), TIMEOUT*time.Second)
-	defer cancel()
+	ctx := r.Context()
 
 	searchTerm := r.URL.Query().Get("searchTerm")
 
@@ -109,8 +101,7 @@ func (u *UserHandlers) Search(w http.ResponseWriter, r *http.Request, _ httprout
 }
 
 func (u *UserHandlers) Update(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	ctx, cancel := context.WithTimeout(r.Context(), TIMEOUT*time.Second)
-	defer cancel()
+	ctx := r.Context()
 
 	userIdStr := ps.ByName("id")
 	id, err := uuid.Parse(userIdStr)
@@ -119,19 +110,18 @@ func (u *UserHandlers) Update(w http.ResponseWriter, r *http.Request, ps httprou
 		return
 	}
 
-	var dto dto.UpdateUserRequest
-	if err := json.NewDecoder(r.Body).Decode(&dto); err != nil {
+	var req dto.UpdateUserRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		httprespond.ErrorResponse(w, "Bad request", http.StatusBadRequest)
 		return
 	}
 
-	if err := validator.Get().Struct(&dto); err != nil {
-		errors := validator.FormatValidationErrors(err)
-		httprespond.ErrorResponse(w, strings.Join(errors, "; "), http.StatusBadRequest)
+	if message, err := dto.Validate(w, req); err != nil {
+		httprespond.ErrorResponse(w, message, http.StatusBadRequest)
 		return
 	}
 
-	updated, err := u.service.Update(ctx, id, dto)
+	updated, err := u.service.Update(ctx, id, req)
 	if err != nil {
 		httprespond.HandleErrorResponse(w, err)
 		return
@@ -143,8 +133,7 @@ func (u *UserHandlers) Update(w http.ResponseWriter, r *http.Request, ps httprou
 }
 
 func (u *UserHandlers) Remove(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	ctx, cancel := context.WithTimeout(r.Context(), TIMEOUT*time.Second)
-	defer cancel()
+	ctx := r.Context()
 
 	userIdStr := ps.ByName("id")
 	id, err := uuid.Parse(userIdStr)

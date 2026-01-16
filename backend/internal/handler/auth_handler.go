@@ -1,17 +1,13 @@
 package handler
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
-	"strings"
 	"table-api/internal/handler/dto"
 	"table-api/internal/mappers"
 	"table-api/internal/service"
 	httprespond "table-api/pkg/http"
-	"table-api/pkg/validator"
-	"time"
 
 	"github.com/julienschmidt/httprouter"
 	"gorm.io/gorm"
@@ -26,19 +22,20 @@ func NewAuthHandlers(service service.AuthService) *AuthHandlers {
 }
 
 func (a *AuthHandlers) Login(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	ctx := r.Context()
+
 	var req dto.LoginRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		httprespond.ErrorResponse(w, "Bad request", http.StatusBadRequest)
 		return
 	}
 
-	if err := validator.Get().Struct(&req); err != nil {
-		errs := validator.FormatValidationErrorsRussian(err)
-		httprespond.ErrorResponse(w, strings.Join(errs, "; "), http.StatusBadRequest)
+	if message, err := dto.Validate(w, req); err != nil {
+		httprespond.ErrorResponse(w, message, http.StatusBadRequest)
 		return
 	}
 
-	user, access, refresh, err := a.authService.Login(r.Context(), req.Login, req.Password)
+	user, access, refresh, err := a.authService.Login(ctx, req.Login, req.Password)
 	if err != nil {
 		httprespond.HandleErrorResponse(w, err)
 		return
@@ -51,19 +48,20 @@ func (a *AuthHandlers) Login(w http.ResponseWriter, r *http.Request, _ httproute
 }
 
 func (a *AuthHandlers) Refresh(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	ctx := r.Context()
+
 	var req dto.RefreshRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		httprespond.ErrorResponse(w, "Bad request", http.StatusBadRequest)
 		return
 	}
 
-	if err := validator.Get().Struct(&req); err != nil {
-		errs := validator.FormatValidationErrorsRussian(err)
-		httprespond.ErrorResponse(w, strings.Join(errs, "; "), http.StatusBadRequest)
+	if message, err := dto.Validate(w, req); err != nil {
+		httprespond.ErrorResponse(w, message, http.StatusBadRequest)
 		return
 	}
 
-	access, refresh, err := a.authService.Refresh(r.Context(), req.RefreshToken)
+	access, refresh, err := a.authService.Refresh(ctx, req.RefreshToken)
 	if err != nil {
 		httprespond.HandleErrorResponse(w, err)
 		return
@@ -74,8 +72,7 @@ func (a *AuthHandlers) Refresh(w http.ResponseWriter, r *http.Request, _ httprou
 }
 
 func (a *AuthHandlers) Logout(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
-	defer cancel()
+	ctx := r.Context()
 
 	var req dto.LogoutRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -83,9 +80,8 @@ func (a *AuthHandlers) Logout(w http.ResponseWriter, r *http.Request, _ httprout
 		return
 	}
 
-	if err := validator.Get().Struct(&req); err != nil {
-		errs := validator.FormatValidationErrorsRussian(err)
-		httprespond.ErrorResponse(w, strings.Join(errs, "; "), http.StatusBadRequest)
+	if message, err := dto.Validate(w, req); err != nil {
+		httprespond.ErrorResponse(w, message, http.StatusBadRequest)
 		return
 	}
 

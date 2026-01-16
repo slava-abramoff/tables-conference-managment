@@ -1,4 +1,3 @@
-// pkg/validator/validator.go
 package validator
 
 import (
@@ -74,61 +73,4 @@ func FormatValidationErrors(err error) []string {
 	}
 
 	return messages
-}
-
-// FormatValidationErrorsRussian — вариант с русскими сообщениями
-func FormatValidationErrorsRussian(err error) []string {
-	if err == nil {
-		return nil
-	}
-
-	validationErrs, ok := err.(validator.ValidationErrors)
-	if !ok {
-		return []string{"ошибка валидации"}
-	}
-
-	var messages []string
-
-	for _, e := range validationErrs {
-		field := translateFieldName(e.Field())
-		tag := e.Tag()
-		param := e.Param()
-
-		var msg string
-
-		switch tag {
-		case "required":
-			msg = fmt.Sprintf("%s обязательно для заполнения", field)
-		case "min":
-			msg = fmt.Sprintf("%s должен содержать минимум %s символов", field, param)
-		case "max":
-			msg = fmt.Sprintf("%s не должен превышать %s символов", field, param)
-		case "oneof":
-			msg = fmt.Sprintf("%s должен быть одним из: %s", field, param)
-		case "alphanum":
-			msg = fmt.Sprintf("%s может содержать только буквы и цифры", field)
-		default:
-			msg = fmt.Sprintf("некорректное значение поля %s", field)
-		}
-
-		messages = append(messages, msg)
-	}
-
-	return messages
-}
-
-// translateFieldName — опционально: человекочитаемые имена полей
-func translateFieldName(field string) string {
-	switch field {
-	case "Login":
-		return "Логин"
-	case "Password":
-		return "Пароль"
-	case "Name":
-		return "Имя"
-	case "Role":
-		return "Роль"
-	default:
-		return field
-	}
 }
