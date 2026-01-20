@@ -7,6 +7,7 @@ import (
 	"table-api/internal/models"
 	"table-api/internal/repository/gormerrors"
 	common "table-api/pkg"
+	"time"
 
 	"gorm.io/gorm"
 )
@@ -16,6 +17,7 @@ type MeetRepository interface {
 	Update(ctx context.Context, id int, updates map[string]interface{}) (*models.Meet, error)
 	List(ctx context.Context, page, limit int, filter dto.GetQueryMeetDto) ([]*models.Meet, *entitys.Pagination, error)
 	GetByID(ctx context.Context, id int) (*models.Meet, error)
+	MarkCompletedIfEnded()
 }
 
 type meetRepository struct {
@@ -130,4 +132,18 @@ func (m *meetRepository) List(
 
 	pagination := entitys.BuildPagination(page, limit, totalItems)
 	return meets, &pagination, nil
+}
+
+func (m *meetRepository) MarkCompletedIfEnded() {
+	now := time.Now()
+
+	_ = m.db.
+		Model(&models.Meet{}).
+		Where(
+			"status = ? AND end <= ?",
+			"approved",
+			now,
+		).
+		Update("status", "completed").
+		Error
 }

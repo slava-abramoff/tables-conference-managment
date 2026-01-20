@@ -1,5 +1,7 @@
 package dto
 
+import "time"
+
 type Status string
 
 const (
@@ -16,9 +18,48 @@ const (
 )
 
 type GetQueryMeetDto struct {
-	Status *Status `validate:"omitempty,oneof=new active completed"`
+	Status *Status `validate:"omitempty,oneof=new active completed canceled"`
 
 	SortBy *string `validate:"omitempty,oneof=eventName customerName email phone location platform devices url shortUrl status description admin start end createdAt updatedAt"`
 
 	Order *SortOrder `validate:"omitempty,oneof=asc desc"`
+}
+
+type CreateMeetRequest struct {
+	EventName    *string `json:"eventName,omitempty"    validate:"omitempty,max=255"`
+	CustomerName *string `json:"customerName,omitempty" validate:"omitempty,max=255"`
+	Email        *string `json:"email,omitempty"        validate:"omitempty,email,max=255"`
+	Phone        *string `json:"phone,omitempty"        validate:"omitempty,max=50"`
+	Location     *string `json:"location,omitempty"     validate:"omitempty,max=255"`
+	Platform     *string `json:"platform,omitempty"     validate:"omitempty,max=100"`
+	Devices      *string `json:"devices,omitempty"      validate:"omitempty,max=255"`
+	URL          *string `json:"url,omitempty"          validate:"omitempty,url"`
+	ShortURL     *string `json:"shortUrl,omitempty"     validate:"omitempty,url"`
+
+	Status      *Status `json:"status,omitempty"       validate:"omitempty,oneof=new approved completed canceled"`
+	Description *string `json:"description,omitempty"  validate:"omitempty,max=2000"`
+
+	Admin *string `json:"admin,omitempty" validate:"omitempty,max=100"`
+
+	Start *time.Time `json:"start,omitempty" validate:"omitempty"`
+	End   *time.Time `json:"end,omitempty"   validate:"omitempty"`
+}
+
+type UpdateMeetRequest struct {
+	EventName    *string `json:"eventName,omitempty"    validate:"omitempty,max=255"`
+	CustomerName *string `json:"customerName,omitempty" validate:"omitempty,max=255"`
+	Email        *string `json:"email,omitempty"        validate:"omitempty,email,max=255"`
+	Phone        *string `json:"phone,omitempty"        validate:"omitempty,max=50"`
+	Location     *string `json:"location,omitempty"     validate:"omitempty,max=255"`
+	Platform     *string `json:"platform,omitempty"     validate:"omitempty,max=100"`
+	Devices      *string `json:"devices,omitempty"      validate:"omitempty,max=255"`
+	URL          *string `json:"url,omitempty"          validate:"omitempty,url"`
+	ShortURL     *string `json:"shortUrl,omitempty"     validate:"omitempty,url"`
+
+	Status      *Status `json:"status,omitempty"      validate:"omitempty,oneof=new approved completed canceled"`
+	Description *string `json:"description,omitempty" validate:"omitempty,max=2000"`
+	Admin       *string `json:"admin,omitempty"       validate:"omitempty,max=100"`
+
+	Start *time.Time `json:"start,omitempty"`
+	End   *time.Time `json:"end,omitempty"`
 }
