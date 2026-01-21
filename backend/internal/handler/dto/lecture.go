@@ -6,7 +6,7 @@ import (
 )
 
 type CreateLectureRequest struct {
-	Group        *string   `json:"group,omitempty"       validate:"omitempty,min=1,max=1"`
+	Group        *string   `json:"group,omitempty"       validate:"omitempty,min=2,max=100"`
 	Lector       *string   `json:"lector,omitempty"      validate:"omitempty,min=2,max=100"`
 	Platform     *string   `json:"platform,omitempty"    validate:"omitempty,max=100"`
 	Unit         *string   `json:"unit,omitempty"        validate:"omitempty,max=100"`

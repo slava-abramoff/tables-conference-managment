@@ -33,7 +33,7 @@ func (l *LectureHandlers) Create(w http.ResponseWriter, r *http.Request, _ httpr
 	}
 
 	// TODO: проверять типизированную ошибку
-	if message, err := dto.Validate(w, req); err != nil {
+	if message, err := dto.Validate(req); err != nil {
 		httprespond.ErrorResponse(w, message, http.StatusBadRequest)
 		return
 	}
@@ -57,7 +57,7 @@ func (l *LectureHandlers) CreateMany(w http.ResponseWriter, r *http.Request, _ h
 		return
 	}
 
-	if message, err := dto.Validate(w, req); err != nil {
+	if message, err := dto.Validate(req); err != nil {
 		httprespond.ErrorResponse(w, message, http.StatusBadRequest)
 		return
 	}
@@ -138,7 +138,7 @@ func (l *LectureHandlers) Update(w http.ResponseWriter, r *http.Request, ps http
 		return
 	}
 
-	if message, err := dto.Validate(w, req); err != nil {
+	if message, err := dto.Validate(req); err != nil {
 		httprespond.ErrorResponse(w, message, http.StatusBadRequest)
 		return
 	}
@@ -161,7 +161,7 @@ func (l *LectureHandlers) CreateManyLinks(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	if message, err := dto.Validate(w, req); err != nil {
+	if message, err := dto.Validate(req); err != nil {
 		httprespond.ErrorResponse(w, message, http.StatusBadRequest)
 		return
 	}

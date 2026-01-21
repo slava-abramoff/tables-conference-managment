@@ -9,6 +9,7 @@ import (
 	"table-api/internal/mappers"
 	"table-api/internal/models"
 	"table-api/internal/repository"
+	common "table-api/pkg"
 	"time"
 )
 
@@ -186,7 +187,27 @@ func (l *lectureService) Update(
 			continue
 		}
 
+		if column == "start" || column == "end" {
+			continue
+		}
+
 		updates[column] = fieldValue.Interface()
+	}
+
+	if dto.Start != nil {
+		t, err := time.Parse("15:04", *dto.Start)
+		if err != nil {
+			return nil, common.ErrInvalidInput
+		}
+		updates["Start"] = &t
+	}
+
+	if dto.End != nil {
+		t, err := time.Parse("15:04", *dto.End)
+		if err != nil {
+			return nil, common.ErrInvalidInput
+		}
+		updates["End"] = &t
 	}
 
 	return l.lectureRepo.Update(ctx, id, updates)

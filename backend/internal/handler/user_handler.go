@@ -33,7 +33,7 @@ func (u *UserHandlers) Create(w http.ResponseWriter, r *http.Request, _ httprout
 		return
 	}
 
-	if message, err := dto.Validate(w, req); err != nil {
+	if message, err := dto.Validate(req); err != nil {
 		httprespond.ErrorResponse(w, message, http.StatusBadRequest)
 		return
 	}
@@ -116,7 +116,7 @@ func (u *UserHandlers) Update(w http.ResponseWriter, r *http.Request, ps httprou
 		return
 	}
 
-	if message, err := dto.Validate(w, req); err != nil {
+	if message, err := dto.Validate(req); err != nil {
 		httprespond.ErrorResponse(w, message, http.StatusBadRequest)
 		return
 	}

@@ -1,7 +1,9 @@
 package service
 
 import (
+	"fmt"
 	"log"
+	"net/mail"
 	"os"
 	"strconv"
 
@@ -10,7 +12,7 @@ import (
 
 type MailService struct {
 	dialer *gomail.Dialer
-	from   string
+	from   *mail.Address
 }
 
 func NewMailService() *MailService {
@@ -18,24 +20,23 @@ func NewMailService() *MailService {
 	portStr := os.Getenv("SMTP_PORT")
 	user := os.Getenv("SMTP_USER")
 	pass := os.Getenv("SMTP_PASSWORD")
-	from := os.Getenv("SMTP_FROM")
+	fromRaw := os.Getenv("SMTP_FROM")
 
 	port, err := strconv.Atoi(portStr)
 	if err != nil {
 		log.Fatal("Invalid SMTP port")
-		return nil
 	}
 
-	d := gomail.NewDialer(
-		host,
-		port,
-		user,
-		pass,
-	)
+	d := gomail.NewDialer(host, port, user, pass)
+
+	addr, err := mail.ParseAddress(fromRaw)
+	if err != nil {
+		log.Fatalf("Invalid SMTP_FROM: %v", err)
+	}
 
 	return &MailService{
 		dialer: d,
-		from:   from,
+		from:   addr,
 	}
 }
 
@@ -45,10 +46,18 @@ func (s *MailService) Send(
 	body string,
 ) {
 	m := gomail.NewMessage()
-	m.SetHeader("From", s.from)
+
+	m.SetAddressHeader(
+		"From",
+		s.from.Address,
+		s.from.Name,
+	)
+
 	m.SetHeader("To", to)
 	m.SetHeader("Subject", subject)
 	m.SetBody("text/plain", body)
 
-	s.dialer.DialAndSend(m)
+	if err := s.dialer.DialAndSend(m); err != nil {
+		fmt.Println("Send error", err)
+	}
 }

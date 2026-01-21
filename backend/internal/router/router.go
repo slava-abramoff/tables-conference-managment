@@ -7,13 +7,29 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
-func NewRouter(u *handler.UserHandlers, a *handler.AuthHandlers, l *handler.LectureHandlers) *httprouter.Router {
+func NewRouter(
+	u *handler.UserHandlers,
+	a *handler.AuthHandlers,
+	l *handler.LectureHandlers,
+	m *handler.MeetHandlers,
+	sl *handler.ShortLinkHandlers,
+) *httprouter.Router {
 	router := httprouter.New()
+
+	//TODO: раскидать пути по разным файлам
 
 	// Auth
 	router.POST("/login", a.Login)
 	router.POST("/refresh", a.Refresh)
 	router.POST("/logout", a.Logout)
+
+	// ShortLink
+	router.GET("/l/:code", sl.GetUrl)
+
+	// Meets
+	router.POST("/meets", m.Create)
+	router.GET("/meets/find", m.FindMany)
+	router.PATCH("/meets/:id", m.Update)
 
 	// Lectures
 	router.POST("/lectures", l.Create)

@@ -54,7 +54,7 @@ func main() {
 	aService := service.NewAuthService(uRepo, aRepo)
 	aHandler := handler.NewAuthHandlers(aService)
 
-	router := router.NewRouter(uHandler, aHandler, lHandler)
+	router := router.NewRouter(uHandler, aHandler, lHandler, mHandler, sHandler)
 
 	go mService.AutoUpdate(time.Minute)
 

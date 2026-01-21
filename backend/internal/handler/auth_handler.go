@@ -30,7 +30,7 @@ func (a *AuthHandlers) Login(w http.ResponseWriter, r *http.Request, _ httproute
 		return
 	}
 
-	if message, err := dto.Validate(w, req); err != nil {
+	if message, err := dto.Validate(req); err != nil {
 		httprespond.ErrorResponse(w, message, http.StatusBadRequest)
 		return
 	}
@@ -56,7 +56,7 @@ func (a *AuthHandlers) Refresh(w http.ResponseWriter, r *http.Request, _ httprou
 		return
 	}
 
-	if message, err := dto.Validate(w, req); err != nil {
+	if message, err := dto.Validate(req); err != nil {
 		httprespond.ErrorResponse(w, message, http.StatusBadRequest)
 		return
 	}
@@ -80,7 +80,7 @@ func (a *AuthHandlers) Logout(w http.ResponseWriter, r *http.Request, _ httprout
 		return
 	}
 
-	if message, err := dto.Validate(w, req); err != nil {
+	if message, err := dto.Validate(req); err != nil {
 		httprespond.ErrorResponse(w, message, http.StatusBadRequest)
 		return
 	}

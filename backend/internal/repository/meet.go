@@ -17,7 +17,7 @@ type MeetRepository interface {
 	Update(ctx context.Context, id int, updates map[string]interface{}) (*models.Meet, error)
 	List(ctx context.Context, page, limit int, filter dto.GetQueryMeetDto) ([]*models.Meet, *entitys.Pagination, error)
 	GetByID(ctx context.Context, id int) (*models.Meet, error)
-	MarkCompletedIfEnded()
+	MarkCompletedIfEnded() error
 }
 
 type meetRepository struct {
@@ -134,13 +134,13 @@ func (m *meetRepository) List(
 	return meets, &pagination, nil
 }
 
-func (m *meetRepository) MarkCompletedIfEnded() {
+func (m *meetRepository) MarkCompletedIfEnded() error {
 	now := time.Now()
 
-	_ = m.db.
+	return m.db.
 		Model(&models.Meet{}).
 		Where(
-			"status = ? AND end <= ?",
+			`status = ? AND "end" <= ?`,
 			"approved",
 			now,
 		).

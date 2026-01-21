@@ -3,6 +3,8 @@ package service
 import (
 	"context"
 	"fmt"
+	"log"
+	"os"
 	"reflect"
 	"strings"
 	"table-api/internal/entitys"
@@ -10,6 +12,7 @@ import (
 	"table-api/internal/mappers"
 	"table-api/internal/models"
 	"table-api/internal/repository"
+	"table-api/pkg/validator"
 	"time"
 )
 
@@ -27,10 +30,17 @@ type meetService struct {
 	meetRepo         repository.MeetRepository
 	shortLinkService ShortLinkService
 	mailService      Mailer
+	domain           string
 }
 
 func NewMeetService(repo repository.MeetRepository, mail Mailer, s ShortLinkService) *meetService {
-	return &meetService{meetRepo: repo, mailService: mail, shortLinkService: s}
+	domain := os.Getenv("SERVER_DOMAIN")
+
+	if !validator.IsValidDomain(domain) {
+		log.Fatal("Invalid SERVER_DOMAIN")
+	}
+
+	return &meetService{meetRepo: repo, mailService: mail, shortLinkService: s, domain: domain}
 }
 
 func (m *meetService) Create(ctx context.Context, dto dto.CreateMeetRequest) (*models.Meet, error) {
@@ -72,18 +82,18 @@ func (m *meetService) Update(ctx context.Context, id int, dto dto.UpdateMeetRequ
 			return nil, err
 		}
 
-		today := time.Now()
-
-		if !today.After(*oldMeet.Start) {
-			updates["Status"] = "approved"
+		if oldMeet.Status == "new" {
+			updates["status"] = "approved"
 		}
 
-		code, err := m.shortLinkService.ShortUrl(ctx, *url)
-		if err != nil {
-			return nil, err
-		}
+		if oldMeet.URL != nil && *url != *oldMeet.URL {
+			code, err := m.shortLinkService.ShortUrl(ctx, *url)
+			if err != nil {
+				return nil, err
+			}
 
-		updates["ShortUrl"] = code
+			updates["shortUrl"] = code
+		}
 	}
 
 	updatedMeet, err := m.meetRepo.Update(ctx, id, updates)
@@ -97,9 +107,10 @@ func (m *meetService) Update(ctx context.Context, id int, dto dto.UpdateMeetRequ
 		updatedMeet.EventName != nil
 
 	if isValid {
+		shortcode := m.domain + "/l/" + *updatedMeet.ShortURL
 
 		subject := fmt.Sprintf("Видеконференция %s", *updatedMeet.EventName)
-		msg := fmt.Sprintf("Ссылка для подключения к ВКС: %s", *updatedMeet.ShortURL)
+		msg := fmt.Sprintf("Ссылка для подключения к ВКС: %s", shortcode)
 		receiver := *updatedMeet.Email
 
 		go m.mailService.Send(receiver, subject, msg)
@@ -129,7 +140,9 @@ func (m *meetService) List(ctx context.Context, page, limit int, filter dto.GetQ
 
 func (m *meetService) AutoUpdate(timeout time.Duration) {
 	for {
-		m.meetRepo.MarkCompletedIfEnded()
+		if err := m.meetRepo.MarkCompletedIfEnded(); err != nil {
+			log.Printf("auto update failed: %v", err)
+		}
 		time.Sleep(timeout)
 	}
 }

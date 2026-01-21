@@ -29,7 +29,7 @@ func (m *MeetHandlers) Create(w http.ResponseWriter, r *http.Request, _ httprout
 		return
 	}
 
-	if message, err := dto.Validate(w, req); err != nil {
+	if message, err := dto.Validate(req); err != nil {
 		httprespond.ErrorResponse(w, message, http.StatusBadRequest)
 		return
 	}
@@ -74,7 +74,7 @@ func (m *MeetHandlers) FindMany(w http.ResponseWriter, r *http.Request, _ httpro
 		filters.Order = &order
 	}
 
-	if message, err := dto.Validate(w, filters); err != nil {
+	if message, err := dto.Validate(filters); err != nil {
 		httprespond.ErrorResponse(w, message, http.StatusBadRequest)
 		return
 	}
@@ -118,7 +118,7 @@ func (m *MeetHandlers) Update(w http.ResponseWriter, r *http.Request, ps httprou
 		return
 	}
 
-	if message, err := dto.Validate(w, req); err != nil {
+	if message, err := dto.Validate(req); err != nil {
 		httprespond.ErrorResponse(w, message, http.StatusBadRequest)
 		return
 	}
