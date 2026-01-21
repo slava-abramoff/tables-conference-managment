@@ -10,6 +10,7 @@ import (
 	"table-api/internal/router"
 	"table-api/internal/service"
 	"table-api/pkg/validator"
+	"time"
 
 	"github.com/joho/godotenv"
 )
@@ -28,7 +29,15 @@ func main() {
 	//ShortLink
 	sRepo := repository.NewShortLinkRepository(db)
 	sService := service.NewShortLinkService(sRepo)
-	// shortenHandler
+	sHandler := handler.NewShortLinkHandlers(sService)
+
+	// Mailer
+	mailer := service.NewMailService()
+
+	// Meets
+	mRepo := repository.NewMeetRepository(db)
+	mService := service.NewMeetService(mRepo, mailer, sService)
+	mHandler := handler.NewMeetHandlers(mService)
 
 	// Lectures
 	lRepo := repository.NewLectureRepository(db)
@@ -46,6 +55,8 @@ func main() {
 	aHandler := handler.NewAuthHandlers(aService)
 
 	router := router.NewRouter(uHandler, aHandler, lHandler)
+
+	go mService.AutoUpdate(time.Minute)
 
 	fmt.Println("Server is started...")
 	log.Fatal(http.ListenAndServe(":8080", router))

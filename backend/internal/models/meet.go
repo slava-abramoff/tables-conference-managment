@@ -4,14 +4,6 @@ import (
 	"time"
 )
 
-type Status string
-
-const (
-	StatusNew      Status = "new"
-	StatusPending  Status = "pending"
-	StatusFinished Status = "finished"
-)
-
 // Meet — мероприятие
 type Meet struct {
 	ID           int     `gorm:"primaryKey;autoIncrement"`
@@ -25,7 +17,7 @@ type Meet struct {
 	URL          *string `gorm:"type:text"`
 	ShortURL     *string `gorm:"type:text"`
 
-	Status      Status  `gorm:"type:text;default:'new'"`
+	Status      string  `gorm:"type:text;default:'new'"`
 	Description *string `gorm:"type:text"`
 
 	Admin *string `gorm:"type:text;"`

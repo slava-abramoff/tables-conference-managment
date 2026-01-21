@@ -36,7 +36,6 @@ type CreateMeetRequest struct {
 	URL          *string `json:"url,omitempty"          validate:"omitempty,url"`
 	ShortURL     *string `json:"shortUrl,omitempty"     validate:"omitempty,url"`
 
-	Status      *Status `json:"status,omitempty"       validate:"omitempty,oneof=new approved completed canceled"`
 	Description *string `json:"description,omitempty"  validate:"omitempty,max=2000"`
 
 	Admin *string `json:"admin,omitempty" validate:"omitempty,max=100"`
@@ -56,10 +55,33 @@ type UpdateMeetRequest struct {
 	URL          *string `json:"url,omitempty"          validate:"omitempty,url"`
 	ShortURL     *string `json:"shortUrl,omitempty"     validate:"omitempty,url"`
 
-	Status      *Status `json:"status,omitempty"      validate:"omitempty,oneof=new approved completed canceled"`
+	Status      *string `json:"status,omitempty"      validate:"omitempty,oneof=new approved completed canceled"`
 	Description *string `json:"description,omitempty" validate:"omitempty,max=2000"`
 	Admin       *string `json:"admin,omitempty"       validate:"omitempty,max=100"`
 
 	Start *time.Time `json:"start,omitempty"`
 	End   *time.Time `json:"end,omitempty"`
+}
+
+type MeetResponse struct {
+	Id           int     `json:"id"`
+	EventName    *string `json:"eventName"`
+	CustomerName *string `json:"customerName"`
+	Email        *string `json:"email"`
+	Phone        *string `json:"phone"`
+	Location     *string `json:"location"`
+	Platform     *string `json:"platform"`
+	Devices      *string `json:"devices"`
+	URL          *string `json:"url"`
+	ShortURL     *string `json:"shortUrl"`
+
+	Status      *string `json:"status"`
+	Description *string `json:"description"`
+
+	Admin *string `json:"admin"`
+
+	Start     *time.Time `json:"start"`
+	End       *time.Time `json:"end"`
+	CreatedAt time.Time  `gorm:"createdAt"`
+	UpdatedAt *time.Time `gorm:"updatedAt"`
 }

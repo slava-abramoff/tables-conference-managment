@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"reflect"
 	"strings"
 	"table-api/internal/entitys"
@@ -19,7 +20,7 @@ type MeetService interface {
 }
 
 type Mailer interface {
-	Send(ctx context.Context, message string) error
+	Send(to, subject, body string)
 }
 
 type meetService struct {
@@ -85,8 +86,26 @@ func (m *meetService) Update(ctx context.Context, id int, dto dto.UpdateMeetRequ
 		updates["ShortUrl"] = code
 	}
 
-	m.mailService.Send(ctx, *url)
-	return m.meetRepo.Update(ctx, id, updates)
+	updatedMeet, err := m.meetRepo.Update(ctx, id, updates)
+	if err != nil {
+		return nil, err
+	}
+
+	isValid := updatedMeet.ShortURL != nil &&
+		updatedMeet.Email != nil &&
+		updatedMeet.Start != nil &&
+		updatedMeet.EventName != nil
+
+	if isValid {
+
+		subject := fmt.Sprintf("Видеконференция %s", *updatedMeet.EventName)
+		msg := fmt.Sprintf("Ссылка для подключения к ВКС: %s", *updatedMeet.ShortURL)
+		receiver := *updatedMeet.Email
+
+		go m.mailService.Send(receiver, subject, msg)
+	}
+
+	return updatedMeet, nil
 }
 
 func (m *meetService) List(ctx context.Context, page, limit int, filter dto.GetQueryMeetDto) ([]*models.Meet, *entitys.Pagination, error) {
