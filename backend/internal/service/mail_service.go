@@ -1,7 +1,6 @@
 package service
 
 import (
-	"fmt"
 	"log"
 	"net/mail"
 	"os"
@@ -13,9 +12,16 @@ import (
 type MailService struct {
 	dialer *gomail.Dialer
 	from   *mail.Address
+	log    logger
 }
 
-func NewMailService() *MailService {
+type logger interface {
+	Info(msg string, args ...any)
+	Warn(msg string, args ...any)
+	Error(msg string, args ...any)
+}
+
+func NewMailService(logger logger) *MailService {
 	host := os.Getenv("SMTP_HOST")
 	portStr := os.Getenv("SMTP_PORT")
 	user := os.Getenv("SMTP_USER")
@@ -37,6 +43,7 @@ func NewMailService() *MailService {
 	return &MailService{
 		dialer: d,
 		from:   addr,
+		log:    logger,
 	}
 }
 
@@ -58,6 +65,6 @@ func (s *MailService) Send(
 	m.SetBody("text/plain", body)
 
 	if err := s.dialer.DialAndSend(m); err != nil {
-		fmt.Println("Send error", err)
+		s.log.Warn("failed send: ", err.Error())
 	}
 }

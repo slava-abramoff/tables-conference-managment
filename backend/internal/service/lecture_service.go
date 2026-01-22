@@ -2,7 +2,10 @@ package service
 
 import (
 	"context"
+	"fmt"
+	"io"
 	"reflect"
+	"strconv"
 	"strings"
 	"table-api/internal/entitys"
 	"table-api/internal/handler/dto"
@@ -11,6 +14,8 @@ import (
 	"table-api/internal/repository"
 	common "table-api/pkg"
 	"time"
+
+	"github.com/xuri/excelize/v2"
 )
 
 type LectureService interface {
@@ -22,7 +27,7 @@ type LectureService interface {
 	GetByDate(ctx context.Context, date time.Time) ([]*models.Lecture, error)
 	Update(ctx context.Context, id int, dto dto.UpdateLectureRequest) (*models.Lecture, error)
 
-	// ExportExcel(dto GetExcelLecturesDTO) ([]map[string]interface{}, error)
+	Export(ctx context.Context, filter dto.ExportLecturesExcelRequest, writer io.Writer) error
 	// GetAll(ctx context.Context, page, limit int) ([]*models.Lecture, *entitys.Pagination, error)
 
 	Remove(ctx context.Context, id int) (*models.Lecture, error)
@@ -215,4 +220,165 @@ func (l *lectureService) Update(
 
 func (l *lectureService) Remove(ctx context.Context, id int) (*models.Lecture, error) {
 	return l.lectureRepo.Delete(ctx, id)
+}
+
+func (l *lectureService) Export(ctx context.Context, filter dto.ExportLecturesExcelRequest, writer io.Writer) error {
+	if filter.StartDate.IsZero() || filter.EndDate.IsZero() {
+		return fmt.Errorf("invalid date range")
+	}
+
+	lectures, err := l.lectureRepo.FindByDatesAndGroup(ctx, filter.StartDate, filter.EndDate, filter.Group)
+	if err != nil {
+		return err
+	}
+
+	f := excelize.NewFile()
+	sheet := "Lectures"
+	index, _ := f.NewSheet(sheet)
+	f.SetActiveSheet(index)
+
+	headers := []string{
+		"ID", "Дата", "Начало", "Конец", "Группа", "Лектор",
+		"Платформа", "Корпус", "Место", "Ссылка", "Ключ потока",
+		"Описание", "Админ",
+	}
+
+	headerStyle, _ := f.NewStyle(&excelize.Style{
+		Font: &excelize.Font{
+			Bold:  true,
+			Color: "#FFFFFF",
+			Size:  12,
+		},
+		Fill: excelize.Fill{
+			Type:    "pattern",
+			Color:   []string{"#4CAF50"},
+			Pattern: 1,
+		},
+		Alignment: &excelize.Alignment{
+			Horizontal: "center",
+			Vertical:   "center",
+		},
+		Border: []excelize.Border{
+			{Type: "left", Color: "000000", Style: 1},
+			{Type: "top", Color: "000000", Style: 1},
+			{Type: "right", Color: "000000", Style: 1},
+			{Type: "bottom", Color: "000000", Style: 1},
+		},
+	})
+
+	for i, h := range headers {
+		cell, _ := excelize.CoordinatesToCellName(i+1, 1)
+		f.SetCellValue(sheet, cell, h)
+		f.SetCellStyle(sheet, cell, cell, headerStyle)
+	}
+
+	dataStyle, _ := f.NewStyle(&excelize.Style{
+		Alignment: &excelize.Alignment{
+			Horizontal: "left",
+			Vertical:   "center",
+		},
+		Border: []excelize.Border{
+			{Type: "left", Color: "000000", Style: 1},
+			{Type: "top", Color: "000000", Style: 1},
+			{Type: "right", Color: "000000", Style: 1},
+			{Type: "bottom", Color: "000000", Style: 1},
+		},
+	})
+
+	for i, lecture := range lectures {
+		row := i + 2
+		f.SetCellValue(sheet, "A"+strconv.Itoa(row), lecture.ID)
+		f.SetCellValue(sheet, "B"+strconv.Itoa(row), lecture.Date.Format("2006-01-02"))
+		if lecture.Start != nil {
+			f.SetCellValue(sheet, "C"+strconv.Itoa(row), lecture.Start.Format("15:04"))
+		}
+		if lecture.End != nil {
+			f.SetCellValue(sheet, "D"+strconv.Itoa(row), lecture.End.Format("15:04"))
+		}
+
+		cells := map[string]*string{
+			"E": lecture.Group,
+			"F": lecture.Lector,
+			"G": lecture.Platform,
+			"H": lecture.Unit,
+			"I": lecture.Location,
+			"J": lecture.ShortURL,
+			"K": lecture.StreamKey,
+			"L": lecture.Description,
+			"M": lecture.Admin,
+		}
+
+		for col, val := range cells {
+			if val != nil {
+				f.SetCellValue(sheet, col+strconv.Itoa(row), *val)
+			}
+		}
+
+		f.SetCellStyle(sheet, "A"+strconv.Itoa(row), "M"+strconv.Itoa(row), dataStyle)
+	}
+
+	// Автоматическая ширина колонок
+	for i := 1; i <= len(headers); i++ {
+		col, _ := excelize.ColumnNumberToName(i)
+		maxLen := len(headers[i-1])
+		for j := 0; j < len(lectures); j++ {
+			var val string
+			switch col {
+			case "A":
+				val = strconv.Itoa(lectures[j].ID)
+			case "B":
+				val = lectures[j].Date.Format("2006-01-02")
+			case "C":
+				if lectures[j].Start != nil {
+					val = lectures[j].Start.Format("15:04")
+				}
+			case "D":
+				if lectures[j].End != nil {
+					val = lectures[j].End.Format("15:04")
+				}
+			case "E":
+				if lectures[j].Group != nil {
+					val = *lectures[j].Group
+				}
+			case "F":
+				if lectures[j].Lector != nil {
+					val = *lectures[j].Lector
+				}
+			case "G":
+				if lectures[j].Platform != nil {
+					val = *lectures[j].Platform
+				}
+			case "H":
+				if lectures[j].Unit != nil {
+					val = *lectures[j].Unit
+				}
+			case "I":
+				if lectures[j].Location != nil {
+					val = *lectures[j].Location
+				}
+			case "J":
+				if lectures[j].ShortURL != nil {
+					val = *lectures[j].ShortURL
+				}
+			case "K":
+				if lectures[j].StreamKey != nil {
+					val = *lectures[j].StreamKey
+				}
+			case "L":
+				if lectures[j].Description != nil {
+					val = *lectures[j].Description
+				}
+			case "M":
+				if lectures[j].Admin != nil {
+					val = *lectures[j].Admin
+				}
+			}
+			if len(val) > maxLen {
+				maxLen = len(val)
+			}
+		}
+		f.SetColWidth(sheet, col, col, float64(maxLen+2))
+	}
+
+	return f.Write(writer)
 }

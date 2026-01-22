@@ -2,7 +2,6 @@ package database
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"table-api/internal/models"
 
@@ -10,7 +9,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func ConnectDB() *gorm.DB {
+func ConnectDB() (*gorm.DB, error) {
 	dsn := fmt.Sprintf(
 		"host=%s user=%s password=%s dbname=%s port=%s sslmode=disable",
 		os.Getenv("POSTGRES_HOST"),
@@ -22,12 +21,11 @@ func ConnectDB() *gorm.DB {
 
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
-		// TODO: return error
-		log.Fatal("failed to connect to database:", err)
+		return nil, fmt.Errorf("failed to connect to database: %v", err)
 	}
 
 	if err := db.Exec(`CREATE EXTENSION IF NOT EXISTS "pgcrypto";`).Error; err != nil {
-		log.Fatal("failed to enable pgcrypto:", err)
+		return nil, fmt.Errorf("failed to enable pgcrypto: %v", err)
 	}
 
 	// TODO: Ручные миграции, отдельным скриптом
@@ -40,10 +38,8 @@ func ConnectDB() *gorm.DB {
 			&models.RefreshToken{},
 		)
 		if err != nil {
-			log.Fatal("failed to migrate database:", err)
+			return nil, fmt.Errorf("failed to migrate database: %w", err)
 		}
 	}
-
-	log.Println("Database connected and migrated successfully!")
-	return db
+	return db, nil
 }

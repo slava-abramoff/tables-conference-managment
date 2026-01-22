@@ -27,7 +27,7 @@ type CreateLecturesRequest struct {
 }
 
 type UpdateLectureRequest struct {
-	Group        *string    `json:"group,omitempty"       validate:"omitempty,min=1,max=100"`
+	Group        *string    `json:"group,omitempty"       validate:"omitempty,min=2,max=100"`
 	Lector       *string    `json:"lector,omitempty"      validate:"omitempty,min=2,max=100"`
 	Platform     *string    `json:"platform,omitempty"    validate:"omitempty,max=100"`
 	Unit         *string    `json:"unit,omitempty"        validate:"omitempty,max=100"`
@@ -43,9 +43,36 @@ type UpdateLectureRequest struct {
 	AbnormalTime *string    `json:"abnormalTime,omitempty" validate:"omitempty,max=100"`
 }
 
+type LectureResponse struct {
+	ID           int       `json:"id"`
+	Group        *string   `json:"group"`
+	Lector       *string   `json:"lector"`
+	Platform     *string   `json:"platform"`
+	Unit         *string   `json:"unit"`
+	Location     *string   `json:"location"`
+	URL          *string   `json:"url"`
+	ShortURL     *string   `json:"shortUrl"`
+	StreamKey    *string   `json:"streamKey"`
+	Description  *string   `json:"description"`
+	Admin        *string   `json:"admin"`
+	Date         time.Time `json:"date"`
+	Start        *string   `json:"start"`
+	End          *string   `json:"end"`
+	AbnormalTime *string   `json:"abnormalTime"`
+
+	CreatedAt time.Time  `json:"createdAt"`
+	UpdatedAt *time.Time `json:"updatedAt"`
+}
+
 type UpdateManyLinksRequest struct {
 	GroupName string `json:"groupName"`
 	Url       string `json:"url"`
+}
+
+type ExportLecturesExcelRequest struct {
+	Group     *string
+	StartDate time.Time
+	EndDate   time.Time
 }
 
 type DailySchedulesResponse struct {

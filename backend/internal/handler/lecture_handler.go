@@ -32,7 +32,6 @@ func (l *LectureHandlers) Create(w http.ResponseWriter, r *http.Request, _ httpr
 		return
 	}
 
-	// TODO: проверять типизированную ошибку
 	if message, err := dto.Validate(req); err != nil {
 		httprespond.ErrorResponse(w, message, http.StatusBadRequest)
 		return
@@ -94,12 +93,13 @@ func (l *LectureHandlers) GetByDates(w http.ResponseWriter, r *http.Request, ps 
 		return
 	}
 
-	resp, err := l.lectureService.GetByDate(ctx, parsedDate)
+	data, err := l.lectureService.GetByDate(ctx, parsedDate)
 	if err != nil {
 		httprespond.HandleErrorResponse(w, err)
 		return
 	}
 
+	resp := mappers.ManyLectureToDto(data)
 	httprespond.JsonResponse(w, resp, 200)
 }
 
@@ -192,4 +192,41 @@ func (l *LectureHandlers) Remove(w http.ResponseWriter, r *http.Request, ps http
 	}
 
 	httprespond.JsonResponse(w, resp, http.StatusOK)
+}
+
+func (h *LectureHandlers) ExportExcel(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	ctx := r.Context()
+
+	start := r.URL.Query().Get("start")
+	end := r.URL.Query().Get("end")
+	group := r.URL.Query().Get("group")
+
+	startDate, err := time.Parse("2006-01-02", start)
+	if err != nil {
+		httprespond.ErrorResponse(w, "Start must be date YYYY-MM-DD", http.StatusBadRequest)
+		return
+	}
+	endDate, err := time.Parse("2006-01-02", end)
+	if err != nil {
+		httprespond.ErrorResponse(w, "End must be date YYYY-MM-DD", http.StatusBadRequest)
+		return
+	}
+
+	var groupPtr *string
+	if group != "" {
+		groupPtr = &group
+	}
+
+	filter := dto.ExportLecturesExcelRequest{
+		StartDate: startDate,
+		EndDate:   endDate,
+		Group:     groupPtr,
+	}
+
+	w.Header().Set("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+	w.Header().Set(`Content-Disposition`, `attachment; filename="lectures.xlsx"`)
+
+	if err := h.lectureService.Export(ctx, filter, w); err != nil {
+		httprespond.HandleErrorResponse(w, err)
+	}
 }

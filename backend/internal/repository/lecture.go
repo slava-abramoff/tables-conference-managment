@@ -20,6 +20,7 @@ type LectureRepository interface {
 	FindByExactDate(ctx context.Context, date time.Time) ([]*models.Lecture, error)
 	FindForSchedule(ctx context.Context, year, month int) ([]*models.Lecture, error)
 	FindWithUniqueDates(ctx context.Context) ([]*models.Lecture, error)
+	FindByDatesAndGroup(ctx context.Context, startDate, endDate time.Time, groupName *string) ([]*models.Lecture, error)
 }
 
 type lectureRepository struct {
@@ -205,6 +206,34 @@ func (l *lectureRepository) FindWithUniqueDates(ctx context.Context) ([]*models.
 
 	if err != nil {
 		return nil, gormerrors.Map(err)
+	}
+
+	return lectures, nil
+}
+
+func (l *lectureRepository) FindByDatesAndGroup(
+	ctx context.Context,
+	startDate, endDate time.Time,
+	groupName *string,
+) ([]*models.Lecture, error) {
+
+	var lectures []*models.Lecture
+
+	query := l.db.WithContext(ctx).Model(&models.Lecture{})
+
+	query = query.Where(`"date" BETWEEN ? AND ?`,
+		startDate.Format("2006-01-02"),
+		endDate.Format("2006-01-02"),
+	)
+
+	if groupName != nil && *groupName != "" {
+		query = query.Where(`"group" = ?`, *groupName)
+	}
+
+	query = query.Debug() // Для дебага, потом можно убрать
+
+	if err := query.Find(&lectures).Error; err != nil {
+		return nil, err
 	}
 
 	return lectures, nil

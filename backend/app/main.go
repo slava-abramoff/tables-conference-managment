@@ -1,14 +1,15 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"table-api/internal/database"
 	"table-api/internal/handler"
 	"table-api/internal/repository"
 	"table-api/internal/router"
 	"table-api/internal/service"
+	"table-api/pkg/logger"
 	"table-api/pkg/validator"
 	"time"
 
@@ -22,8 +23,15 @@ func main() {
 	}
 
 	// TODO: slog logger
+	logger := logger.NewLogger(true)
 
-	db := database.ConnectDB()
+	db, err := database.ConnectDB()
+	if err != nil {
+		logger.Error(err.Error())
+		os.Exit(1)
+	}
+	logger.Info("Database connected and migrated successfully!")
+
 	validator.Init()
 
 	//ShortLink
@@ -32,7 +40,7 @@ func main() {
 	sHandler := handler.NewShortLinkHandlers(sService)
 
 	// Mailer
-	mailer := service.NewMailService()
+	mailer := service.NewMailService(logger)
 
 	// Meets
 	mRepo := repository.NewMeetRepository(db)
@@ -54,10 +62,10 @@ func main() {
 	aService := service.NewAuthService(uRepo, aRepo)
 	aHandler := handler.NewAuthHandlers(aService)
 
-	router := router.NewRouter(uHandler, aHandler, lHandler, mHandler, sHandler)
+	router := router.NewRouter(uHandler, aHandler, lHandler, mHandler, sHandler, logger)
 
 	go mService.AutoUpdate(time.Minute)
 
-	fmt.Println("Server is started...")
+	logger.Info("Server started successfully!")
 	log.Fatal(http.ListenAndServe(":8080", router))
 }
