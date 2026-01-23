@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"fmt"
 	"table-api/internal/models"
 	"table-api/internal/repository/gormerrors"
 	common "table-api/pkg"
@@ -176,7 +177,7 @@ func (l *lectureRepository) FindForSchedule(
 	ctx context.Context,
 	year, month int,
 ) ([]*models.Lecture, error) {
-
+	fmt.Println("Repo: Month: ", month, " Year: ", year)
 	start := time.Date(year, time.Month(month), 1, 0, 0, 0, 0, time.UTC)
 	end := start.AddDate(0, 1, 0).Add(-time.Second)
 

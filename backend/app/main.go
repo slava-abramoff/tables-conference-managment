@@ -22,7 +22,6 @@ func main() {
 		log.Fatal("Error loading .env file")
 	}
 
-	// TODO: slog logger
 	logger := logger.NewLogger(true)
 
 	db, err := database.ConnectDB()

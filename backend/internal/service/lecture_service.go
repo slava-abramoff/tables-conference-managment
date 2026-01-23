@@ -123,10 +123,13 @@ func (l *lectureService) GetDates(ctx context.Context) (*entitys.LectureDates, e
 }
 
 func (l *lectureService) GetSchedule(ctx context.Context, year, month int) ([]*entitys.DailySchedule, error) {
+	fmt.Println("Service: Month: ", month, " Year: ", year)
 	lectures, err := l.lectureRepo.FindForSchedule(ctx, year, month)
 	if err != nil {
 		return nil, err
 	}
+
+	fmt.Println("Lectures in service", lectures)
 
 	var schedules []*entitys.DailySchedule
 	m := make(map[string][]*models.Lecture)
