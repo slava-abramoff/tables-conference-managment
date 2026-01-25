@@ -2,20 +2,25 @@ package service
 
 import (
 	"context"
-	"table-api/internal/repository"
+	"table-api/internal/models"
 	"table-api/pkg/utils"
 )
 
-type ShortLinkService interface {
-	GetUrl(ctx context.Context, code string) (*string, error)
-	ShortUrl(ctx context.Context, url string) (*string, error)
+type ShortLinkRepository interface {
+	Create(ctx context.Context, url, code string) (*models.ShortLink, error)
+	GetByCode(ctx context.Context, code string) (*models.ShortLink, error)
+	IsUnique(ctx context.Context, code string) bool
+	IncrementClickCount(
+		ctx context.Context,
+		id int,
+	) error
 }
 
 type shortLinkService struct {
-	shortLinkRepo repository.ShortLinkRepository
+	shortLinkRepo ShortLinkRepository
 }
 
-func NewShortLinkService(repo repository.ShortLinkRepository) ShortLinkService {
+func NewShortLinkService(repo ShortLinkRepository) *shortLinkService {
 	return &shortLinkService{shortLinkRepo: repo}
 }
 

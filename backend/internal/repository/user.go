@@ -11,25 +11,11 @@ import (
 	"gorm.io/gorm"
 )
 
-type UserRepository interface {
-	Create(ctx context.Context, user *models.User) (*models.User, error)
-	GetByID(ctx context.Context, id uuid.UUID) (*models.User, error)
-	GetByLogin(ctx context.Context, login string) (*models.User, error)
-	List(
-		ctx context.Context,
-		page int,
-		limit int,
-	) ([]*models.User, *entitys.Pagination, error)
-	Search(ctx context.Context, searchTerm string) ([]*models.User, error)
-	Update(ctx context.Context, id uuid.UUID, updates map[string]interface{}) (*models.User, error)
-	Delete(ctx context.Context, id uuid.UUID) (*models.User, error)
-}
-
 type userRepository struct {
 	db *gorm.DB
 }
 
-func NewUserRepository(db *gorm.DB) UserRepository {
+func NewUserRepository(db *gorm.DB) *userRepository {
 	return &userRepository{db: db}
 }
 

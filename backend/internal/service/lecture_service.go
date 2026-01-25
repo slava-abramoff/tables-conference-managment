@@ -30,6 +30,11 @@ type LectureRepository interface {
 	FindByDatesAndGroup(ctx context.Context, startDate, endDate time.Time, groupName *string) ([]*models.Lecture, error)
 }
 
+type ShortLinkService interface {
+	GetUrl(ctx context.Context, code string) (*string, error)
+	ShortUrl(ctx context.Context, url string) (*string, error)
+}
+
 type lectureService struct {
 	lectureRepo      LectureRepository
 	shortLinkService ShortLinkService

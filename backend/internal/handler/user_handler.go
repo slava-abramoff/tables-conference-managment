@@ -1,12 +1,14 @@
 package handler
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"strconv"
+	"table-api/internal/entitys"
 	"table-api/internal/handler/dto"
 	"table-api/internal/mappers"
-	"table-api/internal/service"
+	"table-api/internal/models"
 	httprespond "table-api/pkg/http"
 
 	"github.com/google/uuid"
@@ -16,10 +18,18 @@ import (
 const TIMEOUT = 10
 
 type UserHandlers struct {
-	service service.UserService
+	service UserService
 }
 
-func NewUserHandlers(service service.UserService) *UserHandlers {
+type UserService interface {
+	Create(ctx context.Context, user entitys.User) (*models.User, error)
+	FindMany(ctx context.Context, page int, limit int) ([]*models.User, *entitys.Pagination, error)
+	Search(ctx context.Context, searchTerm string) ([]*models.User, error)
+	Update(ctx context.Context, id uuid.UUID, dto dto.UpdateUserRequest) (*models.User, error)
+	Remove(ctx context.Context, id uuid.UUID) (*models.User, error)
+}
+
+func NewUserHandlers(service UserService) *UserHandlers {
 	return &UserHandlers{service: service}
 }
 

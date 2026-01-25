@@ -8,21 +8,11 @@ import (
 	"gorm.io/gorm"
 )
 
-type ShortLinkRepository interface {
-	Create(ctx context.Context, url, code string) (*models.ShortLink, error)
-	GetByCode(ctx context.Context, code string) (*models.ShortLink, error)
-	IsUnique(ctx context.Context, code string) bool
-	IncrementClickCount(
-		ctx context.Context,
-		id int,
-	) error
-}
-
 type shortLinkRepository struct {
 	db *gorm.DB
 }
 
-func NewShortLinkRepository(db *gorm.DB) ShortLinkRepository {
+func NewShortLinkRepository(db *gorm.DB) *shortLinkRepository {
 	return &shortLinkRepository{db: db}
 }
 

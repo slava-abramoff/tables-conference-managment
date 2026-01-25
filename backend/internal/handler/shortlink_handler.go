@@ -1,18 +1,23 @@
 package handler
 
 import (
+	"context"
 	"net/http"
-	"table-api/internal/service"
 	httprespond "table-api/pkg/http"
 
 	"github.com/julienschmidt/httprouter"
 )
 
-type ShortLinkHandlers struct {
-	shortLinkService service.ShortLinkService
+type ShortLinkService interface {
+	GetUrl(ctx context.Context, code string) (*string, error)
+	ShortUrl(ctx context.Context, url string) (*string, error)
 }
 
-func NewShortLinkHandlers(s service.ShortLinkService) *ShortLinkHandlers {
+type ShortLinkHandlers struct {
+	shortLinkService ShortLinkService
+}
+
+func NewShortLinkHandlers(s ShortLinkService) *ShortLinkHandlers {
 	return &ShortLinkHandlers{shortLinkService: s}
 }
 

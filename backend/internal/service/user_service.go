@@ -8,26 +8,31 @@ import (
 	"table-api/internal/handler/dto"
 	"table-api/internal/mappers"
 	"table-api/internal/models"
-	"table-api/internal/repository"
 	common "table-api/pkg"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
-type UserService interface {
-	Create(ctx context.Context, user entitys.User) (*models.User, error)
-	FindMany(ctx context.Context, page int, limit int) ([]*models.User, *entitys.Pagination, error)
+type UserRepository interface {
+	Create(ctx context.Context, user *models.User) (*models.User, error)
+	GetByID(ctx context.Context, id uuid.UUID) (*models.User, error)
+	GetByLogin(ctx context.Context, login string) (*models.User, error)
+	List(
+		ctx context.Context,
+		page int,
+		limit int,
+	) ([]*models.User, *entitys.Pagination, error)
 	Search(ctx context.Context, searchTerm string) ([]*models.User, error)
-	Update(ctx context.Context, id uuid.UUID, dto dto.UpdateUserRequest) (*models.User, error)
-	Remove(ctx context.Context, id uuid.UUID) (*models.User, error)
+	Update(ctx context.Context, id uuid.UUID, updates map[string]interface{}) (*models.User, error)
+	Delete(ctx context.Context, id uuid.UUID) (*models.User, error)
 }
 
 type userService struct {
-	userRepo repository.UserRepository
+	userRepo UserRepository
 }
 
-func NewUserService(repo repository.UserRepository) UserService {
+func NewUserService(repo UserRepository) *userService {
 	return &userService{userRepo: repo}
 }
 

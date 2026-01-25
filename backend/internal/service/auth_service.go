@@ -26,11 +26,11 @@ type AuthService interface {
 }
 
 type authService struct {
-	userRepo    repository.UserRepository
+	userRepo    UserRepository
 	refreshRepo repository.RefreshTokenRepository
 }
 
-func NewAuthService(userRepo repository.UserRepository, refreshRepo repository.RefreshTokenRepository) AuthService {
+func NewAuthService(userRepo UserRepository, refreshRepo repository.RefreshTokenRepository) AuthService {
 	return &authService{userRepo: userRepo, refreshRepo: refreshRepo}
 }
 
