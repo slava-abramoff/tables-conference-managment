@@ -11,15 +11,16 @@ import (
 	"table-api/internal/handler/dto"
 	"table-api/internal/mappers"
 	"table-api/internal/models"
-	"table-api/internal/repository"
 	"table-api/pkg/validator"
 	"time"
 )
 
-type MeetService interface {
-	Create(ctx context.Context, dto dto.CreateMeetRequest) (*models.Meet, error)
-	Update(ctx context.Context, id int, dto dto.UpdateMeetRequest) (*models.Meet, error)
+type MeetRepository interface {
+	Create(ctx context.Context, meet *models.Meet) (*models.Meet, error)
+	Update(ctx context.Context, id int, updates map[string]interface{}) (*models.Meet, error)
 	List(ctx context.Context, page, limit int, filter dto.GetQueryMeetDto) ([]*models.Meet, *entitys.Pagination, error)
+	GetByID(ctx context.Context, id int) (*models.Meet, error)
+	MarkCompletedIfEnded() error
 }
 
 type Mailer interface {
@@ -27,13 +28,13 @@ type Mailer interface {
 }
 
 type meetService struct {
-	meetRepo         repository.MeetRepository
+	meetRepo         MeetRepository
 	shortLinkService ShortLinkService
 	mailService      Mailer
 	domain           string
 }
 
-func NewMeetService(repo repository.MeetRepository, mail Mailer, s ShortLinkService) *meetService {
+func NewMeetService(repo MeetRepository, mail Mailer, s ShortLinkService) *meetService {
 	domain := os.Getenv("SERVER_DOMAIN")
 
 	if !validator.IsValidDomain(domain) {

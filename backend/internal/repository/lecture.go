@@ -11,24 +11,11 @@ import (
 	"gorm.io/gorm"
 )
 
-type LectureRepository interface {
-	Create(ctx context.Context, lecture *models.Lecture) (*models.Lecture, error)
-	CreateMany(ctx context.Context, lectures []*models.Lecture) ([]*models.Lecture, error)
-	Update(ctx context.Context, id int, updates map[string]interface{}) (*models.Lecture, error)
-	Delete(ctx context.Context, id int) (*models.Lecture, error)
-	UpdateURLsByGroup(ctx context.Context, groupName string, url string, shortURL string) ([]*models.Lecture, error)
-	FindByDateRange(ctx context.Context, start, end time.Time) ([]*models.Lecture, error)
-	FindByExactDate(ctx context.Context, date time.Time) ([]*models.Lecture, error)
-	FindForSchedule(ctx context.Context, year, month int) ([]*models.Lecture, error)
-	FindWithUniqueDates(ctx context.Context) ([]*models.Lecture, error)
-	FindByDatesAndGroup(ctx context.Context, startDate, endDate time.Time, groupName *string) ([]*models.Lecture, error)
-}
-
 type lectureRepository struct {
 	db *gorm.DB
 }
 
-func NewLectureRepository(db *gorm.DB) LectureRepository {
+func NewLectureRepository(db *gorm.DB) *lectureRepository {
 	return &lectureRepository{db: db}
 }
 

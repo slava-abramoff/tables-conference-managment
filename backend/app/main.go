@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"table-api/internal/config"
 	"table-api/internal/database"
 	"table-api/internal/handler"
 	"table-api/internal/repository"
@@ -22,9 +23,14 @@ func main() {
 		log.Fatal("Error loading .env file")
 	}
 
-	logger := logger.NewLogger(true)
+	cfg, err := config.LoadConfig()
+	if err != nil {
+		log.Fatal(err.Error())
+	}
 
-	db, err := database.ConnectDB()
+	logger := logger.NewLogger(cfg.Server.LoggerConsole)
+
+	db, err := database.ConnectDB(&cfg.Db)
 	if err != nil {
 		logger.Error(err.Error())
 		os.Exit(1)

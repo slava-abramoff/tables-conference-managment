@@ -1,22 +1,30 @@
 package handler
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"strconv"
+	"table-api/internal/entitys"
 	"table-api/internal/handler/dto"
 	"table-api/internal/mappers"
-	"table-api/internal/service"
+	"table-api/internal/models"
 	httprespond "table-api/pkg/http"
 
 	"github.com/julienschmidt/httprouter"
 )
 
-type MeetHandlers struct {
-	meetService service.MeetService
+type MeetService interface {
+	Create(ctx context.Context, dto dto.CreateMeetRequest) (*models.Meet, error)
+	Update(ctx context.Context, id int, dto dto.UpdateMeetRequest) (*models.Meet, error)
+	List(ctx context.Context, page, limit int, filter dto.GetQueryMeetDto) ([]*models.Meet, *entitys.Pagination, error)
 }
 
-func NewMeetHandlers(s service.MeetService) *MeetHandlers {
+type MeetHandlers struct {
+	meetService MeetService
+}
+
+func NewMeetHandlers(s MeetService) *MeetHandlers {
 	return &MeetHandlers{meetService: s}
 }
 

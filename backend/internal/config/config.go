@@ -7,12 +7,30 @@ import (
 var JwtSecret string = os.Getenv("SECRET_KEY")
 
 type Config struct {
-	server server
-	smtp   smtp
-	jwt    jwt
-	db     database
+	Server Server
+	Smtp   Smtp
+	Jwt    Jwt
+	Db     Database
 }
 
 func LoadConfig() (*Config, error) {
-	return nil, nil
+	serverCfg, err := getServerConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	smtpCfg, err := getSmtpConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	databaseCfg, err := getDatabaseConfig()
+	jwtCfg := getJwtConfig()
+
+	return &Config{
+		Server: *serverCfg,
+		Smtp:   *smtpCfg,
+		Jwt:    *jwtCfg,
+		Db:     *databaseCfg,
+	}, nil
 }

@@ -12,19 +12,11 @@ import (
 	"gorm.io/gorm"
 )
 
-type MeetRepository interface {
-	Create(ctx context.Context, meet *models.Meet) (*models.Meet, error)
-	Update(ctx context.Context, id int, updates map[string]interface{}) (*models.Meet, error)
-	List(ctx context.Context, page, limit int, filter dto.GetQueryMeetDto) ([]*models.Meet, *entitys.Pagination, error)
-	GetByID(ctx context.Context, id int) (*models.Meet, error)
-	MarkCompletedIfEnded() error
-}
-
 type meetRepository struct {
 	db *gorm.DB
 }
 
-func NewMeetRepository(db *gorm.DB) MeetRepository {
+func NewMeetRepository(db *gorm.DB) *meetRepository {
 	return &meetRepository{db: db}
 }
 

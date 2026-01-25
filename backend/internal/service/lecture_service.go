@@ -11,37 +11,34 @@ import (
 	"table-api/internal/handler/dto"
 	"table-api/internal/mappers"
 	"table-api/internal/models"
-	"table-api/internal/repository"
 	common "table-api/pkg"
 	"time"
 
 	"github.com/xuri/excelize/v2"
 )
 
-type LectureService interface {
-	Create(ctx context.Context, dto dto.CreateLectureRequest) (*models.Lecture, error)
-	CreateMany(ctx context.Context, dtos []dto.CreateLectureRequest) ([]*models.Lecture, error)
-	CreateManyLinks(ctx context.Context, dto dto.UpdateManyLinksRequest) ([]*models.Lecture, error)
-	GetDates(ctx context.Context) (*entitys.LectureDates, error)
-	GetSchedule(ctx context.Context, year, month int) ([]*entitys.DailySchedule, error)
-	GetByDate(ctx context.Context, date time.Time) ([]*models.Lecture, error)
-	Update(ctx context.Context, id int, dto dto.UpdateLectureRequest) (*models.Lecture, error)
-
-	Export(ctx context.Context, filter dto.ExportLecturesExcelRequest, writer io.Writer) error
-	// GetAll(ctx context.Context, page, limit int) ([]*models.Lecture, *entitys.Pagination, error)
-
-	Remove(ctx context.Context, id int) (*models.Lecture, error)
+type LectureRepository interface {
+	Create(ctx context.Context, lecture *models.Lecture) (*models.Lecture, error)
+	CreateMany(ctx context.Context, lectures []*models.Lecture) ([]*models.Lecture, error)
+	Update(ctx context.Context, id int, updates map[string]interface{}) (*models.Lecture, error)
+	Delete(ctx context.Context, id int) (*models.Lecture, error)
+	UpdateURLsByGroup(ctx context.Context, groupName string, url string, shortURL string) ([]*models.Lecture, error)
+	FindByDateRange(ctx context.Context, start, end time.Time) ([]*models.Lecture, error)
+	FindByExactDate(ctx context.Context, date time.Time) ([]*models.Lecture, error)
+	FindForSchedule(ctx context.Context, year, month int) ([]*models.Lecture, error)
+	FindWithUniqueDates(ctx context.Context) ([]*models.Lecture, error)
+	FindByDatesAndGroup(ctx context.Context, startDate, endDate time.Time, groupName *string) ([]*models.Lecture, error)
 }
 
 type lectureService struct {
-	lectureRepo      repository.LectureRepository
+	lectureRepo      LectureRepository
 	shortLinkService ShortLinkService
 }
 
 func NewLectureService(
-	repo repository.LectureRepository,
+	repo LectureRepository,
 	s ShortLinkService,
-) LectureService {
+) *lectureService {
 	return &lectureService{
 		lectureRepo:      repo,
 		shortLinkService: s,

@@ -1,13 +1,16 @@
 package handler
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"strconv"
+	"table-api/internal/entitys"
 	"table-api/internal/handler/dto"
 	"table-api/internal/mappers"
-	"table-api/internal/service"
+	"table-api/internal/models"
 	httprespond "table-api/pkg/http"
 	"table-api/pkg/utils"
 	"time"
@@ -15,12 +18,23 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
-type LectureHandlers struct {
-	lectureService service.LectureService
+type LectureService interface {
+	Create(ctx context.Context, dto dto.CreateLectureRequest) (*models.Lecture, error)
+	CreateMany(ctx context.Context, dtos []dto.CreateLectureRequest) ([]*models.Lecture, error)
+	CreateManyLinks(ctx context.Context, dto dto.UpdateManyLinksRequest) ([]*models.Lecture, error)
+	GetDates(ctx context.Context) (*entitys.LectureDates, error)
+	GetSchedule(ctx context.Context, year, month int) ([]*entitys.DailySchedule, error)
+	GetByDate(ctx context.Context, date time.Time) ([]*models.Lecture, error)
+	Update(ctx context.Context, id int, dto dto.UpdateLectureRequest) (*models.Lecture, error)
+	Export(ctx context.Context, filter dto.ExportLecturesExcelRequest, writer io.Writer) error
+	Remove(ctx context.Context, id int) (*models.Lecture, error)
 }
 
-// TODO: локальные интерфейсы
-func NewLectureHandlers(s service.LectureService) *LectureHandlers {
+type LectureHandlers struct {
+	lectureService LectureService
+}
+
+func NewLectureHandlers(s LectureService) *LectureHandlers {
 	return &LectureHandlers{lectureService: s}
 }
 
