@@ -3,13 +3,11 @@ package config
 import (
 	"errors"
 	"os"
-	"strconv"
 	"strings"
-	"unicode/utf8"
 )
 
 type Server struct {
-	Port          int
+	Port          string
 	Domain        string
 	LoggerConsole bool
 	Admin         string
@@ -25,11 +23,6 @@ func getServerConfig() (*Server, error) {
 	adminLogin := os.Getenv("SERVER_ADMIN_LOGIN")
 	adminPassword := os.Getenv("SERVER_ADMIN_PASSWORD")
 
-	port, err := strconv.Atoi(serverPort)
-	if err != nil {
-		return nil, err
-	}
-
 	isValidDomain := strings.Contains(serverDomain, "http://") || strings.Contains(serverDomain, "https://")
 
 	if !isValidDomain {
@@ -42,13 +35,13 @@ func getServerConfig() (*Server, error) {
 		logger = false
 	}
 
-	if !(utf8.RuneCountInString(adminLogin) > 5) {
+	if !(len(adminLogin) >= 5) {
 		return nil, errors.New("is not valid admin login")
 	}
 
-	if !(utf8.RuneCountInString(adminPassword) > 6) {
+	if !(len(adminPassword) >= 6) {
 		return nil, errors.New("is not valid admin password")
 	}
 
-	return &Server{Port: port, Domain: serverDomain, LoggerConsole: logger, Admin: adminLogin, Password: adminPassword}, nil
+	return &Server{Port: serverPort, Domain: serverDomain, LoggerConsole: logger, Admin: adminLogin, Password: adminPassword}, nil
 }

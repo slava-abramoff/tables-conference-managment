@@ -125,13 +125,13 @@ func (l *LectureHandlers) GetSchedule(w http.ResponseWriter, r *http.Request, _ 
 	month := r.URL.Query().Get("month")
 
 	parsedYear, parsedMonth, err := utils.ParseYearMonth(year, month)
-	fmt.Println("Handler: Month: ", parsedMonth, " Year: ", parsedYear)
+
 	schedule, err := l.lectureService.GetSchedule(ctx, parsedYear, parsedMonth)
 	if err != nil {
 		httprespond.HandleErrorResponse(w, err)
 		return
 	}
-
+	fmt.Println("Дошло")
 	resp := dto.DailySchedulesResponse{Data: schedule}
 
 	httprespond.JsonResponse(w, resp, 200)

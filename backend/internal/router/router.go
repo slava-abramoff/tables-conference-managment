@@ -39,83 +39,83 @@ func NewRouter(
 	router.GET("/meets/find", chain(
 		m.FindMany,
 		logs(logger),
-		// auth(),
+		auth(),
 	))
 	router.PATCH("/meets/:id", chain(
 		m.Update,
 		logs(logger),
-		// auth(),
-		// roles([]string{"admin", "moderator"}),
+		auth(),
+		roles([]string{"admin", "moderator"}),
 	))
 
 	// Lectures
 	router.POST("/lectures", chain(
 		l.Create,
 		logs(logger),
-		// auth(),
-		// roles([]string{"admin", "moderator"}),
+		auth(),
+		roles([]string{"admin", "moderator"}),
 	))
 	router.POST("/lectures/advanced", chain(
 		l.CreateMany,
 		logs(logger),
-		// auth(),
-		// roles([]string{"admin", "moderator"}),
+		auth(),
+		roles([]string{"admin", "moderator"}),
 	))
 	router.POST("/lectures/links", chain(
 		l.CreateManyLinks,
 		logs(logger),
-		// auth(),
-		// roles([]string{"admin", "moderator"}),
+		auth(),
+		roles([]string{"admin", "moderator"}),
 	))
 	router.GET("/lectures/dates", chain(
 		l.GetDates,
 		logs(logger),
-		// auth(),
-		// roles([]string{"admin", "moderator"}),
+		auth(),
+		roles([]string{"admin", "moderator"}),
 	))
 	router.GET("/lectures/days", chain(
 		l.GetSchedule,
 		logs(logger),
-		// auth(),
-		// roles([]string{"admin", "moderator"}),
+		auth(),
+		roles([]string{"admin", "moderator"}),
 	))
 	router.GET("/lectures/schedule/:date", chain(
 		l.GetByDates,
 		logs(logger),
-		// auth(),
-		// roles([]string{"admin", "moderator"}),
+		auth(),
+		roles([]string{"admin", "moderator"}),
 	))
 	router.PATCH("/lectures/:id", chain(
 		l.Update,
 		logs(logger),
-		// auth(),
-		// roles([]string{"admin", "moderator"}),
+		auth(),
+		roles([]string{"admin", "moderator"}),
 	))
 	router.GET("/lectures/export", chain(
 		l.ExportExcel,
 		logs(logger),
-		// auth(),
+		auth(),
 	))
 	router.DELETE("/lectures/:id", chain(
 		l.Remove,
 		logs(logger),
-		// auth(),
-		// roles([]string{"admin"}),
+		auth(),
+		roles([]string{"admin"}),
 	))
 
 	// Users
 	router.POST("/users", chain(
 		u.Create,
 		logs(logger),
-		// auth(),
-		// roles([]string{"admin"}),
+		auth(),
+		roles([]string{"admin"}),
 	))
 
 	router.GET("/users/find", chain(
 		u.FindMany,
 		logs(logger),
-		// auth(),
-		// roles([]string{"admin"}),
+		auth(),
+		roles([]string{"admin"}),
 	))
 
 	router.GET("/users/search", chain(

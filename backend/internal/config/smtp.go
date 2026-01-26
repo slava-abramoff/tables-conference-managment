@@ -32,7 +32,7 @@ func getSmtpConfig() (*Smtp, error) {
 
 	host := os.Getenv("SMTP_HOST")
 	user := os.Getenv("SMTP_USER")
-	if !strings.Contains("@", user) {
+	if !strings.Contains(user, "@") {
 		return nil, errors.New("invalid smtp username")
 	}
 

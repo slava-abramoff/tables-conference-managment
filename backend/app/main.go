@@ -1,11 +1,13 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"os"
 	"table-api/internal/config"
 	"table-api/internal/database"
+	"table-api/internal/entitys"
 	"table-api/internal/handler"
 	"table-api/internal/repository"
 	"table-api/internal/router"
@@ -45,7 +47,7 @@ func main() {
 	sHandler := handler.NewShortLinkHandlers(sService)
 
 	// Mailer
-	mailer := service.NewMailService(logger)
+	mailer := service.NewMailService(&cfg.Smtp, logger)
 
 	// Meets
 	mRepo := repository.NewMeetRepository(db)
@@ -62,6 +64,13 @@ func main() {
 	uService := service.NewUserService(uRepo)
 	uHandler := handler.NewUserHandlers(uService)
 
+	if _, err := uService.Create(context.TODO(), entitys.User{
+		Login:    cfg.Server.Admin,
+		Password: cfg.Server.Password,
+	}); err != nil {
+		logger.Warn("Created admin: " + err.Error())
+	}
+
 	// Auth
 	aRepo := repository.NewRefreshTokenRepository(db)
 	aService := service.NewAuthService(uRepo, aRepo)
@@ -72,5 +81,5 @@ func main() {
 	go mService.AutoUpdate(time.Minute)
 
 	logger.Info("Server started successfully!")
-	log.Fatal(http.ListenAndServe(":8080", router))
+	log.Fatal(http.ListenAndServe(cfg.Server.Port, router))
 }

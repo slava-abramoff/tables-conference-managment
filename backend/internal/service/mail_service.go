@@ -3,8 +3,7 @@ package service
 import (
 	"log"
 	"net/mail"
-	"os"
-	"strconv"
+	"table-api/internal/config"
 
 	"gopkg.in/gomail.v2"
 )
@@ -21,17 +20,12 @@ type logger interface {
 	Error(msg string, args ...any)
 }
 
-func NewMailService(logger logger) *MailService {
-	host := os.Getenv("SMTP_HOST")
-	portStr := os.Getenv("SMTP_PORT")
-	user := os.Getenv("SMTP_USER")
-	pass := os.Getenv("SMTP_PASSWORD")
-	fromRaw := os.Getenv("SMTP_FROM")
-
-	port, err := strconv.Atoi(portStr)
-	if err != nil {
-		log.Fatal("Invalid SMTP port")
-	}
+func NewMailService(cfg *config.Smtp, logger logger) *MailService {
+	host := cfg.Host
+	port := cfg.Port
+	user := cfg.User
+	pass := cfg.Password
+	fromRaw := cfg.From
 
 	d := gomail.NewDialer(host, port, user, pass)
 

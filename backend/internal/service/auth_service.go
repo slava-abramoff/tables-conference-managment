@@ -8,6 +8,7 @@ import (
 	"table-api/internal/models"
 	"table-api/internal/repository"
 	common "table-api/pkg"
+	"table-api/pkg/hasher"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -40,7 +41,7 @@ func (a *authService) Login(ctx context.Context, login, password string) (*model
 		return nil, "", "", common.ErrNotFound
 	}
 
-	if password != user.Password {
+	if hasher.CheckPasswordHash(password, user.Password) {
 		return nil, "", "", common.ErrForbidden
 	}
 

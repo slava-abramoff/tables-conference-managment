@@ -124,32 +124,50 @@ func (l *lectureService) GetDates(ctx context.Context) (*entitys.LectureDates, e
 	return result, nil
 }
 
-func (l *lectureService) GetSchedule(ctx context.Context, year, month int) ([]*entitys.DailySchedule, error) {
-	fmt.Println("Service: Month: ", month, " Year: ", year)
+func (l *lectureService) GetSchedule(
+	ctx context.Context,
+	year, month int,
+) ([]*entitys.DailySchedule, error) {
+
 	lectures, err := l.lectureRepo.FindForSchedule(ctx, year, month)
 	if err != nil {
 		return nil, err
 	}
 
-	fmt.Println("Lectures in service", lectures)
+	byDate := make(map[string][]*models.Lecture)
 
-	var schedules []*entitys.DailySchedule
-	m := make(map[string][]*models.Lecture)
-
-	for _, v := range lectures {
-		key := v.Date.Format("2006-01-02")
-		m[key] = append(m[key], v)
+	for _, lecture := range lectures {
+		key := lecture.Date.Format("2006-01-02")
+		byDate[key] = append(byDate[key], lecture)
 	}
 
-	for key, v := range m {
-		schedule := &entitys.DailySchedule{}
+	var schedules []*entitys.DailySchedule
 
-		schedule.Date = key
-		schedule.LectureCount = len(v)
+	for date, dayLectures := range byDate {
+		schedule := &entitys.DailySchedule{
+			Date:         date,
+			LectureCount: len(dayLectures),
+		}
 
-		for _, el := range v {
-			schedule.Groups = append(schedule.Groups, *el.Group)
-			schedule.Lectors = append(schedule.Lectors, *el.Lector)
+		groupSet := make(map[string]struct{})
+		lectorSet := make(map[string]struct{})
+
+		for _, lecture := range dayLectures {
+			if lecture.Group != nil {
+				groupSet[*lecture.Group] = struct{}{}
+			}
+
+			if lecture.Lector != nil {
+				lectorSet[*lecture.Lector] = struct{}{}
+			}
+		}
+
+		for g := range groupSet {
+			schedule.Groups = append(schedule.Groups, g)
+		}
+
+		for l := range lectorSet {
+			schedule.Lectors = append(schedule.Lectors, l)
 		}
 
 		schedules = append(schedules, schedule)

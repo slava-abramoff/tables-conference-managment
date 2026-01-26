@@ -9,6 +9,7 @@ import (
 	"table-api/internal/mappers"
 	"table-api/internal/models"
 	common "table-api/pkg"
+	"table-api/pkg/hasher"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -46,6 +47,11 @@ func (u *userService) Create(ctx context.Context, user entitys.User) (*models.Us
 	}
 
 	data := mappers.UserToModel(user)
+
+	data.Password, err = hasher.HashPassword(data.Password)
+	if err != nil {
+		return nil, err
+	}
 
 	newUser, err := u.userRepo.Create(ctx, &data)
 	if err != nil {
@@ -93,7 +99,12 @@ func (u *userService) Update(ctx context.Context, id uuid.UUID, dto dto.UpdateUs
 		updates["role"] = *dto.Role
 	}
 	if dto.Password != nil && *dto.Password != "" {
-		updates["password"] = *dto.Password
+		var err error
+
+		updates["password"], err = hasher.HashPassword(*dto.Password)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	if len(updates) == 0 {
