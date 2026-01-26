@@ -2,6 +2,7 @@ package router
 
 import (
 	"log/slog"
+	"net/http"
 	"table-api/internal/handler"
 	"table-api/pkg/middleware"
 
@@ -22,11 +23,12 @@ func NewRouter(
 	auth := middleware.AuthMiddleware
 	logs := middleware.LoggingMiddleware
 	roles := middleware.RoleMiddleware
+	cors := middleware.CorsMiddleware
 
 	// Auth
-	router.POST("/login", chain(a.Login, logs(logger)))
-	router.POST("/refresh", chain(a.Refresh, logs(logger)))
-	router.POST("/logout", chain(a.Logout, logs(logger)))
+	router.POST("/auth/login", chain(a.Login, cors, logs(logger)))
+	router.POST("/auth/refresh", chain(a.Refresh, logs(logger)))
+	router.POST("/auth/logout", chain(a.Logout, logs(logger)))
 
 	// ShortLink
 	router.GET("/l/:code", chain(sl.GetUrl, logs(logger)))
@@ -137,6 +139,26 @@ func NewRouter(
 		auth(),
 		roles([]string{"admin"}),
 	))
+
+	router.GlobalOPTIONS = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		origin := r.Header.Get("Origin")
+
+		allowedOrigins := map[string]bool{
+			"http://localhost:5173": true,
+			"http://127.0.0.1:5173": true,
+		}
+
+		if allowedOrigins[origin] {
+			w.Header().Set("Access-Control-Allow-Origin", origin)
+			w.Header().Set("Vary", "Origin")
+		}
+
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+		w.Header().Set("Access-Control-Allow-Credentials", "true")
+
+		w.WriteHeader(http.StatusNoContent)
+	})
 
 	return router
 }
