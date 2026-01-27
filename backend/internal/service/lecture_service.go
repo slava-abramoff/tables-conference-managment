@@ -113,9 +113,7 @@ func (l *lectureService) GetDates(ctx context.Context) (*entitys.LectureDates, e
 		}
 
 		for month := range monthsMap {
-			yearEntity.Months = append(yearEntity.Months, &entitys.LectureMonth{
-				Month: month,
-			})
+			yearEntity.Months = append(yearEntity.Months, &month)
 		}
 
 		result.Years = append(result.Years, yearEntity)

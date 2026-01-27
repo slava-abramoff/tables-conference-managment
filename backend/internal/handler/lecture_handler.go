@@ -3,7 +3,6 @@ package handler
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"strconv"
@@ -89,12 +88,13 @@ func (l *LectureHandlers) CreateMany(w http.ResponseWriter, r *http.Request, _ h
 func (l *LectureHandlers) GetDates(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	ctx := r.Context()
 
-	resp, err := l.lectureService.GetDates(ctx)
+	data, err := l.lectureService.GetDates(ctx)
 	if err != nil {
 		httprespond.HandleErrorResponse(w, err)
 		return
 	}
 
+	resp := dto.AvailableDatesReponse{Data: *data}
 	httprespond.JsonResponse(w, resp, 200)
 }
 
@@ -131,7 +131,7 @@ func (l *LectureHandlers) GetSchedule(w http.ResponseWriter, r *http.Request, _ 
 		httprespond.HandleErrorResponse(w, err)
 		return
 	}
-	fmt.Println("Дошло")
+
 	resp := dto.DailySchedulesResponse{Data: schedule}
 
 	httprespond.JsonResponse(w, resp, 200)
@@ -158,11 +158,13 @@ func (l *LectureHandlers) Update(w http.ResponseWriter, r *http.Request, ps http
 		return
 	}
 
-	resp, err := l.lectureService.Update(ctx, id, req)
+	data, err := l.lectureService.Update(ctx, id, req)
 	if err != nil {
 		httprespond.HandleErrorResponse(w, err)
 		return
 	}
+
+	resp := mappers.LectureToDto(data)
 
 	httprespond.JsonResponse(w, resp, http.StatusOK)
 }

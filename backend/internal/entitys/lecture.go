@@ -1,17 +1,17 @@
 package entitys
 
 type LectureDates struct {
-	Years []*LectureYear `json:"data"`
+	Years []*LectureYear `json:"years"`
 }
 
 type LectureYear struct {
-	Year   string          `json:"year"`
-	Months []*LectureMonth `json:"months"`
+	Year   string    `json:"year"`
+	Months []*string `json:"months"`
 }
 
-type LectureMonth struct {
-	Month string `json:"month"`
-}
+// type LectureMonth struct {
+// 	Month string `json:"month"`
+// }
 
 type DailySchedule struct {
 	Date         string   `json:"date"`

@@ -67,6 +67,7 @@ func main() {
 	if _, err := uService.Create(context.TODO(), entitys.User{
 		Login:    cfg.Server.Admin,
 		Password: cfg.Server.Password,
+		Role:     "admin",
 	}); err != nil {
 		logger.Warn("Created admin: " + err.Error())
 	}

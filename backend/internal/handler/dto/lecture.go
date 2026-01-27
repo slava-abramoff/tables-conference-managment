@@ -6,8 +6,8 @@ import (
 )
 
 type CreateLectureRequest struct {
-	Group        *string   `json:"group,omitempty"       validate:"omitempty,min=2,max=100"`
-	Lector       *string   `json:"lector,omitempty"      validate:"omitempty,min=2,max=100"`
+	Group        *string   `json:"group,omitempty"       validate:"omitempty,max=100"`
+	Lector       *string   `json:"lector,omitempty"      validate:"omitempty,max=100"`
 	Platform     *string   `json:"platform,omitempty"    validate:"omitempty,max=100"`
 	Unit         *string   `json:"unit,omitempty"        validate:"omitempty,max=100"`
 	Location     *string   `json:"location,omitempty"    validate:"omitempty,max=150"`
@@ -27,8 +27,8 @@ type CreateLecturesRequest struct {
 }
 
 type UpdateLectureRequest struct {
-	Group        *string    `json:"group,omitempty"       validate:"omitempty,min=2,max=100"`
-	Lector       *string    `json:"lector,omitempty"      validate:"omitempty,min=2,max=100"`
+	Group        *string    `json:"group,omitempty"       validate:"omitempty,max=100"`
+	Lector       *string    `json:"lector,omitempty"      validate:"omitempty,max=100"`
 	Platform     *string    `json:"platform,omitempty"    validate:"omitempty,max=100"`
 	Unit         *string    `json:"unit,omitempty"        validate:"omitempty,max=100"`
 	Location     *string    `json:"location,omitempty"    validate:"omitempty,max=150"`
@@ -73,6 +73,10 @@ type ExportLecturesExcelRequest struct {
 	Group     *string
 	StartDate time.Time
 	EndDate   time.Time
+}
+
+type AvailableDatesReponse struct {
+	Data entitys.LectureDates `json:"data"`
 }
 
 type DailySchedulesResponse struct {

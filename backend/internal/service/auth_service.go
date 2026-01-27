@@ -41,7 +41,7 @@ func (a *authService) Login(ctx context.Context, login, password string) (*model
 		return nil, "", "", common.ErrNotFound
 	}
 
-	if hasher.CheckPasswordHash(password, user.Password) {
+	if !hasher.CheckPasswordHash(password, user.Password) {
 		return nil, "", "", common.ErrForbidden
 	}
 
