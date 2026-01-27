@@ -1,0 +1,60 @@
+.header {
+    height: 56px;
+    width: 100%;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+    background-color: #fff;
+}
+
+.left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.right {
+    display: flex;
+    align-items: center;
+}
+
+.burger {
+    width: 32px;
+    height: 24px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+}
+
+.burger span {
+    display: block;
+    height: 3px;
+    width: 100%;
+    background-color: #111827;
+    border-radius: 2px;
+}
+
+.userName {
+    font-size: 14px;
+    font-weight: 500;
+    color: #111827;
+}
+
+.loginButton {
+    padding: 6px 12px;
+    font-size: 14px;
+    border-radius: 6px;
+    border: 1px solid #d1d5db;
+    background-color: transparent;
+    cursor: pointer;
+}
+
+.loginButton:hover {
+    background-color: #f3f4f6;
+}
