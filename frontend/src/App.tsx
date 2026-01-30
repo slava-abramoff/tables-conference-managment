@@ -1,37 +1,62 @@
-import { useState } from "react";
-import "./App.css";
-import { Header } from "./ui/header";
-import { Sidebar } from "./ui/sidebar/Sidebar";
-import { SidebarButton } from "./ui/buttons/SidebarButton/SidebarButton";
+import { Routes, Route, Navigate } from "react-router-dom";
+import { AuthProvider } from "./contexts/AuthContext";
+import Layout from "./components/Layout";
+import Login from "./pages/Login";
+import ConferenceForm from "./pages/ConferenceForm";
+import Schedule from "./pages/Schedule";
+import Lectures from "./pages/Lectures";
+import Meets from "./pages/Meets";
+import Users from "./pages/Users";
 
-export const App = () => {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-
+function App() {
   return (
-    <>
-      <Header
-        userName="Alex"
-        isAuthenticated={false}
-        onBurgerClick={() => setSidebarOpen(true)}
-        onLoginClick={() => console.log("Login")}
-      />
-      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)}>
-        <SidebarButton
-          text="Конференции"
-          active
-          onClick={() => console.log("/dashboard")}
+    <AuthProvider>
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route
+          path="/"
+          element={
+            <Layout>
+              <ConferenceForm />
+            </Layout>
+          }
         />
-        <SidebarButton
-          text="Лекции"
-          onClick={() => console.log("/dashboard")}
+        <Route
+          path="/schedule"
+          element={
+            <Layout>
+              <Schedule />
+            </Layout>
+          }
         />
-        <SidebarButton
-          text="Пользователи"
-          onClick={() => console.log("/dashboard")}
+        <Route
+          path="/lectures"
+          element={
+            <Layout>
+              <Lectures />
+            </Layout>
+          }
         />
-      </Sidebar>
-    </>
+        <Route
+          path="/meets"
+          element={
+            <Layout>
+              <Meets />
+            </Layout>
+          }
+        />
+        <Route
+          path="/users"
+          element={
+            <Layout>
+              <Users />
+            </Layout>
+          }
+        />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </AuthProvider>
   );
-};
+}
 
 export default App;
