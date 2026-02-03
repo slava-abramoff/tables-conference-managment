@@ -1,56 +1,85 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import EditableCell from "../components/EditableCell";
 import EditableSelectCell from "../components/EditableSelectCell";
 import ColumnSettingsModal from "../components/ColumnSettingsModal";
 import ConfirmDeleteModal from "../components/ConfirmDeleteModal";
+import CreateUserModal from "../components/CreateUserModal.tsx";
+import {
+  getUsers,
+  createUser,
+  updateUser,
+  deleteUser,
+} from "../api/users/users";
+import type { UserResponse } from "../types/response/user";
+import type { UserUpdateRequest } from "../types/request/user";
+import type { Pagination } from "../types/response/pagination";
+import { ROLE_OPTIONS } from "../utils/roleUtils";
 
 interface User {
-  id: number;
+  id: string;
   login: string;
   password: string;
+  name: string | null;
   role: string;
   createdAt: string;
-  updatedAt: string;
 }
 
 const STORAGE_KEY = "users_visible_columns";
-
-const ROLE_OPTIONS = [
-  { value: "admin", label: "Админ" },
-  { value: "moder", label: "Модер" },
-  { value: "viewer", label: "Зритель" },
-];
 
 const columns = [
   { key: "id", label: "ID" },
   { key: "login", label: "Логин" },
   { key: "password", label: "Пароль" },
+  { key: "name", label: "Имя" },
   { key: "role", label: "Роль" },
   { key: "createdAt", label: "Создан" },
-  { key: "updatedAt", label: "Обновлен" },
   { key: "actions", label: "Действия" },
 ];
 
 const PAGE_SIZE = 10;
 
-const generateMockUsers = (): User[] =>
-  Array.from({ length: 25 }, (_, i) => ({
-    id: i + 1,
-    login: `user${i + 1}`,
-    password: `password${i + 1}`,
-    role: ["admin", "moder", "viewer"][i % 3],
-    createdAt: "2026-01-15 10:00",
-    updatedAt: "2026-01-20 14:30",
-  }));
+function mapUserResponseToUser(r: UserResponse): User {
+  return {
+    id: r.id,
+    login: r.login ?? "",
+    password: "",
+    name: r.name ?? null,
+    role: r.role ?? "",
+    createdAt: r.createdAt ?? "",
+  };
+}
 
 export default function Users() {
-  const [users, setUsers] = useState<User[]>(generateMockUsers());
+  const [users, setUsers] = useState<User[]>([]);
+  const [pagination, setPagination] = useState<Pagination | null>(null);
+  const [loading, setLoading] = useState(false);
   const [visibleColumns, setVisibleColumns] = useState<Set<string>>(
     new Set(columns.map((col) => col.key))
   );
   const [showSettings, setShowSettings] = useState(false);
-  const [deleteTargetId, setDeleteTargetId] = useState<number | null>(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
+
+  const fetchUsers = useCallback(() => {
+    setLoading(true);
+    getUsers({ page: currentPage, limit: PAGE_SIZE })
+      .then((res) => {
+        setUsers((res.data ?? []).map(mapUserResponseToUser));
+        setPagination(res.pagination ?? null);
+      })
+      .catch(() => {
+        setUsers([]);
+        setPagination(null);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, [currentPage]);
+
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
 
   useEffect(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
@@ -71,29 +100,65 @@ export default function Users() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(Array.from(newVisibleColumns)));
   };
 
-  const handleCellSave = (userId: number, field: keyof User, value: string) => {
-    setUsers((prev) =>
-      prev.map((u) =>
-        u.id === userId
-          ? { ...u, [field]: value, updatedAt: new Date().toLocaleString("ru-RU") }
-          : u
-      )
-    );
+  const handleCellSave = (userId: string, field: keyof User, value: string) => {
+    const body: UserUpdateRequest = {};
+    if (field === "login") body.login = value;
+    else if (field === "password") body.password = value;
+    else if (field === "name") body.name = value || null;
+    else if (field === "role") body.role = value;
+    else return;
+    updateUser(userId, body)
+      .then((updated) => {
+        setUsers((prev) =>
+          prev.map((u) =>
+            u.id === userId
+              ? {
+                  ...u,
+                  [field]: field === "password" ? "" : value,
+                  ...(field === "name" ? { name: value || null } : {}),
+                  ...(updated.createdAt ? { createdAt: updated.createdAt } : {}),
+                }
+              : u
+          )
+        );
+      })
+      .catch(() => {});
   };
 
-  const handleDelete = (userId: number) => {
-    setUsers((prev) => prev.filter((u) => u.id !== userId));
-    setDeleteTargetId(null);
+  const handleDelete = (userId: string) => {
+    deleteUser(userId)
+      .then(() => {
+        setUsers((prev) => prev.filter((u) => u.id !== userId));
+        setDeleteTargetId(null);
+      })
+      .catch(() => {});
   };
 
-  const totalPages = Math.max(1, Math.ceil(users.length / PAGE_SIZE));
-  const paginatedUsers = useMemo(() => {
-    const start = (currentPage - 1) * PAGE_SIZE;
-    return users.slice(start, start + PAGE_SIZE);
-  }, [users, currentPage]);
+  const handleCreateUser = (payload: {
+    login: string;
+    password: string;
+    name: string;
+    role: string;
+  }) => {
+    createUser({
+      login: payload.login,
+      password: payload.password,
+      name: payload.name.trim() || null,
+      role: payload.role || undefined,
+    })
+      .then(() => {
+        setShowCreateModal(false);
+        fetchUsers();
+      })
+      .catch(() => {});
+  };
+
+  const totalPages = Math.max(1, pagination?.totalPages ?? 1);
+  const totalItems = pagination?.totalItems ?? 0;
+  const itemsPerPage = pagination?.itemsPerPage ?? PAGE_SIZE;
 
   useEffect(() => {
-    if (currentPage > totalPages) setCurrentPage(1);
+    if (currentPage > totalPages && totalPages > 0) setCurrentPage(1);
   }, [currentPage, totalPages]);
 
   const visibleColumnsArray = columns.filter((col) => visibleColumns.has(col.key));
@@ -101,8 +166,14 @@ export default function Users() {
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-slate-50 p-4 lg:p-6">
       <div className="max-w-[calc(100vw-2rem)] mx-auto">
-        {/* Тулбар: только шестерёнка */}
+        {/* Тулбар */}
         <div className="flex items-center gap-3 mb-6">
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="px-4 py-2 text-sm font-medium text-white bg-slate-800 rounded-md hover:bg-slate-700 transition-colors"
+          >
+            Создать
+          </button>
           <button
             onClick={() => setShowSettings(true)}
             className="p-2 text-slate-700 bg-white border border-slate-300 rounded-md hover:bg-slate-50"
@@ -126,6 +197,11 @@ export default function Users() {
         </div>
 
         {/* Таблица */}
+        {loading && users.length === 0 ? (
+          <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-12 text-center text-slate-500">
+            Загрузка...
+          </div>
+        ) : (
         <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-x-auto">
           <table className="min-w-full divide-y divide-slate-200">
             <thead className="bg-slate-50">
@@ -141,7 +217,7 @@ export default function Users() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-slate-200">
-              {paginatedUsers.map((user) => (
+              {users.map((user) => (
                 <tr key={user.id} className="hover:bg-slate-50">
                   {visibleColumnsArray.map((column) => {
                     if (column.key === "actions") {
@@ -170,31 +246,22 @@ export default function Users() {
                       );
                     }
 
-                    const value = user[column.key as keyof User] as string;
-                    const isDisabled =
-                      column.key === "id" ||
-                      column.key === "createdAt" ||
-                      column.key === "updatedAt";
+                    const rawValue = user[column.key as keyof User];
+                    const value =
+                      typeof rawValue === "string"
+                        ? rawValue
+                        : rawValue == null
+                          ? ""
+                          : String(rawValue);
+                    const isDisabled = column.key === "id" || column.key === "createdAt";
 
                     if (column.key === "role") {
                       return (
                         <EditableSelectCell
                           key={column.key}
-                          value={value || ""}
+                          value={value}
                           onSave={(v) => handleCellSave(user.id, "role", v)}
                           options={ROLE_OPTIONS}
-                        />
-                      );
-                    }
-
-                    if (column.key === "login") {
-                      return (
-                        <EditableCell
-                          key={column.key}
-                          value={value || ""}
-                          onSave={(v) => handleCellSave(user.id, "login", v)}
-                          maxLength={50}
-                          disabled={isDisabled}
                         />
                       );
                     }
@@ -203,10 +270,23 @@ export default function Users() {
                       return (
                         <EditableCell
                           key={column.key}
-                          value={value || ""}
+                          value={value}
                           onSave={(v) => handleCellSave(user.id, "password", v)}
                           maxLength={50}
                           type="password"
+                          disabled={isDisabled}
+                          displayValue={value ? undefined : "—"}
+                        />
+                      );
+                    }
+
+                    if (column.key === "login" || column.key === "name") {
+                      return (
+                        <EditableCell
+                          key={column.key}
+                          value={value}
+                          onSave={(v) => handleCellSave(user.id, column.key as keyof User, v)}
+                          maxLength={50}
                           disabled={isDisabled}
                         />
                       );
@@ -215,7 +295,7 @@ export default function Users() {
                     return (
                       <EditableCell
                         key={column.key}
-                        value={value || ""}
+                        value={value}
                         onSave={(v) => handleCellSave(user.id, column.key as keyof User, v)}
                         disabled={isDisabled}
                       />
@@ -226,8 +306,9 @@ export default function Users() {
             </tbody>
           </table>
         </div>
+        )}
 
-        {users.length === 0 && (
+        {!loading && users.length === 0 && (
           <div className="text-center py-12 text-slate-500">Нет данных для отображения</div>
         )}
 
@@ -235,8 +316,8 @@ export default function Users() {
         {totalPages > 1 && (
           <div className="flex items-center justify-between mt-4 px-1">
             <div className="text-sm text-slate-600">
-              Показано {(currentPage - 1) * PAGE_SIZE + 1}–
-              {Math.min(currentPage * PAGE_SIZE, users.length)} из {users.length}
+              Показано {(currentPage - 1) * itemsPerPage + 1}–
+              {Math.min(currentPage * itemsPerPage, totalItems)} из {totalItems}
             </div>
             <div className="flex items-center gap-1">
               <button
@@ -290,6 +371,13 @@ export default function Users() {
             message="Вы уверены, что хотите удалить этого пользователя? Это действие нельзя отменить."
             onConfirm={() => handleDelete(deleteTargetId)}
             onCancel={() => setDeleteTargetId(null)}
+          />
+        )}
+
+        {showCreateModal && (
+          <CreateUserModal
+            onClose={() => setShowCreateModal(false)}
+            onSubmit={handleCreateUser}
           />
         )}
 

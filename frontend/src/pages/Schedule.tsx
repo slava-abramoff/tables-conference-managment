@@ -1,90 +1,112 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import ScheduleCard from "../components/ScheduleCard";
 import SchedulePlanningModal from "../components/SchedulePlanningModal";
 import ScheduleExportModal from "../components/ScheduleExportModal";
+import { getAvailableDates, getScheduleDays } from "../api/schedule/schedule";
+import { createManyLectures } from "../api/lectures/lectures";
+import type { YearSchedule, DaySchedule } from "../types/response/schedule";
+import type { LectureCreateRequest } from "../types/request/lecture";
+import { englishToRussianMonth, monthToTwoDigits } from "../utils/monthUtils";
+import type { PlanningRow } from "../components/SchedulePlanningModal";
 
-// Моковые данные
-const mockYears = ["2025", "2026"];
-const mockMonths = [
-  "январь",
-  "февраль",
-  "март",
-  "апрель",
-  "май",
-  "июнь",
-  "июль",
-  "август",
-  "сентябрь",
-  "октябрь",
-  "ноябрь",
-  "декабрь",
-];
+function monthToIndex(month: string): number {
+  const two = monthToTwoDigits(month);
+  return two ? parseInt(two, 10) : 1;
+}
 
-// Моковые данные для карточек
-const generateMockCards = () => {
-  const cards = [];
-  const lecturers = [
-    ["Иванова И.И.", "Петрова А.И."],
-    ["Сидоров В.В."],
-    ["Козлова М.П.", "Новикова Е.С.", "Морозов Д.А."],
-    ["Волкова О.Н."],
-  ];
-  const groups = [
-    ["CS-01", "CS-02"],
-    ["CS-03"],
-    ["CS-01", "CS-02", "CS-03"],
-    ["CS-04"],
-  ];
-  
-  const dates = [
-    "25 февраля 2026",
-    "26 февраля 2026",
-    "27 февраля 2026",
-    "1 марта 2026",
-    "2 марта 2026",
-    "3 марта 2026",
-    "4 марта 2026",
-    "5 марта 2026",
-    "8 марта 2026",
-    "9 марта 2026",
-    "10 марта 2026",
-    "11 марта 2026",
-    "12 марта 2026",
-    "15 марта 2026",
-    "16 марта 2026",
-    "17 марта 2026",
-    "18 марта 2026",
-    "19 марта 2026",
-    "22 марта 2026",
-    "23 марта 2026",
-    "24 марта 2026",
-    "25 марта 2026",
-    "26 марта 2026",
-    "29 марта 2026",
-    "30 марта 2026",
-    "31 марта 2026",
-  ];
+function pickDefaultYearAndMonth(years: YearSchedule[]): { year: string; month: string } | null {
+  if (years.length === 0) return null;
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth() + 1;
 
-  for (let i = 0; i < Math.min(26, dates.length); i++) {
-    cards.push({
-      date: dates[i],
-      lecturers: lecturers[i % lecturers.length],
-      groups: groups[i % groups.length],
-      lessonsCount: Math.floor(Math.random() * 3) + 1,
-    });
-  }
+  const yearStrings = years.map((y) => y.year);
+  const currentYearStr = String(currentYear);
+  const pastOrCurrentYears = yearStrings
+    .filter((y) => parseInt(y, 10) <= currentYear)
+    .sort((a, b) => parseInt(b, 10) - parseInt(a, 10));
+  const bestYear =
+    yearStrings.includes(currentYearStr)
+      ? currentYearStr
+      : pastOrCurrentYears[0] ?? yearStrings[0];
 
-  return cards;
-};
+  const yearData = years.find((y) => y.year === bestYear);
+  if (!yearData || yearData.months.length === 0) return { year: bestYear, month: yearData?.months[0] ?? "" };
+
+  const monthIndices = yearData.months.map((m) => monthToIndex(m));
+  const validMonthIndices = monthIndices.filter((i) => i <= currentMonth);
+  const bestMonthIndex =
+    validMonthIndices.length > 0 ? Math.max(...validMonthIndices) : monthIndices[0];
+  const bestMonth =
+    yearData.months.find((m) => monthToIndex(m) === bestMonthIndex) ?? yearData.months[0];
+  return { year: bestYear, month: bestMonth };
+}
+
 
 export default function Schedule() {
   const navigate = useNavigate();
-  const [selectedYear, setSelectedYear] = useState("2026");
-  const [selectedMonth, setSelectedMonth] = useState("февраль");
-  const [cards] = useState(generateMockCards());
+  const [yearsData, setYearsData] = useState<YearSchedule[]>([]);
+  const [selectedYear, setSelectedYear] = useState("");
+  const [selectedMonth, setSelectedMonth] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [cards, setCards] = useState<DaySchedule[]>([]);
+  const [cardsLoading, setCardsLoading] = useState(false);
   const [showPlanningModal, setShowPlanningModal] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
+
+  const availableYears = yearsData.map((y) => y.year);
+  const selectedYearData = yearsData.find((y) => y.year === selectedYear);
+  const availableMonths = selectedYearData?.months ?? [];
+
+  useEffect(() => {
+    getAvailableDates()
+      .then((res) => {
+        const years = (res.data?.years ?? []).map((y) => ({
+          ...y,
+          months: y.months.map(englishToRussianMonth),
+        }));
+        setYearsData(years);
+        const defaultPick = pickDefaultYearAndMonth(years);
+        if (defaultPick) {
+          setSelectedYear(defaultPick.year);
+          setSelectedMonth(defaultPick.month);
+        } else if (years.length > 0) {
+          setSelectedYear(years[0].year);
+          setSelectedMonth(years[0].months[0] ?? "");
+        }
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
+
+  const fetchScheduleDays = () => {
+    if (!selectedYear || !selectedMonth) return;
+    const monthNumber = parseInt(monthToTwoDigits(selectedMonth), 10);
+    if (Number.isNaN(monthNumber)) return;
+    setCardsLoading(true);
+    getScheduleDays({ year: parseInt(selectedYear, 10), month: monthNumber })
+      .then((res) => {
+        setCards(res.data ?? []);
+      })
+      .catch(() => {
+        setCards([]);
+      })
+      .finally(() => {
+        setCardsLoading(false);
+      });
+  };
+
+  useEffect(() => {
+    fetchScheduleDays();
+  }, [selectedYear, selectedMonth]);
+
+  const handleYearChange = (year: string) => {
+    setSelectedYear(year);
+    const yearInfo = yearsData.find((y) => y.year === year);
+    const months = yearInfo?.months ?? [];
+    setSelectedMonth(months.includes(selectedMonth) ? selectedMonth : months[0] ?? "");
+  };
 
   const handleExport = () => {
     setShowExportModal(true);
@@ -99,14 +121,39 @@ export default function Schedule() {
     setShowPlanningModal(true);
   };
 
-  const handlePlanningSubmit = (rows: { id: number; date: string; start: string; end: string; group: string; lecturer: string; platform: string; building: string; place: string; comment: string }[]) => {
-    console.log("Отправка планирования:", rows);
-    // Здесь будет логика отправки на сервер
+  const handlePlanningSubmit = (rows: PlanningRow[]) => {
+    if (rows.length === 0) return;
+    const lectures: LectureCreateRequest[] = rows
+      .filter((row) => row.date.trim() !== "")
+      .map((row) => {
+        const dateISO = row.date.trim()
+          ? `${row.date}T${row.start.trim() || "00:00"}:00Z`
+          : "";
+        return {
+          date: dateISO,
+          group: row.group.trim() || undefined,
+          lector: row.lecturer.trim() || undefined,
+          platform: row.platform.trim() || undefined,
+          unit: row.building.trim() || undefined,
+          location: row.place.trim() || undefined,
+          description: row.comment.trim() || undefined,
+          start: row.start.trim() || undefined,
+          end: row.end.trim() || undefined,
+        };
+      });
+    if (lectures.length === 0) return;
+    createManyLectures({ lectures })
+      .then(() => {
+        setShowPlanningModal(false);
+        fetchScheduleDays();
+      })
+      .catch(() => {
+        // Можно показать уведомление об ошибке
+      });
   };
 
   const handleCardClick = (date: string) => {
-    console.log("Клик по карточке:", date);
-    navigate("/lectures");
+    navigate(`/lectures/${date}`);
   };
 
   return (
@@ -128,10 +175,14 @@ export default function Schedule() {
               <select
                 id="year"
                 value={selectedYear}
-                onChange={(e) => setSelectedYear(e.target.value)}
-                className="px-3 py-2 border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 text-slate-900 bg-white min-w-[100px]"
+                onChange={(e) => handleYearChange(e.target.value)}
+                disabled={loading}
+                className="px-3 py-2 border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 text-slate-900 bg-white min-w-[100px] disabled:opacity-50"
               >
-                {mockYears.map((year) => (
+                {availableYears.length === 0 && !loading && (
+                  <option value="">Нет данных</option>
+                )}
+                {availableYears.map((year) => (
                   <option key={year} value={year}>
                     {year}
                   </option>
@@ -148,9 +199,13 @@ export default function Schedule() {
                 id="month"
                 value={selectedMonth}
                 onChange={(e) => setSelectedMonth(e.target.value)}
-                className="px-3 py-2 border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 text-slate-900 bg-white min-w-[150px]"
+                disabled={loading || availableMonths.length === 0}
+                className="px-3 py-2 border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 text-slate-900 bg-white min-w-[150px] disabled:opacity-50"
               >
-                {mockMonths.map((month) => (
+                {availableMonths.length === 0 && !loading && (
+                  <option value="">Нет данных</option>
+                )}
+                {availableMonths.map((month) => (
                   <option key={month} value={month}>
                     {month}
                   </option>
@@ -197,23 +252,28 @@ export default function Schedule() {
         )}
 
         {/* Календарь из карточек */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {cards.map((card, index) => (
-            <ScheduleCard
-              key={index}
-              date={card.date}
-              lecturers={card.lecturers}
-              groups={card.groups}
-              lessonsCount={card.lessonsCount}
-              onClick={() => handleCardClick(card.date)}
-            />
-          ))}
-        </div>
-
-        {cards.length === 0 && (
+        {cardsLoading ? (
           <div className="text-center py-12 text-slate-500">
-            Нет запланированных лекций на выбранный период
+            Загрузка расписания...
           </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {cards.map((card) => (
+                <ScheduleCard
+                  key={card.date}
+                  data={card}
+                  onClick={() => handleCardClick(card.date)}
+                />
+              ))}
+            </div>
+
+            {cards.length === 0 && (
+              <div className="text-center py-12 text-slate-500">
+                Нет запланированных лекций на выбранный период
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

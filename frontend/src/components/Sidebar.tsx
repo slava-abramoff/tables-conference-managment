@@ -1,19 +1,37 @@
 import { Link, useLocation } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
+import { ROLE_API } from "../utils/roleUtils";
 
 interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
+interface MenuItem {
+  path: string;
+  label: string;
+  icon: string;
+  requiredRole?: string;
+}
+
 export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const location = useLocation();
+  const { user } = useAuth();
 
-  const menuItems = [
+  const menuItems: MenuItem[] = [
     { path: "/", label: "Заявка на конференцию", icon: "📅" },
     { path: "/schedule", label: "Лекции", icon: "📚" },
     { path: "/meets", label: "Конференции", icon: "🎯" },
-    { path: "/users", label: "Пользователи", icon: "👤" },
+    { path: "/users", label: "Пользователи", icon: "👤", requiredRole: ROLE_API.ADMIN },
   ];
+
+  // Фильтруем пункты меню по роли пользователя
+  const visibleMenuItems = menuItems.filter((item) => {
+    if (item.requiredRole) {
+      return user?.role === item.requiredRole;
+    }
+    return true;
+  });
 
   return (
     <>
@@ -36,7 +54,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             <h2 className="text-lg font-semibold text-slate-900">Навигация</h2>
           </div>
           <nav className="space-y-1">
-            {menuItems.map((item) => {
+            {visibleMenuItems.map((item) => {
               const isActive = location.pathname === item.path;
               return (
                 <Link

@@ -11,7 +11,6 @@ import (
 	"table-api/internal/handler/dto"
 	"table-api/internal/mappers"
 	"table-api/internal/models"
-	common "table-api/pkg"
 	"time"
 
 	"github.com/xuri/excelize/v2"
@@ -221,19 +220,11 @@ func (l *lectureService) Update(
 	}
 
 	if dto.Start != nil {
-		t, err := time.Parse("15:04", *dto.Start)
-		if err != nil {
-			return nil, common.ErrInvalidInput
-		}
-		updates["Start"] = &t
+		updates["start"] = *dto.Start
 	}
 
 	if dto.End != nil {
-		t, err := time.Parse("15:04", *dto.End)
-		if err != nil {
-			return nil, common.ErrInvalidInput
-		}
-		updates["End"] = &t
+		updates["end"] = *dto.End
 	}
 
 	return l.lectureRepo.Update(ctx, id, updates)
@@ -243,12 +234,21 @@ func (l *lectureService) Remove(ctx context.Context, id int) (*models.Lecture, e
 	return l.lectureRepo.Delete(ctx, id)
 }
 
-func (l *lectureService) Export(ctx context.Context, filter dto.ExportLecturesExcelRequest, writer io.Writer) error {
+func (l *lectureService) Export(
+	ctx context.Context,
+	filter dto.ExportLecturesExcelRequest,
+	writer io.Writer,
+) error {
 	if filter.StartDate.IsZero() || filter.EndDate.IsZero() {
 		return fmt.Errorf("invalid date range")
 	}
 
-	lectures, err := l.lectureRepo.FindByDatesAndGroup(ctx, filter.StartDate, filter.EndDate, filter.Group)
+	lectures, err := l.lectureRepo.FindByDatesAndGroup(
+		ctx,
+		filter.StartDate,
+		filter.EndDate,
+		filter.Group,
+	)
 	if err != nil {
 		return err
 	}
@@ -308,13 +308,15 @@ func (l *lectureService) Export(ctx context.Context, filter dto.ExportLecturesEx
 
 	for i, lecture := range lectures {
 		row := i + 2
+
 		f.SetCellValue(sheet, "A"+strconv.Itoa(row), lecture.ID)
 		f.SetCellValue(sheet, "B"+strconv.Itoa(row), lecture.Date.Format("2006-01-02"))
+
 		if lecture.Start != nil {
-			f.SetCellValue(sheet, "C"+strconv.Itoa(row), lecture.Start.Format("15:04"))
+			f.SetCellValue(sheet, "C"+strconv.Itoa(row), *lecture.Start)
 		}
 		if lecture.End != nil {
-			f.SetCellValue(sheet, "D"+strconv.Itoa(row), lecture.End.Format("15:04"))
+			f.SetCellValue(sheet, "D"+strconv.Itoa(row), *lecture.End)
 		}
 
 		cells := map[string]*string{
@@ -342,8 +344,10 @@ func (l *lectureService) Export(ctx context.Context, filter dto.ExportLecturesEx
 	for i := 1; i <= len(headers); i++ {
 		col, _ := excelize.ColumnNumberToName(i)
 		maxLen := len(headers[i-1])
+
 		for j := 0; j < len(lectures); j++ {
 			var val string
+
 			switch col {
 			case "A":
 				val = strconv.Itoa(lectures[j].ID)
@@ -351,11 +355,11 @@ func (l *lectureService) Export(ctx context.Context, filter dto.ExportLecturesEx
 				val = lectures[j].Date.Format("2006-01-02")
 			case "C":
 				if lectures[j].Start != nil {
-					val = lectures[j].Start.Format("15:04")
+					val = *lectures[j].Start
 				}
 			case "D":
 				if lectures[j].End != nil {
-					val = lectures[j].End.Format("15:04")
+					val = *lectures[j].End
 				}
 			case "E":
 				if lectures[j].Group != nil {
@@ -394,10 +398,12 @@ func (l *lectureService) Export(ctx context.Context, filter dto.ExportLecturesEx
 					val = *lectures[j].Admin
 				}
 			}
+
 			if len(val) > maxLen {
 				maxLen = len(val)
 			}
 		}
+
 		f.SetColWidth(sheet, col, col, float64(maxLen+2))
 	}
 

@@ -47,11 +47,11 @@ export default function Header({ onMenuClick }: HeaderProps) {
               {user && (
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-white text-sm font-medium">
-                    {user.name.charAt(0).toUpperCase()}
+                    {(user.name ?? user.login).charAt(0).toUpperCase()}
                   </div>
                   <div className="flex flex-col">
                     <span className="text-sm font-medium text-slate-900">
-                      {user.name}
+                      {user.name ?? user.login}
                     </span>
                     <span className="text-xs text-slate-500">{user.role}</span>
                   </div>

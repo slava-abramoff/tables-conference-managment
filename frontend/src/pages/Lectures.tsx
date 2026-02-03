@@ -1,10 +1,23 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { useParams } from "react-router-dom";
 import EditableCell from "../components/EditableCell";
 import ColumnSettingsModal from "../components/ColumnSettingsModal";
 import ConfirmDeleteModal from "../components/ConfirmDeleteModal";
+import SetUnifiedLectureLinkModal from "../components/SetUnifiedLectureLinkModal.tsx";
+import { formatDateRuLong } from "../utils/dateUtils";
+import {
+  getLecturesByDate,
+  createLecture,
+  updateLecturesLink,
+  updateLecture,
+  deleteLecture,
+} from "../api/lectures/lectures";
+import type { LectureResponse } from "../types/response/lecture";
+import type { LectureUpdateRequest } from "../types/request/lecture";
 
 interface Lecture {
   id: number;
+  date: string;
   lecturer: string;
   group: string;
   platform: string;
@@ -44,73 +57,86 @@ const columns = [
   { key: "actions", label: "Действия" },
 ];
 
-// Моковые данные
-const generateMockLectures = (): Lecture[] => {
-  return [
-    {
-      id: 1,
-      lecturer: "Иванова И.И.",
-      group: "CS-01",
-      platform: "Zoom",
-      building: "Корпус 1",
-      place: "Аудитория 101",
-      url: "https://example.com/lecture/1",
-      shortUrl: "https://short.ly/abc123",
-      stream: "Основной поток",
-      description: "Введение в программирование",
-      admin: "Петров А.А.",
-      start: "09:00",
-      end: "10:30",
-      customTime: "",
-      createdAt: "2026-01-15 10:00",
-      updatedAt: "2026-01-20 14:30",
-    },
-    {
-      id: 2,
-      lecturer: "Петрова А.И.",
-      group: "CS-02",
-      platform: "VK",
-      building: "Корпус 2",
-      place: "Аудитория 205",
-      url: "https://example.com/lecture/2",
-      shortUrl: "https://short.ly/def456",
-      stream: "Дополнительный поток",
-      description: "Алгоритмы и структуры данных",
-      admin: "Сидоров В.В.",
-      start: "11:00",
-      end: "12:30",
-      customTime: "",
-      createdAt: "2026-01-16 11:00",
-      updatedAt: "2026-01-21 15:00",
-    },
-    {
-      id: 3,
-      lecturer: "Сидоров В.В.",
-      group: "CS-03",
-      platform: "Другое",
-      building: "Корпус 1",
-      place: "Аудитория 103",
-      url: "https://example.com/lecture/3",
-      shortUrl: "https://short.ly/ghi789",
-      stream: "Основной поток",
-      description: "Базы данных",
-      admin: "Козлова М.П.",
-      start: "14:00",
-      end: "15:30",
-      customTime: "Особое расписание",
-      createdAt: "2026-01-17 12:00",
-      updatedAt: "2026-01-22 16:00",
-    },
-  ];
-};
+const POLL_INTERVAL_MS = 2 * 60 * 1000; // 2 минуты
+
+/** Маппинг ключа таблицы в ключ тела PATCH (LectureUpdateRequest). */
+function tableFieldToApiField(
+  field: keyof Lecture
+): keyof LectureUpdateRequest | null {
+  const map: Partial<Record<keyof Lecture, keyof LectureUpdateRequest>> = {
+    lecturer: "lector",
+    building: "unit",
+    place: "location",
+    stream: "streamKey",
+    customTime: "abnormalTime",
+    group: "group",
+    platform: "platform",
+    url: "url",
+    shortUrl: "shortUrl",
+    description: "description",
+    admin: "admin",
+    start: "start",
+    end: "end",
+  };
+  return map[field] ?? (field === "id" || field === "createdAt" || field === "updatedAt" ? null : (field as keyof LectureUpdateRequest));
+}
+
+function mapLectureResponseToLecture(r: LectureResponse): Lecture {
+  return {
+    id: r.id,
+    date: r.date ?? "",
+    lecturer: r.lector ?? "",
+    group: r.group ?? "",
+    platform: r.platform ?? "",
+    building: r.unit ?? "",
+    place: r.location ?? "",
+    url: r.url ?? "",
+    shortUrl: r.shortUrl ?? "",
+    stream: r.streamKey ?? "",
+    description: r.description ?? "",
+    admin: r.admin ?? "",
+    start: r.start ?? "",
+    end: r.end ?? "",
+    customTime: r.abnormalTime ?? "",
+    createdAt: r.createdAt ?? "",
+    updatedAt: r.updatedAt ?? "",
+  };
+}
 
 export default function Lectures() {
-  const [lectures, setLectures] = useState<Lecture[]>(generateMockLectures());
+  const { date } = useParams<{ date: string }>();
+  const [lectures, setLectures] = useState<Lecture[]>([]);
+  const [loading, setLoading] = useState(false);
   const [visibleColumns, setVisibleColumns] = useState<Set<string>>(
     new Set(columns.map((col) => col.key))
   );
   const [showSettings, setShowSettings] = useState(false);
   const [deleteTargetId, setDeleteTargetId] = useState<number | null>(null);
+  const [showSetLinkModal, setShowSetLinkModal] = useState(false);
+
+  const ruDate = date ? formatDateRuLong(date) : "";
+
+  const fetchLectures = useCallback(() => {
+    if (!date) return;
+    setLoading(true);
+    getLecturesByDate(date)
+      .then((list) => {
+        setLectures(Array.isArray(list) ? list.map(mapLectureResponseToLecture) : []);
+      })
+      .catch(() => {
+        setLectures([]);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, [date]);
+
+  useEffect(() => {
+    fetchLectures();
+    if (!date) return;
+    const intervalId = setInterval(fetchLectures, POLL_INTERVAL_MS);
+    return () => clearInterval(intervalId);
+  }, [date, fetchLectures]);
 
   useEffect(() => {
     // Загружаем сохраненные настройки из localStorage
@@ -136,28 +162,53 @@ export default function Lectures() {
     field: keyof Lecture,
     value: string
   ) => {
-    setLectures((prev) =>
-      prev.map((lecture) =>
-        lecture.id === lectureId
-          ? { ...lecture, [field]: value, updatedAt: new Date().toLocaleString("ru-RU") }
-          : lecture
-      )
-    );
+    const apiField = tableFieldToApiField(field);
+    if (apiField == null) return;
+    const body: LectureUpdateRequest = { [apiField]: value };
+    updateLecture(lectureId, body)
+      .then((updated) => {
+        setLectures((prev) =>
+          prev.map((lecture) =>
+            lecture.id === lectureId
+              ? {
+                  ...lecture,
+                  [field]: value,
+                  updatedAt: updated.updatedAt ?? new Date().toLocaleString("ru-RU"),
+                }
+              : lecture
+          )
+        );
+      })
+      .catch(() => {
+        // Можно показать уведомление об ошибке
+      });
   };
 
   const handleDelete = (lectureId: number) => {
-    setLectures((prev) => prev.filter((lecture) => lecture.id !== lectureId));
-    setDeleteTargetId(null);
+    deleteLecture(lectureId)
+      .then(() => {
+        setLectures((prev) => prev.filter((lecture) => lecture.id !== lectureId));
+        setDeleteTargetId(null);
+      })
+      .catch(() => {
+        // Можно показать уведомление об ошибке
+      });
   };
 
   const handleAddLecture = () => {
-    console.log("Добавить лекцию");
-    // Здесь будет логика добавления новой лекции
+    const dateToUse = lectures[0]?.date ?? date ?? "";
+    if (!dateToUse) return;
+    createLecture({ date: dateToUse })
+      .then((created) => {
+        setLectures((prev) => [mapLectureResponseToLecture(created), ...prev]);
+      })
+      .catch(() => {
+        // Можно показать уведомление об ошибке
+      });
   };
 
   const handleSetLink = () => {
-    console.log("Установить ссылку");
-    // Здесь будет логика установки ссылки
+    setShowSetLinkModal(true);
   };
 
   const visibleColumnsArray = columns.filter((col) => visibleColumns.has(col.key));
@@ -165,6 +216,14 @@ export default function Lectures() {
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-slate-50 p-4 lg:p-6">
       <div className="max-w-[calc(100vw-2rem)] mx-auto">
+        {/* Заголовок с датой */}
+        {date && (
+          <div className="mb-4">
+            <h1 className="text-2xl font-semibold text-slate-900">
+              Лекции на {ruDate}
+            </h1>
+          </div>
+        )}
         {/* Кнопки вверху */}
         <div className="flex items-center gap-3 mb-6">
           <button
@@ -207,6 +266,15 @@ export default function Lectures() {
         </div>
 
         {/* Таблица */}
+        {loading && lectures.length === 0 ? (
+          <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-12 text-center text-slate-500">
+            Загрузка лекций...
+          </div>
+        ) : !date ? (
+          <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-12 text-center text-slate-500">
+            Укажите дату в адресе страницы
+          </div>
+        ) : (
         <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-x-auto">
           <table className="min-w-full divide-y divide-slate-200">
             <thead className="bg-slate-50">
@@ -310,8 +378,9 @@ export default function Lectures() {
             </tbody>
           </table>
         </div>
+        )}
 
-        {lectures.length === 0 && (
+        {!loading && date && lectures.length === 0 && (
           <div className="text-center py-12 text-slate-500">
             Нет данных для отображения
           </div>
@@ -324,6 +393,23 @@ export default function Lectures() {
             message="Вы уверены, что хотите удалить эту лекцию? Это действие нельзя отменить."
             onConfirm={() => handleDelete(deleteTargetId)}
             onCancel={() => setDeleteTargetId(null)}
+          />
+        )}
+
+        {showSetLinkModal && (
+          <SetUnifiedLectureLinkModal
+            onClose={() => setShowSetLinkModal(false)}
+            onSubmit={({ groupName, url }) => {
+              updateLecturesLink({ groupName, url })
+                .then(() => {
+                  // После установки ссылки — обновляем данные на странице
+                  fetchLectures();
+                  setShowSetLinkModal(false);
+                })
+                .catch(() => {
+                  // Можно показать уведомление об ошибке
+                });
+            }}
           />
         )}
 

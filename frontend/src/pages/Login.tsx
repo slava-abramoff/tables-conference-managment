@@ -1,20 +1,30 @@
-import { useState, FormEvent } from "react";
+import { useState } from "react";
+import type { FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
+import * as authApi from "../api/auth/auth";
 
 export default function Login() {
   const navigate = useNavigate();
   const { login } = useAuth();
   const [loginValue, setLoginValue] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    // Заглушка: авторизуем пользователя
-    console.log("Login attempt:", { login: loginValue, password });
-    // Устанавливаем авторизацию (заглушка - всегда "Ivanov, admin")
-    login("Ivanov", "admin");
-    navigate("/");
+    setError(null);
+    setLoading(true);
+    try {
+      const authData = await authApi.login({ login: loginValue, password });
+      login(authData);
+      navigate("/");
+    } catch {
+      setError("Неверный логин или пароль");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -32,6 +42,11 @@ export default function Login() {
           </div>
 
           <form onSubmit={handleSubmit} className="p-6 space-y-4">
+            {error && (
+              <div className="rounded-md bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-700">
+                {error}
+              </div>
+            )}
             <div>
               <label
                 htmlFor="login"
@@ -70,9 +85,10 @@ export default function Login() {
 
             <button
               type="submit"
-              className="w-full py-2.5 px-4 bg-slate-800 hover:bg-slate-700 text-white font-medium rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2"
+              disabled={loading}
+              className="w-full py-2.5 px-4 bg-slate-800 hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2"
             >
-              Отправить
+              {loading ? "Вход..." : "Отправить"}
             </button>
           </form>
         </div>

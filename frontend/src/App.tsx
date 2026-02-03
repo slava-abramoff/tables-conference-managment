@@ -1,12 +1,14 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import Layout from "./components/Layout";
+import RoleProtectedRoute from "./components/RoleProtectedRoute";
 import Login from "./pages/Login";
 import ConferenceForm from "./pages/ConferenceForm";
 import Schedule from "./pages/Schedule";
 import Lectures from "./pages/Lectures";
 import Meets from "./pages/Meets";
 import Users from "./pages/Users";
+import { ROLE_API } from "./utils/roleUtils";
 
 function App() {
   return (
@@ -30,7 +32,7 @@ function App() {
           }
         />
         <Route
-          path="/lectures"
+          path="/lectures/:date"
           element={
             <Layout>
               <Lectures />
@@ -48,9 +50,11 @@ function App() {
         <Route
           path="/users"
           element={
-            <Layout>
-              <Users />
-            </Layout>
+            <RoleProtectedRoute allowedRoles={[ROLE_API.ADMIN]}>
+              <Layout>
+                <Users />
+              </Layout>
+            </RoleProtectedRoute>
           }
         />
         <Route path="*" element={<Navigate to="/" replace />} />

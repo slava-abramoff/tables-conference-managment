@@ -1,7 +1,16 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import EditableCell from "../components/EditableCell";
 import EditableSelectCell from "../components/EditableSelectCell";
 import ColumnSettingsModal from "../components/ColumnSettingsModal";
+import MeetsExportModal from "../components/MeetsExportModal";
+import { getMeets, updateMeet } from "../api/meets/meets";
+import type { MeetResponse } from "../types/response/meet";
+import type { MeetUpdateRequest } from "../types/request/meets";
+import type { Pagination } from "../types/response/pagination";
+import {
+  MEET_STATUS_FILTER_OPTIONS,
+  MEET_STATUS_ROW_OPTIONS,
+} from "../utils/meetStatusUtils";
 
 interface Meet {
   id: number;
@@ -25,21 +34,6 @@ interface Meet {
 
 const STORAGE_KEY = "meets_visible_columns";
 
-const STATUS_OPTIONS = [
-  { value: "new", label: "Новая" },
-  { value: "upcoming", label: "Состоится" },
-  { value: "past", label: "Прошедшая" },
-  { value: "rejected", label: "Отклонена" },
-];
-
-const FILTER_OPTIONS = [
-  { value: "", label: "Все" },
-  { value: "new", label: "Новые" },
-  { value: "upcoming", label: "Состоятся" },
-  { value: "past", label: "Прошедшие" },
-  { value: "rejected", label: "Отклоненные" },
-];
-
 const columns = [
   { key: "id", label: "ID" },
   { key: "title", label: "Название" },
@@ -62,30 +56,107 @@ const columns = [
 
 type SortDirection = "asc" | "desc" | null;
 
-const generateMockMeets = (): Meet[] => {
-  const statuses = ["new", "upcoming", "past", "rejected"];
-  return Array.from({ length: 25 }, (_, i) => ({
-    id: i + 1,
-    title: `Конференция ${i + 1}`,
-    fullName: ["Иванов И.И.", "Петрова А.И.", "Сидоров В.В."][i % 3],
-    email: `user${i + 1}@example.com`,
-    phone: `79${String(9000000000 + i).slice(0, 9)}`,
-    start: `2026-0${(i % 9) + 1}-${String((i % 28) + 1).padStart(2, "0")}T09:00`,
-    end: `2026-0${(i % 9) + 1}-${String((i % 28) + 1).padStart(2, "0")}T12:00`,
-    place: `Аудитория ${100 + i}`,
-    platform: ["VK", "Zoom", "Другое"][i % 3],
-    equipment: "Проектор, микрофон",
-    url: `https://example.com/meet/${i + 1}`,
-    shortUrl: `https://short.ly/meet${i + 1}`,
-    status: statuses[i % 4],
-    notes: i % 3 === 0 ? "Примечание к заявке" : "",
-    admin: "Админ А.А.",
-    createdAt: "2026-01-15 10:00",
-    updatedAt: "2026-01-20 14:30",
-  }));
-};
-
 const PAGE_SIZE = 10;
+
+const API_SORT_FIELDS = [
+  "eventName",
+  "customerName",
+  "email",
+  "phone",
+  "location",
+  "platform",
+  "devices",
+  "url",
+  "shortUrl",
+  "status",
+  "description",
+  "admin",
+  "start",
+  "end",
+  "createdAt",
+  "updatedAt",
+] as const;
+
+/** Маппинг ключа колонки таблицы в имя поля для сортировки/фильтрации на сервере. */
+function tableColumnToApiSortField(columnKey: string): string | undefined {
+  const map: Record<string, string> = {
+    title: "eventName",
+    fullName: "customerName",
+    place: "location",
+    equipment: "devices",
+    notes: "description",
+    email: "email",
+    phone: "phone",
+    platform: "platform",
+    url: "url",
+    shortUrl: "shortUrl",
+    status: "status",
+    admin: "admin",
+    start: "start",
+    end: "end",
+    createdAt: "createdAt",
+    updatedAt: "updatedAt",
+  };
+  const api = map[columnKey] ?? columnKey;
+  return API_SORT_FIELDS.includes(api as (typeof API_SORT_FIELDS)[number]) ? api : undefined;
+}
+
+/**
+ * Форматирует значение start/end для отправки на сервер: 2026-01-22T13:00:00+03:00
+ */
+function formatStartEndForApi(value: string): string {
+  if (!value || typeof value !== "string") return value;
+  const trimmed = value.trim();
+  if (!trimmed) return value;
+  if (/[+-]\d{2}:\d{2}$/.test(trimmed) || trimmed.endsWith("Z")) return trimmed;
+  const hasSeconds = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(trimmed);
+  const normalized = hasSeconds ? trimmed.slice(0, 19) : trimmed.slice(0, 16) + ":00";
+  return `${normalized}+03:00`;
+}
+
+/** Маппинг ключа таблицы в ключ тела PATCH (MeetUpdateRequest). */
+function tableFieldToApiField(field: keyof Meet): keyof MeetUpdateRequest | null {
+  const map: Partial<Record<keyof Meet, keyof MeetUpdateRequest>> = {
+    title: "eventName",
+    fullName: "customerName",
+    place: "location",
+    equipment: "devices",
+    notes: "description",
+    status: "status",
+    start: "start",
+    end: "end",
+    email: "email",
+    phone: "phone",
+    platform: "platform",
+    url: "url",
+    shortUrl: "shortUrl",
+    admin: "admin",
+  };
+  if (field === "id" || field === "createdAt" || field === "updatedAt") return null;
+  return map[field] ?? (field as keyof MeetUpdateRequest);
+}
+
+function mapMeetResponseToMeet(r: MeetResponse): Meet {
+  return {
+    id: r.id,
+    title: r.eventName ?? "",
+    fullName: r.customerName ?? "",
+    email: r.email ?? "",
+    phone: r.phone ?? "",
+    start: r.start ?? "",
+    end: r.end ?? "",
+    place: r.location ?? "",
+    platform: r.platform ?? "",
+    equipment: r.devices ?? "",
+    url: r.url ?? "",
+    shortUrl: r.shortUrl ?? "",
+    status: r.status ?? "",
+    notes: r.description ?? "",
+    admin: r.admin ?? "",
+    createdAt: r.CreatedAt ?? "",
+    updatedAt: r.UpdatedAt ?? "",
+  };
+}
 
 /** Форматирует строку даты/времени (YYYY-MM-DDTHH:mm или ISO) в человеко-понятный вид для ru. */
 function formatDateTime(value: string): string {
@@ -102,16 +173,46 @@ function formatDateTime(value: string): string {
 }
 
 export default function Meets() {
-  const [meets, setMeets] = useState<Meet[]>(generateMockMeets());
+  const [meets, setMeets] = useState<Meet[]>([]);
+  const [pagination, setPagination] = useState<Pagination | null>(null);
+  const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [visibleColumns, setVisibleColumns] = useState<Set<string>>(
     new Set(columns.map((col) => col.key))
   );
   const [showSettings, setShowSettings] = useState(false);
+  const [showExportModal, setShowExportModal] = useState(false);
   const [sortColumn, setSortColumn] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>(null);
   const [currentPage, setCurrentPage] = useState(1);
+
+  const fetchMeets = useCallback(() => {
+    setLoading(true);
+    const apiSortBy = sortColumn ? tableColumnToApiSortField(sortColumn) : undefined;
+    getMeets({
+      page: currentPage,
+      limit: PAGE_SIZE,
+      status: statusFilter || undefined,
+      sortBy: apiSortBy,
+      order: sortDirection ?? undefined,
+    })
+      .then((res) => {
+        setMeets((res.data ?? []).map(mapMeetResponseToMeet));
+        setPagination(res.pagination ?? null);
+      })
+      .catch(() => {
+        setMeets([]);
+        setPagination(null);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, [currentPage, statusFilter, sortColumn, sortDirection]);
+
+  useEffect(() => {
+    fetchMeets();
+  }, [fetchMeets]);
 
   useEffect(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
@@ -132,72 +233,72 @@ export default function Meets() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(Array.from(newVisibleColumns)));
   };
 
+  const handleExportSubmit = (params: { dateFrom: string; dateTo: string }) => {
+    console.log("Экспорт конференций:", params);
+    // Здесь будет логика экспорта
+  };
+
   const handleCellSave = (meetId: number, field: keyof Meet, value: string) => {
-    setMeets((prev) =>
-      prev.map((m) =>
-        m.id === meetId
-          ? { ...m, [field]: value, updatedAt: new Date().toLocaleString("ru-RU") }
-          : m
-      )
-    );
+    const apiField = tableFieldToApiField(field);
+    if (apiField == null) return;
+    const sendValue =
+      apiField === "start" || apiField === "end" ? formatStartEndForApi(value) : value;
+    const body: MeetUpdateRequest = { [apiField]: sendValue };
+    updateMeet(meetId, body)
+      .then((updated) => {
+        setMeets((prev) =>
+          prev.map((m) =>
+            m.id === meetId
+              ? {
+                  ...m,
+                  [field]: value,
+                  updatedAt: updated.UpdatedAt ?? new Date().toLocaleString("ru-RU"),
+                }
+              : m
+          )
+        );
+      })
+      .catch(() => {
+        // Можно показать уведомление об ошибке
+      });
   };
 
   const handleSort = (columnKey: string) => {
     if (sortColumn !== columnKey) {
       setSortColumn(columnKey);
       setSortDirection("asc");
+      setCurrentPage(1);
       return;
     }
     if (sortDirection === "asc") {
       setSortDirection("desc");
+      setCurrentPage(1);
       return;
     }
     if (sortDirection === "desc") {
       setSortColumn(null);
       setSortDirection(null);
+      setCurrentPage(1);
     }
   };
 
-  const filteredAndSortedMeets = useMemo(() => {
-    let result = [...meets];
+  const filteredBySearchMeets = useMemo(() => {
+    if (!search.trim()) return meets;
+    const q = search.toLowerCase();
+    return meets.filter(
+      (m) =>
+        m.title.toLowerCase().includes(q) ||
+        m.fullName.toLowerCase().includes(q) ||
+        m.email.toLowerCase().includes(q)
+    );
+  }, [meets, search]);
 
-    if (search.trim()) {
-      const q = search.toLowerCase();
-      result = result.filter(
-        (m) =>
-          m.title.toLowerCase().includes(q) ||
-          m.fullName.toLowerCase().includes(q) ||
-          m.email.toLowerCase().includes(q)
-      );
-    }
-
-    if (statusFilter) {
-      result = result.filter((m) => m.status === statusFilter);
-    }
-
-    if (sortColumn && sortDirection) {
-      result.sort((a, b) => {
-        const aVal = a[sortColumn as keyof Meet] ?? "";
-        const bVal = b[sortColumn as keyof Meet] ?? "";
-        const cmp =
-          typeof aVal === "string" && typeof bVal === "string"
-            ? aVal.localeCompare(bVal, "ru")
-            : Number(aVal) - Number(bVal);
-        return sortDirection === "asc" ? cmp : -cmp;
-      });
-    }
-
-    return result;
-  }, [meets, search, statusFilter, sortColumn, sortDirection]);
-
-  const totalPages = Math.max(1, Math.ceil(filteredAndSortedMeets.length / PAGE_SIZE));
-  const paginatedMeets = useMemo(() => {
-    const start = (currentPage - 1) * PAGE_SIZE;
-    return filteredAndSortedMeets.slice(start, start + PAGE_SIZE);
-  }, [filteredAndSortedMeets, currentPage]);
+  const totalPages = Math.max(1, pagination?.totalPages ?? 1);
+  const totalItems = pagination?.totalItems ?? 0;
+  const itemsPerPage = pagination?.itemsPerPage ?? PAGE_SIZE;
 
   useEffect(() => {
-    if (currentPage > totalPages) setCurrentPage(1);
+    if (currentPage > totalPages && totalPages > 0) setCurrentPage(1);
   }, [currentPage, totalPages]);
 
   const visibleColumnsArray = columns.filter((col) => visibleColumns.has(col.key));
@@ -225,10 +326,13 @@ export default function Meets() {
           />
           <select
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
+            onChange={(e) => {
+              setStatusFilter(e.target.value);
+              setCurrentPage(1);
+            }}
             className="px-3 py-2 border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-slate-500 bg-white min-w-[140px]"
           >
-            {FILTER_OPTIONS.map((opt) => (
+            {MEET_STATUS_FILTER_OPTIONS.map((opt) => (
               <option key={opt.value || "all"} value={opt.value}>
                 {opt.label}
               </option>
@@ -247,7 +351,7 @@ export default function Meets() {
             Импорт
           </button>
           <button
-            onClick={() => console.log("Экспорт")}
+            onClick={() => setShowExportModal(true)}
             className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-md hover:bg-slate-50"
           >
             Экспорт
@@ -265,6 +369,11 @@ export default function Meets() {
         </div>
 
         {/* Таблица */}
+        {loading && meets.length === 0 ? (
+          <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-12 text-center text-slate-500">
+            Загрузка...
+          </div>
+        ) : (
         <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-x-auto">
           <table className="min-w-full divide-y divide-slate-200">
             <thead className="bg-slate-50">
@@ -282,7 +391,7 @@ export default function Meets() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-slate-200">
-              {paginatedMeets.map((meet) => (
+              {filteredBySearchMeets.map((meet) => (
                 <tr key={meet.id} className="hover:bg-slate-50">
                   {visibleColumnsArray.map((column) => {
                     const value = meet[column.key as keyof Meet] as string;
@@ -313,7 +422,7 @@ export default function Meets() {
                           key={column.key}
                           value={value || ""}
                           onSave={(v) => handleCellSave(meet.id, "status", v)}
-                          options={STATUS_OPTIONS}
+                          options={MEET_STATUS_ROW_OPTIONS}
                         />
                       );
                     }
@@ -375,8 +484,9 @@ export default function Meets() {
             </tbody>
           </table>
         </div>
+        )}
 
-        {filteredAndSortedMeets.length === 0 && (
+        {!loading && meets.length === 0 && (
           <div className="text-center py-12 text-slate-500">Нет данных для отображения</div>
         )}
 
@@ -384,9 +494,8 @@ export default function Meets() {
         {totalPages > 1 && (
           <div className="flex items-center justify-between mt-4 px-1">
             <div className="text-sm text-slate-600">
-              Показано {(currentPage - 1) * PAGE_SIZE + 1}–
-              {Math.min(currentPage * PAGE_SIZE, filteredAndSortedMeets.length)} из{" "}
-              {filteredAndSortedMeets.length}
+              Показано {(currentPage - 1) * itemsPerPage + 1}–
+              {Math.min(currentPage * itemsPerPage, totalItems)} из {totalItems}
             </div>
             <div className="flex items-center gap-1">
               <button
@@ -431,6 +540,13 @@ export default function Meets() {
               </button>
             </div>
           </div>
+        )}
+
+        {showExportModal && (
+          <MeetsExportModal
+            onClose={() => setShowExportModal(false)}
+            onSubmit={handleExportSubmit}
+          />
         )}
 
         {showSettings && (
