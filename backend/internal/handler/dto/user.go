@@ -14,8 +14,8 @@ type UserResponse struct {
 type CreateUserRequest struct {
 	Login    string  `json:"login"    validate:"required,min=3,max=50,alphanum"`
 	Name     *string `json:"name,omitempty"    validate:"omitempty,min=2,max=100"`
-	Role     *string `json:"role,omitempty"    validate:"omitempty,oneof=admin editor viewer manager"`
-	Password string  `json:"password" validate:"required,min=6,max=72"`
+	Role     *string `json:"role,omitempty"    validate:"omitempty,oneof=admin moderator viewer"`
+	Password string  `json:"password" validate:"required,min=1,max=72"`
 }
 
 type UpdateUserRequest struct {

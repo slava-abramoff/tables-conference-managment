@@ -50,3 +50,11 @@ func UserToModel(user entitys.User) models.User {
 		Password: user.Password,
 	}
 }
+
+func UserToInfo(u models.User) dto.UserInfo {
+	return dto.UserInfo{
+		Login: u.Login,
+		Role:  u.Role,
+		Name:  u.Name,
+	}
+}

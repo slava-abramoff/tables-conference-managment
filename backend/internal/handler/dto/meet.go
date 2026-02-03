@@ -4,12 +4,6 @@ import "time"
 
 type Status string
 
-const (
-	StatusNew       Status = "new"
-	StatusActive    Status = "active"
-	StatusCompleted Status = "completed"
-)
-
 type SortOrder string
 
 const (
@@ -55,7 +49,7 @@ type UpdateMeetRequest struct {
 	URL          *string `json:"url,omitempty"          validate:"omitempty,url"`
 	ShortURL     *string `json:"shortUrl,omitempty"     validate:"omitempty,url"`
 
-	Status      *string `json:"status,omitempty"      validate:"omitempty,oneof=new approved completed canceled"`
+	Status      *string `json:"status,omitempty"      validate:"omitempty,oneof=new active completed canceled"`
 	Description *string `json:"description,omitempty" validate:"omitempty,max=2000"`
 	Admin       *string `json:"admin,omitempty"       validate:"omitempty,max=100"`
 

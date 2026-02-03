@@ -41,7 +41,7 @@ func (a *AuthHandlers) Login(w http.ResponseWriter, r *http.Request, _ httproute
 		return
 	}
 
-	userData := mappers.ToUserResponse(*user)
+	userData := mappers.UserToInfo(*user)
 
 	resp := dto.TokenResponse{User: userData, AccessToken: access, RefreshToken: refresh}
 	httprespond.JsonResponse(w, resp, http.StatusOK)
@@ -61,13 +61,14 @@ func (a *AuthHandlers) Refresh(w http.ResponseWriter, r *http.Request, _ httprou
 		return
 	}
 
-	access, refresh, err := a.authService.Refresh(ctx, req.RefreshToken)
+	user, access, refresh, err := a.authService.Refresh(ctx, req.RefreshToken)
 	if err != nil {
 		httprespond.HandleErrorResponse(w, err)
 		return
 	}
 
-	resp := dto.TokenResponse{AccessToken: access, RefreshToken: refresh}
+	userData := mappers.UserToInfo(*user)
+	resp := dto.TokenResponse{User: userData, AccessToken: access, RefreshToken: refresh}
 	httprespond.JsonResponse(w, resp, http.StatusOK)
 }
 

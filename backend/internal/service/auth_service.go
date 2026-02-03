@@ -22,7 +22,7 @@ const (
 
 type AuthService interface {
 	Login(ctx context.Context, login, password string) (*models.User, string, string, error)
-	Refresh(ctx context.Context, refreshToken string) (newAccessToken string, newRefreshToken string, err error)
+	Refresh(ctx context.Context, refreshToken string) (user *models.User, newAccessToken string, newRefreshToken string, err error)
 	Logout(ctx context.Context, refreshToken string) error
 }
 
@@ -58,29 +58,29 @@ func (a *authService) Login(ctx context.Context, login, password string) (*model
 	return user, accessToken, refreshToken, nil
 }
 
-func (a *authService) Refresh(ctx context.Context, refreshToken string) (string, string, error) {
+func (a *authService) Refresh(ctx context.Context, refreshToken string) (*models.User, string, string, error) {
 	rt, err := a.refreshRepo.GetByToken(ctx, refreshToken)
 	if err != nil || rt.ExpiresAt.Before(time.Now()) {
-		return "", "", common.ErrForbidden
+		return nil, "", "", common.ErrForbidden
 	}
 
 	user, err := a.userRepo.GetByID(ctx, rt.UserID)
 	if err != nil {
-		return "", "", common.ErrNotFound
+		return nil, "", "", common.ErrNotFound
 	}
 
 	newAccess, err := a.generateAccessToken(user)
 	if err != nil {
-		return "", "", err
+		return nil, "", "", err
 	}
 
 	newRefresh, err := a.generateRefreshToken(ctx, user.ID)
 	if err != nil {
-		return "", "", err
+		return nil, "", "", err
 	}
 	_ = a.refreshRepo.DeleteByToken(ctx, refreshToken)
 
-	return newAccess, newRefresh, nil
+	return user, newAccess, newRefresh, nil
 }
 
 func (a *authService) generateAccessToken(user *models.User) (string, error) {

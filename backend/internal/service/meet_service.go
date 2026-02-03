@@ -84,7 +84,7 @@ func (m *meetService) Update(ctx context.Context, id int, dto dto.UpdateMeetRequ
 		}
 
 		if oldMeet.Status == "new" {
-			updates["status"] = "approved"
+			updates["status"] = "active"
 		}
 
 		if oldMeet.URL != nil && *url != *oldMeet.URL {

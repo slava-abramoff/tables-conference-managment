@@ -26,26 +26,26 @@ func NewRouter(
 	cors := middleware.CorsMiddleware
 
 	// Auth
-	router.POST("/auth/login", chain(a.Login, cors, logs(logger)))
-	router.POST("/auth/refresh", chain(a.Refresh, cors, logs(logger)))
-	router.POST("/auth/logout", chain(a.Logout, cors, logs(logger)))
+	router.POST("/api/auth/login", chain(a.Login, cors, logs(logger)))
+	router.POST("/api/auth/refresh", chain(a.Refresh, cors, logs(logger)))
+	router.POST("/api/auth/logout", chain(a.Logout, cors, logs(logger)))
 
 	// ShortLink
 	router.GET("/l/:code", chain(sl.GetUrl, cors, logs(logger)))
 
 	// Meets
-	router.POST("/meets", chain(
+	router.POST("/api/meets", chain(
 		m.Create,
 		cors,
 		logs(logger),
 	))
-	router.GET("/meets/find", chain(
+	router.GET("/api/meets/find", chain(
 		m.FindMany,
 		cors,
 		logs(logger),
 		auth(),
 	))
-	router.PATCH("/meets/:id", chain(
+	router.PATCH("/api/meets/:id", chain(
 		m.Update,
 		cors,
 		logs(logger),
@@ -54,62 +54,62 @@ func NewRouter(
 	))
 
 	// Lectures
-	router.POST("/lectures", chain(
+	router.POST("/api/lectures", chain(
 		l.Create,
 		cors,
 		logs(logger),
 		auth(),
 		roles([]string{"admin", "moderator"}),
 	))
-	router.POST("/lectures/advanced", chain(
+	router.POST("/api/lectures/advanced", chain(
 		l.CreateMany,
 		cors,
 		logs(logger),
 		auth(),
 		roles([]string{"admin", "moderator"}),
 	))
-	router.POST("/lectures/links", chain(
+	router.POST("/api/lectures/links", chain(
 		l.CreateManyLinks,
 		cors,
 		logs(logger),
 		auth(),
 		roles([]string{"admin", "moderator"}),
 	))
-	router.GET("/lectures/dates", chain(
+	router.GET("/api/lectures/dates", chain(
 		l.GetDates,
 		cors,
 		logs(logger),
 		auth(),
 		roles([]string{"admin", "moderator"}),
 	))
-	router.GET("/lectures/days", chain(
+	router.GET("/api/lectures/days", chain(
 		l.GetSchedule,
 		cors,
 		logs(logger),
 		auth(),
 		roles([]string{"admin", "moderator"}),
 	))
-	router.GET("/lectures/schedule/:date", chain(
+	router.GET("/api/lectures/schedule/:date", chain(
 		l.GetByDates,
 		cors,
 		logs(logger),
 		auth(),
 		roles([]string{"admin", "moderator"}),
 	))
-	router.PATCH("/lectures/:id", chain(
+	router.PATCH("/api/lectures/:id", chain(
 		l.Update,
 		cors,
 		logs(logger),
 		auth(),
 		roles([]string{"admin", "moderator"}),
 	))
-	router.GET("/lectures/export", chain(
+	router.GET("/api/lectures/export", chain(
 		l.ExportExcel,
 		cors,
 		logs(logger),
 		auth(),
 	))
-	router.DELETE("/lectures/:id", chain(
+	router.DELETE("/api/lectures/:id", chain(
 		l.Remove,
 		cors,
 		logs(logger),
@@ -118,7 +118,7 @@ func NewRouter(
 	))
 
 	// Users
-	router.POST("/users", chain(
+	router.POST("/api/users", chain(
 		u.Create,
 		cors,
 		logs(logger),
@@ -126,7 +126,7 @@ func NewRouter(
 		roles([]string{"admin"}),
 	))
 
-	router.GET("/users/find", chain(
+	router.GET("/api/users/find", chain(
 		u.FindMany,
 		cors,
 		logs(logger),
@@ -134,14 +134,14 @@ func NewRouter(
 		roles([]string{"admin"}),
 	))
 
-	router.GET("/users/search", chain(
+	router.GET("/api/users/search", chain(
 		u.Search,
 		cors,
 		logs(logger),
 		auth(),
 	))
 
-	router.PATCH("/users/:id", chain(
+	router.PATCH("/api/users/:id", chain(
 		u.Update,
 		cors,
 		logs(logger),
@@ -149,7 +149,7 @@ func NewRouter(
 		roles([]string{"admin"}),
 	))
 
-	router.DELETE("/users/:id", chain(
+	router.DELETE("/api/users/:id", chain(
 		u.Remove,
 		cors,
 		logs(logger),
