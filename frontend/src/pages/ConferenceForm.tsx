@@ -1,6 +1,17 @@
 import { useState, type FormEvent, type ChangeEvent } from "react";
 import SuccessMessage from "../components/SuccessMessage";
 import ErrorMessage from "../components/ErrorMessage";
+import { createMeet } from "../api/meets/meets";
+import type { MeetCreateRequest } from "../types/request/meets";
+
+/**
+ * Форматирует дату и время для отправки на сервер: 2026-01-22T13:00:00+03:00
+ */
+function formatDateTimeForApi(date: string, time: string): string {
+  if (!date || !time) return "";
+  const dateTime = `${date}T${time}:00`;
+  return `${dateTime}+03:00`;
+}
 
 export default function ConferenceForm() {
   const [formData, setFormData] = useState({
@@ -20,6 +31,8 @@ export default function ConferenceForm() {
 
   const [showSuccess, setShowSuccess] = useState(false);
   const [showError, setShowError] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string>("");
 
   const handleChange = (
     e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -68,21 +81,66 @@ export default function ConferenceForm() {
     );
   };
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     
-    // Заглушка для отправки
-    // Здесь будет логика отправки на сервер
-    console.log("Form submitted:", formData);
-    
-    // Пример: случайно показываем успех или ошибку
-    // В реальном приложении здесь будет запрос к API
-    const shouldSucceed = true; // Заменить на реальную логику
-    
-    if (shouldSucceed) {
+    if (!isFormValid() || isSubmitting) {
+      return;
+    }
+
+    setIsSubmitting(true);
+    setShowError(false);
+    setErrorMessage("");
+
+    try {
+      // Формируем данные для отправки на сервер
+      // Объединяем дату начала и время начала в одну строку
+      const start = formatDateTimeForApi(formData.startDate, formData.startTime);
+      // Объединяем дату конца и время конца в одну строку
+      const end = formatDateTimeForApi(formData.endDate, formData.endTime);
+      
+      const meetData: MeetCreateRequest = {
+        eventName: formData.title.trim(),
+        customerName: formData.fullName.trim(),
+        email: formData.email.trim(),
+        phone: formData.phone.trim(),
+        location: formData.location.trim(),
+        platform: formData.platform,
+        devices: formData.equipment.trim(),
+        description: formData.notes.trim() || undefined,
+        start,
+        end,
+      };
+
+      await createMeet(meetData);
+      
+      // Очищаем форму после успешной отправки
+      setFormData({
+        title: "",
+        fullName: "",
+        email: "",
+        phone: "",
+        startDate: "",
+        startTime: "",
+        endDate: "",
+        endTime: "",
+        location: "",
+        platform: "",
+        equipment: "",
+        notes: "",
+      });
+      
       setShowSuccess(true);
-    } else {
+    } catch (error) {
+      console.error("Ошибка при отправке заявки:", error);
+      setErrorMessage(
+        error instanceof Error 
+          ? error.message 
+          : "Произошла ошибка при отправке заявки. Пожалуйста, попробуйте позже."
+      );
       setShowError(true);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -347,14 +405,14 @@ export default function ConferenceForm() {
           <div className="mt-8 pt-6 border-t border-slate-200">
             <button
               type="submit"
-              disabled={!isFormValid()}
+              disabled={!isFormValid() || isSubmitting}
               className={`w-full py-3 px-4 rounded-md font-medium transition-colors ${
-                isFormValid()
+                isFormValid() && !isSubmitting
                   ? "bg-slate-800 hover:bg-slate-700 text-white cursor-pointer"
                   : "bg-slate-300 text-slate-500 cursor-not-allowed"
               }`}
             >
-              Отправить
+              {isSubmitting ? "Отправка..." : "Отправить"}
             </button>
           </div>
         </form>
@@ -370,8 +428,11 @@ export default function ConferenceForm() {
 
       {showError && (
         <ErrorMessage
-          message="Произошла ошибка при отправке заявки. Пожалуйста, попробуйте позже."
-          onClose={() => setShowError(false)}
+          message={errorMessage || "Произошла ошибка при отправке заявки. Пожалуйста, попробуйте позже."}
+          onClose={() => {
+            setShowError(false);
+            setErrorMessage("");
+          }}
         />
       )}
     </div>

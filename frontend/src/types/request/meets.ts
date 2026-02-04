@@ -7,6 +7,8 @@ export interface MeetCreateRequest {
     platform: string;
     devices: string;
     description?: string;
+    start?: string;
+    end?: string;
 }
 
 export interface MeetUpdateRequest {
