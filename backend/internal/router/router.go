@@ -140,6 +140,7 @@ func NewRouter(
 		cors,
 		logs(logger),
 		auth(),
+		roles([]string{"admin"}),
 	))
 
 	router.PATCH("/api/users/:id", chain(
