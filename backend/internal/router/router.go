@@ -16,6 +16,7 @@ func NewRouter(
 	m *handler.MeetHandlers,
 	sl *handler.ShortLinkHandlers,
 	logger *slog.Logger,
+	frontend string,
 ) *httprouter.Router {
 	router := httprouter.New()
 
@@ -23,7 +24,7 @@ func NewRouter(
 	auth := middleware.AuthMiddleware
 	logs := middleware.LoggingMiddleware
 	roles := middleware.RoleMiddleware
-	cors := middleware.CorsMiddleware
+	cors := middleware.CorsMiddleware(frontend)
 
 	// Auth
 	router.POST("/api/auth/login", chain(a.Login, cors, logs(logger)))
@@ -161,8 +162,11 @@ func NewRouter(
 		origin := r.Header.Get("Origin")
 
 		allowedOrigins := map[string]bool{
+			frontend: true,
+			// Для обратной совместимости с локальной разработкой
 			"http://localhost:5173": true,
 			"http://127.0.0.1:5173": true,
+			"http://localhost:4444": true,
 		}
 
 		if allowedOrigins[origin] {

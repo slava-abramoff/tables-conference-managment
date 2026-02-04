@@ -42,20 +42,25 @@ services:
       SERVER_ADMIN_PASSWORD: ${SERVER_ADMIN_PASSWORD}
       SERVER_PORT: ${SERVER_PORT}
       SERVER_LOGGER_CONSOLE: "false"
+
+      FRONTEND_DOMAIN: ${FRONTEND_DOMAIN}
     volumes:
       - ./backend/logs:/app/logs
     depends_on:
       postgres:
         condition: service_healthy
-    expose:
-      - "8080"
+    ports:
+      - "${SERVER_PORT}:8080"
 
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      args:
+        VITE_API_URL: ${VITE_API_URL}
     container_name: frontend
     restart: always
     ports:
-      - "4444:80"
+      - "${FRONTEND_PORT}:80"
 
 volumes:
   postgres_data:

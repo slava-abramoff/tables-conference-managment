@@ -20,10 +20,7 @@ import (
 )
 
 func main() {
-	err := godotenv.Load(".env")
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
+	_ = godotenv.Load(".env")
 
 	cfg, err := config.LoadConfig()
 	if err != nil {
@@ -77,10 +74,10 @@ func main() {
 	aService := service.NewAuthService(uRepo, aRepo)
 	aHandler := handler.NewAuthHandlers(aService)
 
-	router := router.NewRouter(uHandler, aHandler, lHandler, mHandler, sHandler, logger)
+	router := router.NewRouter(uHandler, aHandler, lHandler, mHandler, sHandler, logger, cfg.Server.Frontend)
 
 	go mService.AutoUpdate(time.Minute)
 
 	logger.Info("Server started successfully!")
-	log.Fatal(http.ListenAndServe(cfg.Server.Port, router))
+	log.Fatal(http.ListenAndServe(":8080", router))
 }

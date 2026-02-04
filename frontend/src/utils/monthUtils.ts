@@ -8,9 +8,6 @@ const MONTHS_EN = [
   "july", "august", "september", "october", "november", "december",
 ] as const;
 
-const MONTHS_EN_TO_RU: Record<string, string> = Object.fromEntries(
-  MONTHS_EN.map((en, i) => [en, MONTHS_RU[i]])
-);
 
 /** Нормализует название месяца к нижнему регистру для поиска */
 function normalizeMonth(month: string): string {

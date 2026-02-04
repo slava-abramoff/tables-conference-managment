@@ -9,9 +9,14 @@ import (
 type Server struct {
 	Port          string
 	Domain        string
+	Frontend      string
 	LoggerConsole bool
 	Admin         string
 	Password      string
+}
+
+func isValidDomain(domain string) bool {
+	return strings.Contains(domain, "http://") || strings.Contains(domain, "https://")
 }
 
 func getServerConfig() (*Server, error) {
@@ -19,14 +24,17 @@ func getServerConfig() (*Server, error) {
 
 	serverPort := os.Getenv("SERVER_PORT")
 	serverDomain := os.Getenv("SERVER_DOMAIN")
+	frontendDomain := os.Getenv("FRONTEND_DOMAIN")
 	serverLogger := os.Getenv("SERVER_LOGGER_CONSOLE")
 	adminLogin := os.Getenv("SERVER_ADMIN_LOGIN")
 	adminPassword := os.Getenv("SERVER_ADMIN_PASSWORD")
 
-	isValidDomain := strings.Contains(serverDomain, "http://") || strings.Contains(serverDomain, "https://")
+	if !isValidDomain(serverDomain) {
+		return nil, errors.New("is not valid server domain")
+	}
 
-	if !isValidDomain {
-		return nil, errors.New("is not valid domain")
+	if !isValidDomain(frontendDomain) {
+		return nil, errors.New("is not valid frontend domain")
 	}
 
 	if serverLogger == "true" {
@@ -43,5 +51,12 @@ func getServerConfig() (*Server, error) {
 		return nil, errors.New("is not valid admin password")
 	}
 
-	return &Server{Port: serverPort, Domain: serverDomain, LoggerConsole: logger, Admin: adminLogin, Password: adminPassword}, nil
+	return &Server{
+		Port:          serverPort,
+		Domain:        serverDomain,
+		Frontend:      frontendDomain,
+		LoggerConsole: logger,
+		Admin:         adminLogin,
+		Password:      adminPassword,
+	}, nil
 }
