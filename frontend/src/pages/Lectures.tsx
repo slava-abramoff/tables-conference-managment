@@ -14,6 +14,7 @@ import {
 } from "../api/lectures/lectures";
 import type { LectureResponse } from "../types/response/lecture";
 import type { LectureUpdateRequest } from "../types/request/lecture";
+import { baseURL } from "../api/api.ts";
 
 interface Lecture {
   id: number;
@@ -36,6 +37,7 @@ interface Lecture {
 }
 
 const STORAGE_KEY = "lectures_visible_columns";
+const url = baseURL.replace("/api", "/l/");
 
 const columns = [
   { key: "id", label: "ID" },
@@ -61,7 +63,7 @@ const POLL_INTERVAL_MS = 2 * 60 * 1000; // 2 минуты
 
 /** Маппинг ключа таблицы в ключ тела PATCH (LectureUpdateRequest). */
 function tableFieldToApiField(
-  field: keyof Lecture
+  field: keyof Lecture,
 ): keyof LectureUpdateRequest | null {
   const map: Partial<Record<keyof Lecture, keyof LectureUpdateRequest>> = {
     lecturer: "lector",
@@ -78,7 +80,12 @@ function tableFieldToApiField(
     start: "start",
     end: "end",
   };
-  return map[field] ?? (field === "id" || field === "createdAt" || field === "updatedAt" ? null : (field as keyof LectureUpdateRequest));
+  return (
+    map[field] ??
+    (field === "id" || field === "createdAt" || field === "updatedAt"
+      ? null
+      : (field as keyof LectureUpdateRequest))
+  );
 }
 
 function mapLectureResponseToLecture(r: LectureResponse): Lecture {
@@ -108,7 +115,7 @@ export default function Lectures() {
   const [lectures, setLectures] = useState<Lecture[]>([]);
   const [loading, setLoading] = useState(false);
   const [visibleColumns, setVisibleColumns] = useState<Set<string>>(
-    new Set(columns.map((col) => col.key))
+    new Set(columns.map((col) => col.key)),
   );
   const [showSettings, setShowSettings] = useState(false);
   const [deleteTargetId, setDeleteTargetId] = useState<number | null>(null);
@@ -121,7 +128,9 @@ export default function Lectures() {
     setLoading(true);
     getLecturesByDate(date)
       .then((list) => {
-        setLectures(Array.isArray(list) ? list.map(mapLectureResponseToLecture) : []);
+        setLectures(
+          Array.isArray(list) ? list.map(mapLectureResponseToLecture) : [],
+        );
       })
       .catch(() => {
         setLectures([]);
@@ -154,13 +163,16 @@ export default function Lectures() {
   const handleSaveColumnSettings = (newVisibleColumns: Set<string>) => {
     setVisibleColumns(newVisibleColumns);
     // Сохраняем в localStorage
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(Array.from(newVisibleColumns)));
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify(Array.from(newVisibleColumns)),
+    );
   };
 
   const handleCellSave = (
     lectureId: number,
     field: keyof Lecture,
-    value: string
+    value: string,
   ) => {
     const apiField = tableFieldToApiField(field);
     if (apiField == null) return;
@@ -173,10 +185,11 @@ export default function Lectures() {
               ? {
                   ...lecture,
                   [field]: value,
-                  updatedAt: updated.updatedAt ?? new Date().toLocaleString("ru-RU"),
+                  updatedAt:
+                    updated.updatedAt ?? new Date().toLocaleString("ru-RU"),
                 }
-              : lecture
-          )
+              : lecture,
+          ),
         );
       })
       .catch(() => {
@@ -187,7 +200,9 @@ export default function Lectures() {
   const handleDelete = (lectureId: number) => {
     deleteLecture(lectureId)
       .then(() => {
-        setLectures((prev) => prev.filter((lecture) => lecture.id !== lectureId));
+        setLectures((prev) =>
+          prev.filter((lecture) => lecture.id !== lectureId),
+        );
         setDeleteTargetId(null);
       })
       .catch(() => {
@@ -211,7 +226,9 @@ export default function Lectures() {
     setShowSetLinkModal(true);
   };
 
-  const visibleColumnsArray = columns.filter((col) => visibleColumns.has(col.key));
+  const visibleColumnsArray = columns.filter((col) =>
+    visibleColumns.has(col.key),
+  );
 
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-slate-50 p-4 lg:p-6">
@@ -275,109 +292,118 @@ export default function Lectures() {
             Укажите дату в адресе страницы
           </div>
         ) : (
-        <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-x-auto">
-          <table className="min-w-full divide-y divide-slate-200">
-            <thead className="bg-slate-50">
-              <tr>
-                {visibleColumnsArray.map((column) => (
-                  <th
-                    key={column.key}
-                    className="px-4 py-3 text-left text-xs font-medium text-slate-700 uppercase tracking-wider"
-                  >
-                    {column.label}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-slate-200">
-              {lectures.map((lecture) => (
-                <tr key={lecture.id} className="hover:bg-slate-50">
-                  {visibleColumnsArray.map((column) => {
-                    if (column.key === "actions") {
-                      return (
-                        <td key={column.key} className="px-4 py-3">
-                          <button
-                            onClick={() => setDeleteTargetId(lecture.id)}
-                            className="p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
-                            aria-label="Удалить"
-                          >
-                            <svg
-                              className="w-5 h-5"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                              />
-                            </svg>
-                          </button>
-                        </td>
-                      );
-                    }
-
-                    const value = lecture[column.key as keyof Lecture] as string;
-                    const isDisabled =
-                      column.key === "id" ||
-                      column.key === "shortUrl" ||
-                      column.key === "createdAt" ||
-                      column.key === "updatedAt";
-
-                    if (column.key === "shortUrl" && value) {
-                      return (
-                        <td
-                          key={column.key}
-                          className="px-4 py-3 text-sm text-slate-600"
-                        >
-                          <a
-                            href={value}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-600 hover:text-blue-800 underline"
-                          >
-                            {value}
-                          </a>
-                        </td>
-                      );
-                    }
-
-                    return (
-                      <EditableCell
-                        key={column.key}
-                        value={value || ""}
-                        onSave={(newValue) =>
-                          handleCellSave(lecture.id, column.key as keyof Lecture, newValue)
-                        }
-                        maxLength={
-                          column.key === "lecturer" || column.key === "group"
-                            ? 70
-                            : column.key === "platform" ||
-                              column.key === "building" ||
-                              column.key === "place" ||
-                              column.key === "admin" ||
-                              column.key === "customTime"
-                            ? 50
-                            : column.key === "url" || column.key === "stream"
-                            ? 2048
-                            : column.key === "description"
-                            ? 150
-                            : undefined
-                        }
-                        type={
-                          column.key === "start" || column.key === "end" ? "time" : "text"
-                        }
-                        disabled={isDisabled}
-                      />
-                    );
-                  })}
+          <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-x-auto">
+            <table className="min-w-full divide-y divide-slate-200">
+              <thead className="bg-slate-50">
+                <tr>
+                  {visibleColumnsArray.map((column) => (
+                    <th
+                      key={column.key}
+                      className="px-4 py-3 text-left text-xs font-medium text-slate-700 uppercase tracking-wider"
+                    >
+                      {column.label}
+                    </th>
+                  ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="bg-white divide-y divide-slate-200">
+                {lectures.map((lecture) => (
+                  <tr key={lecture.id} className="hover:bg-slate-50">
+                    {visibleColumnsArray.map((column) => {
+                      if (column.key === "actions") {
+                        return (
+                          <td key={column.key} className="px-4 py-3">
+                            <button
+                              onClick={() => setDeleteTargetId(lecture.id)}
+                              className="p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                              aria-label="Удалить"
+                            >
+                              <svg
+                                className="w-5 h-5"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                />
+                              </svg>
+                            </button>
+                          </td>
+                        );
+                      }
+
+                      const value = lecture[
+                        column.key as keyof Lecture
+                      ] as string;
+                      const isDisabled =
+                        column.key === "id" ||
+                        column.key === "shortUrl" ||
+                        column.key === "createdAt" ||
+                        column.key === "updatedAt";
+
+                      if (column.key === "shortUrl" && value) {
+                        return (
+                          <td
+                            key={column.key}
+                            className="px-4 py-3 text-sm text-slate-600"
+                          >
+                            <a
+                              href={url + value}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 hover:text-blue-800 underline"
+                            >
+                              {url + value}
+                            </a>
+                          </td>
+                        );
+                      }
+
+                      return (
+                        <EditableCell
+                          key={column.key}
+                          value={value || ""}
+                          onSave={(newValue) =>
+                            handleCellSave(
+                              lecture.id,
+                              column.key as keyof Lecture,
+                              newValue,
+                            )
+                          }
+                          maxLength={
+                            column.key === "lecturer" || column.key === "group"
+                              ? 70
+                              : column.key === "platform" ||
+                                  column.key === "building" ||
+                                  column.key === "place" ||
+                                  column.key === "admin" ||
+                                  column.key === "customTime"
+                                ? 50
+                                : column.key === "url" ||
+                                    column.key === "stream"
+                                  ? 2048
+                                  : column.key === "description"
+                                    ? 150
+                                    : undefined
+                          }
+                          type={
+                            column.key === "start" || column.key === "end"
+                              ? "time"
+                              : "text"
+                          }
+                          disabled={isDisabled}
+                        />
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
 
         {!loading && date && lectures.length === 0 && (

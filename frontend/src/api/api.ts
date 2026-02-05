@@ -1,4 +1,7 @@
-import axios, { type AxiosInstance, type InternalAxiosRequestConfig } from "axios";
+import axios, {
+  type AxiosInstance,
+  type InternalAxiosRequestConfig,
+} from "axios";
 import type { AuthResponse } from "../types/response/auth";
 
 declare module "axios" {
@@ -7,7 +10,8 @@ declare module "axios" {
   }
 }
 
-const baseURL = import.meta.env.VITE_API_URL ?? "http://localhost:8080/api";
+export const baseURL =
+  import.meta.env.VITE_API_URL ?? "http://localhost:8080/api";
 
 /** Ключи для хранения токенов (используй при сохранении после login/refresh) */
 export const ACCESS_TOKEN_KEY = "accessToken";
@@ -73,7 +77,7 @@ api.interceptors.response.use(
     originalRequest._retry = true;
     originalRequest.headers.Authorization = `Bearer ${data.accessToken}`;
     return api(originalRequest);
-  }
+  },
 );
 
 function clearTokensAndRedirect() {
