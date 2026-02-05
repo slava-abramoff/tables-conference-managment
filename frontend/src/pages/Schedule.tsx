@@ -15,7 +15,9 @@ function monthToIndex(month: string): number {
   return two ? parseInt(two, 10) : 1;
 }
 
-function pickDefaultYearAndMonth(years: YearSchedule[]): { year: string; month: string } | null {
+function pickDefaultYearAndMonth(
+  years: YearSchedule[],
+): { year: string; month: string } | null {
   if (years.length === 0) return null;
   const now = new Date();
   const currentYear = now.getFullYear();
@@ -26,23 +28,25 @@ function pickDefaultYearAndMonth(years: YearSchedule[]): { year: string; month: 
   const pastOrCurrentYears = yearStrings
     .filter((y) => parseInt(y, 10) <= currentYear)
     .sort((a, b) => parseInt(b, 10) - parseInt(a, 10));
-  const bestYear =
-    yearStrings.includes(currentYearStr)
-      ? currentYearStr
-      : pastOrCurrentYears[0] ?? yearStrings[0];
+  const bestYear = yearStrings.includes(currentYearStr)
+    ? currentYearStr
+    : (pastOrCurrentYears[0] ?? yearStrings[0]);
 
   const yearData = years.find((y) => y.year === bestYear);
-  if (!yearData || yearData.months.length === 0) return { year: bestYear, month: yearData?.months[0] ?? "" };
+  if (!yearData || yearData.months.length === 0)
+    return { year: bestYear, month: yearData?.months[0] ?? "" };
 
   const monthIndices = yearData.months.map((m) => monthToIndex(m));
   const validMonthIndices = monthIndices.filter((i) => i <= currentMonth);
   const bestMonthIndex =
-    validMonthIndices.length > 0 ? Math.max(...validMonthIndices) : monthIndices[0];
+    validMonthIndices.length > 0
+      ? Math.max(...validMonthIndices)
+      : monthIndices[0];
   const bestMonth =
-    yearData.months.find((m) => monthToIndex(m) === bestMonthIndex) ?? yearData.months[0];
+    yearData.months.find((m) => monthToIndex(m) === bestMonthIndex) ??
+    yearData.months[0];
   return { year: bestYear, month: bestMonth };
 }
-
 
 export default function Schedule() {
   const navigate = useNavigate();
@@ -79,7 +83,6 @@ export default function Schedule() {
       .finally(() => setLoading(false));
   }, []);
 
-
   const fetchScheduleDays = () => {
     if (!selectedYear || !selectedMonth) return;
     const monthNumber = parseInt(monthToTwoDigits(selectedMonth), 10);
@@ -105,14 +108,20 @@ export default function Schedule() {
     setSelectedYear(year);
     const yearInfo = yearsData.find((y) => y.year === year);
     const months = yearInfo?.months ?? [];
-    setSelectedMonth(months.includes(selectedMonth) ? selectedMonth : months[0] ?? "");
+    setSelectedMonth(
+      months.includes(selectedMonth) ? selectedMonth : (months[0] ?? ""),
+    );
   };
 
   const handleExport = () => {
     setShowExportModal(true);
   };
 
-  const handleExportSubmit = (params: { dateFrom: string; dateTo: string; group: string }) => {
+  const handleExportSubmit = (params: {
+    dateFrom: string;
+    dateTo: string;
+    group: string;
+  }) => {
     console.log("Экспорт расписания:", params);
     // Здесь будет логика экспорта
   };
@@ -161,7 +170,9 @@ export default function Schedule() {
       <div className="max-w-7xl mx-auto">
         {/* Заголовок страницы */}
         <div className="mb-6">
-          <h1 className="text-2xl font-semibold text-slate-900">Расписание лекций</h1>
+          <h1 className="text-2xl font-semibold text-slate-900">
+            Расписание лекций
+          </h1>
         </div>
 
         {/* Тулбар */}
@@ -169,7 +180,10 @@ export default function Schedule() {
           <div className="flex flex-wrap items-center gap-4">
             {/* Год */}
             <div className="flex items-center gap-2">
-              <label htmlFor="year" className="text-sm font-medium text-slate-700">
+              <label
+                htmlFor="year"
+                className="text-sm font-medium text-slate-700"
+              >
                 Год:
               </label>
               <select
@@ -192,7 +206,10 @@ export default function Schedule() {
 
             {/* Месяц */}
             <div className="flex items-center gap-2">
-              <label htmlFor="month" className="text-sm font-medium text-slate-700">
+              <label
+                htmlFor="month"
+                className="text-sm font-medium text-slate-700"
+              >
                 Месяц:
               </label>
               <select
@@ -259,13 +276,18 @@ export default function Schedule() {
         ) : (
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {cards.map((card) => (
-                <ScheduleCard
-                  key={card.date}
-                  data={card}
-                  onClick={() => handleCardClick(card.date)}
-                />
-              ))}
+              {[...cards]
+                .sort(
+                  (a, b) =>
+                    new Date(b.date).getTime() - new Date(a.date).getTime(),
+                )
+                .map((card) => (
+                  <ScheduleCard
+                    key={card.date}
+                    data={card}
+                    onClick={() => handleCardClick(card.date)}
+                  />
+                ))}
             </div>
 
             {cards.length === 0 && (
