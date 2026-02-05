@@ -81,21 +81,18 @@ func NewRouter(
 		cors,
 		logs(logger),
 		auth(),
-		roles([]string{"admin", "moderator"}),
 	))
 	router.GET("/api/lectures/days", chain(
 		l.GetSchedule,
 		cors,
 		logs(logger),
 		auth(),
-		roles([]string{"admin", "moderator"}),
 	))
 	router.GET("/api/lectures/schedule/:date", chain(
 		l.GetByDates,
 		cors,
 		logs(logger),
 		auth(),
-		roles([]string{"admin", "moderator"}),
 	))
 	router.PATCH("/api/lectures/:id", chain(
 		l.Update,
@@ -115,7 +112,7 @@ func NewRouter(
 		cors,
 		logs(logger),
 		auth(),
-		roles([]string{"admin"}),
+		roles([]string{"admin", "moderator"}),
 	))
 
 	// Users
@@ -163,8 +160,7 @@ func NewRouter(
 		origin := r.Header.Get("Origin")
 
 		allowedOrigins := map[string]bool{
-			frontend: true,
-			// Для обратной совместимости с локальной разработкой
+			frontend:                true,
 			"http://localhost:5173": true,
 			"http://127.0.0.1:5173": true,
 			"http://localhost:4444": true,
