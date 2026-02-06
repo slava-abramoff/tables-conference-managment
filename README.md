@@ -25,7 +25,7 @@ $ cd tables-conference-managment
 ```
 2. Настройка переменных окружения
 
-  Запустите скрипт `fast_setup.sh` (рекомендуется):
+  Запустите скрипт `fast_setup.sh` (***рекомендуется***):
   ```bash
   $ ./fast_setup.sh
   ```
