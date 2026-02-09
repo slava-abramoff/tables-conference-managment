@@ -59,6 +59,6 @@ func (s *MailService) Send(
 	m.SetBody("text/plain", body)
 
 	if err := s.dialer.DialAndSend(m); err != nil {
-		s.log.Warn("failed send: ", err.Error())
+		s.log.Warn("failed send: " + err.Error())
 	}
 }
