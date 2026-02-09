@@ -1,4 +1,4 @@
-package entitys
+package entities
 
 type LectureDates struct {
 	Years []*LectureYear `json:"years"`

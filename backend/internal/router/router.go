@@ -3,6 +3,7 @@ package router
 import (
 	"log/slog"
 	"net/http"
+	"table-api/internal/config"
 	"table-api/internal/handler"
 	"table-api/pkg/middleware"
 
@@ -16,15 +17,15 @@ func NewRouter(
 	m *handler.MeetHandlers,
 	sl *handler.ShortLinkHandlers,
 	logger *slog.Logger,
-	frontend string,
+	cfg config.Config,
 ) *httprouter.Router {
 	router := httprouter.New()
 
 	chain := middleware.Chain
-	auth := middleware.AuthMiddleware
+	auth := middleware.AuthMiddleware(cfg.Jwt.SecretKey)
 	logs := middleware.LoggingMiddleware
 	roles := middleware.RoleMiddleware
-	cors := middleware.CorsMiddleware(frontend)
+	cors := middleware.CorsMiddleware(cfg.Server.Frontend)
 
 	// Auth
 	router.POST("/api/auth/login", chain(a.Login, cors, logs(logger)))
@@ -160,7 +161,7 @@ func NewRouter(
 		origin := r.Header.Get("Origin")
 
 		allowedOrigins := map[string]bool{
-			frontend:                true,
+			cfg.Server.Frontend:     true,
 			"http://localhost:5173": true,
 			"http://127.0.0.1:5173": true,
 			"http://localhost:4444": true,

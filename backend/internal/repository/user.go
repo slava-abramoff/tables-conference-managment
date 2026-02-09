@@ -2,7 +2,8 @@ package repository
 
 import (
 	"context"
-	"table-api/internal/entitys"
+
+	"table-api/internal/entities"
 	"table-api/internal/models"
 	"table-api/internal/repository/gormerrors"
 	common "table-api/pkg"
@@ -50,7 +51,7 @@ func (u *userRepository) List(
 	ctx context.Context,
 	page int,
 	limit int,
-) ([]*models.User, *entitys.Pagination, error) {
+) ([]*models.User, *entities.Pagination, error) {
 	offset := (page - 1) * limit
 
 	var (
@@ -69,7 +70,7 @@ func (u *userRepository) List(
 	}
 
 	// compute pagination
-	pagination := entitys.BuildPagination(page, limit, totalItems)
+	pagination := entities.BuildPagination(page, limit, totalItems)
 
 	return users, &pagination, nil
 }

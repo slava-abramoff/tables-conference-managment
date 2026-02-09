@@ -1,7 +1,7 @@
 package mappers
 
 import (
-	"table-api/internal/entitys"
+	"table-api/internal/entities"
 	"table-api/internal/handler/dto"
 	"table-api/internal/models"
 )
@@ -12,7 +12,7 @@ func ToUserResponse(u models.User) dto.UserResponse {
 		Login:     u.Login,
 		Name:      u.Name,
 		Role:      u.Role,
-		Password:  u.Password,
+		Password:  "",
 		CreatedAt: u.CreatedAt,
 	}
 }
@@ -25,7 +25,7 @@ func ToUsersResponse(users []*models.User) []dto.UserResponse {
 	return resp
 }
 
-func DtoCreateRequestToUser(user dto.CreateUserRequest) entitys.User {
+func DtoCreateRequestToUser(user dto.CreateUserRequest) entities.User {
 	var role string
 
 	if user.Role != nil {
@@ -34,7 +34,7 @@ func DtoCreateRequestToUser(user dto.CreateUserRequest) entitys.User {
 		role = "viewer"
 	}
 
-	return entitys.User{
+	return entities.User{
 		Login:    user.Login,
 		Name:     user.Name,
 		Role:     role,
@@ -42,7 +42,7 @@ func DtoCreateRequestToUser(user dto.CreateUserRequest) entitys.User {
 	}
 }
 
-func UserToModel(user entitys.User) models.User {
+func UserToModel(user entities.User) models.User {
 	return models.User{
 		Login:    user.Login,
 		Name:     user.Name,

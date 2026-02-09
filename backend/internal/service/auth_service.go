@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/base64"
-	"table-api/internal/config"
 	"table-api/internal/models"
 	"table-api/internal/repository"
 	common "table-api/pkg"
@@ -29,10 +28,11 @@ type AuthService interface {
 type authService struct {
 	userRepo    UserRepository
 	refreshRepo repository.RefreshTokenRepository
+	secret      string
 }
 
-func NewAuthService(userRepo UserRepository, refreshRepo repository.RefreshTokenRepository) AuthService {
-	return &authService{userRepo: userRepo, refreshRepo: refreshRepo}
+func NewAuthService(userRepo UserRepository, refreshRepo repository.RefreshTokenRepository, secret string) AuthService {
+	return &authService{userRepo: userRepo, refreshRepo: refreshRepo, secret: secret}
 }
 
 func (a *authService) Login(ctx context.Context, login, password string) (*models.User, string, string, error) {
@@ -90,7 +90,7 @@ func (a *authService) generateAccessToken(user *models.User) (string, error) {
 		"exp":  time.Now().Add(accessTokenTTL).Unix(),
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString([]byte(config.JwtSecret))
+	return token.SignedString([]byte(a.secret))
 }
 
 func (a *authService) generateRefreshToken(ctx context.Context, userID uuid.UUID) (string, error) {

@@ -5,7 +5,8 @@ import (
 	"encoding/json"
 	"net/http"
 	"strconv"
-	"table-api/internal/entitys"
+
+	"table-api/internal/entities"
 	"table-api/internal/handler/dto"
 	"table-api/internal/mappers"
 	"table-api/internal/models"
@@ -22,8 +23,8 @@ type UserHandlers struct {
 }
 
 type UserService interface {
-	Create(ctx context.Context, user entitys.User) (*models.User, error)
-	FindMany(ctx context.Context, page int, limit int) ([]*models.User, *entitys.Pagination, error)
+	Create(ctx context.Context, user entities.User) (*models.User, error)
+	FindMany(ctx context.Context, page int, limit int) ([]*models.User, *entities.Pagination, error)
 	Search(ctx context.Context, searchTerm string) ([]*models.User, error)
 	Update(ctx context.Context, id uuid.UUID, dto dto.UpdateUserRequest) (*models.User, error)
 	Remove(ctx context.Context, id uuid.UUID) (*models.User, error)

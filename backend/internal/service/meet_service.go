@@ -4,7 +4,8 @@ import (
 	"context"
 	"log"
 	"table-api/internal/config"
-	"table-api/internal/entitys"
+	"table-api/internal/entities"
+
 	"table-api/internal/handler/dto"
 	"table-api/internal/mappers"
 	"table-api/internal/models"
@@ -14,7 +15,7 @@ import (
 type MeetRepository interface {
 	Create(ctx context.Context, meet *models.Meet) (*models.Meet, error)
 	Update(ctx context.Context, id int, updates map[string]interface{}) (*models.Meet, error)
-	List(ctx context.Context, page, limit int, filter dto.GetQueryMeetDto) ([]*models.Meet, *entitys.Pagination, error)
+	List(ctx context.Context, page, limit int, filter dto.GetQueryMeetDto) ([]*models.Meet, *entities.Pagination, error)
 	GetByID(ctx context.Context, id int) (*models.Meet, error)
 	MarkCompletedIfEnded() error
 }
@@ -133,7 +134,7 @@ func (m *meetService) Update(ctx context.Context, id int, dto dto.UpdateMeetRequ
 	return updatedMeet, nil
 }
 
-func (m *meetService) List(ctx context.Context, page, limit int, filter dto.GetQueryMeetDto) ([]*models.Meet, *entitys.Pagination, error) {
+func (m *meetService) List(ctx context.Context, page, limit int, filter dto.GetQueryMeetDto) ([]*models.Meet, *entities.Pagination, error) {
 	if page < 1 {
 		page = 1
 	}

@@ -3,12 +3,12 @@ package config
 import "os"
 
 type Jwt struct {
-	SectetKey string
+	SecretKey string
 }
 
 func getJwtConfig() *Jwt {
 	secretKey := os.Getenv("SECRET_KEY")
 	return &Jwt{
-		SectetKey: secretKey,
+		SecretKey: secretKey,
 	}
 }

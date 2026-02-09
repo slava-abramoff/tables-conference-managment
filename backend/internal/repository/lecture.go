@@ -218,8 +218,6 @@ func (l *lectureRepository) FindByDatesAndGroup(
 		query = query.Where(`"group" = ?`, *groupName)
 	}
 
-	query = query.Debug() // Для дебага, потом можно убрать
-
 	if err := query.Find(&lectures).Error; err != nil {
 		return nil, err
 	}

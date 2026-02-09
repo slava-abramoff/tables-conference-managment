@@ -1,7 +1,7 @@
 package dto
 
 import (
-	"table-api/internal/entitys"
+	"table-api/internal/entities"
 	"time"
 )
 
@@ -76,9 +76,9 @@ type ExportLecturesExcelRequest struct {
 }
 
 type AvailableDatesReponse struct {
-	Data entitys.LectureDates `json:"data"`
+	Data entities.LectureDates `json:"data"`
 }
 
 type DailySchedulesResponse struct {
-	Data []*entitys.DailySchedule `json:"data"`
+	Data []*entities.DailySchedule `json:"data"`
 }

@@ -2,7 +2,8 @@ package service
 
 import (
 	"context"
-	"table-api/internal/entitys"
+
+	"table-api/internal/entities"
 	"table-api/internal/handler/dto"
 	"table-api/internal/mappers"
 	"table-api/internal/models"
@@ -20,7 +21,7 @@ type UserRepository interface {
 		ctx context.Context,
 		page int,
 		limit int,
-	) ([]*models.User, *entitys.Pagination, error)
+	) ([]*models.User, *entities.Pagination, error)
 	Search(ctx context.Context, searchTerm string) ([]*models.User, error)
 	Update(ctx context.Context, id uuid.UUID, updates map[string]interface{}) (*models.User, error)
 	Delete(ctx context.Context, id uuid.UUID) (*models.User, error)
@@ -34,7 +35,7 @@ func NewUserService(repo UserRepository) *userService {
 	return &userService{userRepo: repo}
 }
 
-func (u *userService) Create(ctx context.Context, user entitys.User) (*models.User, error) {
+func (u *userService) Create(ctx context.Context, user entities.User) (*models.User, error) {
 	existUser, err := u.userRepo.GetByLogin(ctx, user.Login)
 	if existUser != nil {
 		return nil, common.ErrAlreadyExists
@@ -54,7 +55,7 @@ func (u *userService) Create(ctx context.Context, user entitys.User) (*models.Us
 	return newUser, nil
 }
 
-func (u *userService) FindMany(ctx context.Context, page int, limit int) ([]*models.User, *entitys.Pagination, error) {
+func (u *userService) FindMany(ctx context.Context, page int, limit int) ([]*models.User, *entities.Pagination, error) {
 	if page < 1 {
 		page = 1
 	}

@@ -2,7 +2,8 @@ package repository
 
 import (
 	"context"
-	"table-api/internal/entitys"
+
+	"table-api/internal/entities"
 	"table-api/internal/handler/dto"
 	"table-api/internal/models"
 	"table-api/internal/repository/gormerrors"
@@ -64,7 +65,7 @@ func (m *meetRepository) List(
 	page int,
 	limit int,
 	filter dto.GetQueryMeetDto,
-) ([]*models.Meet, *entitys.Pagination, error) {
+) ([]*models.Meet, *entities.Pagination, error) {
 	offset := (page - 1) * limit
 
 	var (
@@ -122,7 +123,7 @@ func (m *meetRepository) List(
 		return nil, nil, gormerrors.Map(err)
 	}
 
-	pagination := entitys.BuildPagination(page, limit, totalItems)
+	pagination := entities.BuildPagination(page, limit, totalItems)
 	return meets, &pagination, nil
 }
 
@@ -133,7 +134,7 @@ func (m *meetRepository) MarkCompletedIfEnded() error {
 		Model(&models.Meet{}).
 		Where(
 			`status = ? AND "end" <= ?`,
-			"approved",
+			"active",
 			now,
 		).
 		Update("status", "completed").

@@ -7,32 +7,43 @@ import (
 	common "table-api/pkg"
 )
 
-func JsonResponse(w http.ResponseWriter, data any, code int) {
+func JsonResponse(w http.ResponseWriter, data any, code int) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
-	json.NewEncoder(w).Encode(data)
+	err := json.NewEncoder(w).Encode(data)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
-func ErrorResponse(w http.ResponseWriter, message string, code int) {
-	JsonResponse(w, map[string]any{
+func ErrorResponse(w http.ResponseWriter, message string, code int) error {
+	err := JsonResponse(w, map[string]any{
 		"status":  "error",
 		"message": message,
 	}, code)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
-func HandleErrorResponse(w http.ResponseWriter, err error) {
+func HandleErrorResponse(w http.ResponseWriter, err error) error {
+
 	switch {
 	case errors.Is(err, common.ErrNotFound):
-		ErrorResponse(w, err.Error(), http.StatusNotFound)
+		return ErrorResponse(w, err.Error(), http.StatusNotFound)
 	case errors.Is(err, common.ErrAlreadyExists):
-		ErrorResponse(w, err.Error(), http.StatusConflict)
+		return ErrorResponse(w, err.Error(), http.StatusConflict)
 	case errors.Is(err, common.ErrInvalidInput):
-		ErrorResponse(w, err.Error(), http.StatusBadRequest)
+		return ErrorResponse(w, err.Error(), http.StatusBadRequest)
 	case errors.Is(err, common.ErrUnauthorized):
-		ErrorResponse(w, err.Error(), http.StatusUnauthorized)
+		return ErrorResponse(w, err.Error(), http.StatusUnauthorized)
 	case errors.Is(err, common.ErrForbidden):
-		ErrorResponse(w, err.Error(), http.StatusForbidden)
+		return ErrorResponse(w, err.Error(), http.StatusForbidden)
 	default:
-		ErrorResponse(w, "internal server error", http.StatusInternalServerError)
+		return ErrorResponse(w, "internal server error", http.StatusInternalServerError)
 	}
 }

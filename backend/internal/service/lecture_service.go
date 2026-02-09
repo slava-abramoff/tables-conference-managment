@@ -7,7 +7,8 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
-	"table-api/internal/entitys"
+
+	"table-api/internal/entities"
 	"table-api/internal/handler/dto"
 	"table-api/internal/mappers"
 	"table-api/internal/models"
@@ -85,7 +86,7 @@ func (l *lectureService) CreateManyLinks(ctx context.Context, dto dto.UpdateMany
 	return l.lectureRepo.UpdateURLsByGroup(ctx, dto.GroupName, dto.Url, *shortUrl)
 }
 
-func (l *lectureService) GetDates(ctx context.Context) (*entitys.LectureDates, error) {
+func (l *lectureService) GetDates(ctx context.Context) (*entities.LectureDates, error) {
 	lectures, err := l.lectureRepo.FindWithUniqueDates(ctx)
 	if err != nil {
 		return nil, err
@@ -104,10 +105,10 @@ func (l *lectureService) GetDates(ctx context.Context) (*entitys.LectureDates, e
 		yearMap[year][month] = struct{}{}
 	}
 
-	result := &entitys.LectureDates{}
+	result := &entities.LectureDates{}
 
 	for year, monthsMap := range yearMap {
-		yearEntity := &entitys.LectureYear{
+		yearEntity := &entities.LectureYear{
 			Year: year,
 		}
 
@@ -124,7 +125,7 @@ func (l *lectureService) GetDates(ctx context.Context) (*entitys.LectureDates, e
 func (l *lectureService) GetSchedule(
 	ctx context.Context,
 	year, month int,
-) ([]*entitys.DailySchedule, error) {
+) ([]*entities.DailySchedule, error) {
 
 	lectures, err := l.lectureRepo.FindForSchedule(ctx, year, month)
 	if err != nil {
@@ -138,10 +139,10 @@ func (l *lectureService) GetSchedule(
 		byDate[key] = append(byDate[key], lecture)
 	}
 
-	var schedules []*entitys.DailySchedule
+	var schedules []*entities.DailySchedule
 
 	for date, dayLectures := range byDate {
-		schedule := &entitys.DailySchedule{
+		schedule := &entities.DailySchedule{
 			Date:         date,
 			LectureCount: len(dayLectures),
 		}

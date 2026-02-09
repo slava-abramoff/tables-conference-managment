@@ -5,7 +5,8 @@ import (
 	"encoding/json"
 	"net/http"
 	"strconv"
-	"table-api/internal/entitys"
+
+	"table-api/internal/entities"
 	"table-api/internal/handler/dto"
 	"table-api/internal/mappers"
 	"table-api/internal/models"
@@ -17,7 +18,7 @@ import (
 type MeetService interface {
 	Create(ctx context.Context, dto dto.CreateMeetRequest) (*models.Meet, error)
 	Update(ctx context.Context, id int, dto dto.UpdateMeetRequest) (*models.Meet, error)
-	List(ctx context.Context, page, limit int, filter dto.GetQueryMeetDto) ([]*models.Meet, *entitys.Pagination, error)
+	List(ctx context.Context, page, limit int, filter dto.GetQueryMeetDto) ([]*models.Meet, *entities.Pagination, error)
 }
 
 type MeetHandlers struct {

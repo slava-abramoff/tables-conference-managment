@@ -7,7 +7,8 @@ import (
 	"os"
 	"table-api/internal/config"
 	"table-api/internal/database"
-	"table-api/internal/entitys"
+	"table-api/internal/entities"
+
 	"table-api/internal/handler"
 	"table-api/internal/repository"
 	"table-api/internal/router"
@@ -61,20 +62,22 @@ func main() {
 	uService := service.NewUserService(uRepo)
 	uHandler := handler.NewUserHandlers(uService)
 
-	if _, err := uService.Create(context.TODO(), entitys.User{
+	if _, err := uService.Create(context.TODO(), entities.User{
 		Login:    cfg.Server.Admin,
 		Password: cfg.Server.Password,
 		Role:     "admin",
 	}); err != nil {
-		logger.Warn("Created admin: " + err.Error())
+		logger.Warn("Failed created admin: " + err.Error())
+	} else {
+		logger.Info("Successfully created admin!")
 	}
 
 	// Auth
 	aRepo := repository.NewRefreshTokenRepository(db)
-	aService := service.NewAuthService(uRepo, aRepo)
+	aService := service.NewAuthService(uRepo, aRepo, cfg.Jwt.SecretKey)
 	aHandler := handler.NewAuthHandlers(aService)
 
-	router := router.NewRouter(uHandler, aHandler, lHandler, mHandler, sHandler, logger, cfg.Server.Frontend)
+	router := router.NewRouter(uHandler, aHandler, lHandler, mHandler, sHandler, logger, *cfg)
 
 	go mService.AutoUpdate(time.Minute)
 

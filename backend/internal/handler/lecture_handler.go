@@ -6,7 +6,7 @@ import (
 	"io"
 	"net/http"
 	"strconv"
-	"table-api/internal/entitys"
+	"table-api/internal/entities"
 	"table-api/internal/handler/dto"
 	"table-api/internal/mappers"
 	"table-api/internal/models"
@@ -21,8 +21,8 @@ type LectureService interface {
 	Create(ctx context.Context, dto dto.CreateLectureRequest) (*models.Lecture, error)
 	CreateMany(ctx context.Context, dtos []dto.CreateLectureRequest) ([]*models.Lecture, error)
 	CreateManyLinks(ctx context.Context, dto dto.UpdateManyLinksRequest) ([]*models.Lecture, error)
-	GetDates(ctx context.Context) (*entitys.LectureDates, error)
-	GetSchedule(ctx context.Context, year, month int) ([]*entitys.DailySchedule, error)
+	GetDates(ctx context.Context) (*entities.LectureDates, error)
+	GetSchedule(ctx context.Context, year, month int) ([]*entities.DailySchedule, error)
 	GetByDate(ctx context.Context, date time.Time) ([]*models.Lecture, error)
 	Update(ctx context.Context, id int, dto dto.UpdateLectureRequest) (*models.Lecture, error)
 	Export(ctx context.Context, filter dto.ExportLecturesExcelRequest, writer io.Writer) error
@@ -125,6 +125,10 @@ func (l *LectureHandlers) GetSchedule(w http.ResponseWriter, r *http.Request, _ 
 	month := r.URL.Query().Get("month")
 
 	parsedYear, parsedMonth, err := utils.ParseYearMonth(year, month)
+	if err != nil {
+		httprespond.ErrorResponse(w, "Bad request", http.StatusBadRequest)
+		return
+	}
 
 	schedule, err := l.lectureService.GetSchedule(ctx, parsedYear, parsedMonth)
 	if err != nil {
@@ -165,7 +169,6 @@ func (l *LectureHandlers) Update(w http.ResponseWriter, r *http.Request, ps http
 	}
 
 	resp := mappers.LectureToDto(data)
-
 	httprespond.JsonResponse(w, resp, http.StatusOK)
 }
 
@@ -183,12 +186,13 @@ func (l *LectureHandlers) CreateManyLinks(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	resp, err := l.lectureService.CreateManyLinks(ctx, req)
+	data, err := l.lectureService.CreateManyLinks(ctx, req)
 	if err != nil {
 		httprespond.HandleErrorResponse(w, err)
 		return
 	}
 
+	resp := mappers.ManyLectureToDto(data)
 	httprespond.JsonResponse(w, resp, http.StatusOK)
 }
 

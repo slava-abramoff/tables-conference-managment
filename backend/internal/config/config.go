@@ -1,11 +1,5 @@
 package config
 
-import (
-	"os"
-)
-
-var JwtSecret string = os.Getenv("SECRET_KEY")
-
 type Config struct {
 	Server Server
 	Smtp   Smtp
@@ -25,6 +19,10 @@ func LoadConfig() (*Config, error) {
 	}
 
 	databaseCfg, err := getDatabaseConfig()
+	if err != nil {
+		return nil, err
+	}
+
 	jwtCfg := getJwtConfig()
 
 	return &Config{

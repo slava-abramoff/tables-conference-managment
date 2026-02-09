@@ -33,7 +33,17 @@ func (s *shortLinkRepository) Create(ctx context.Context, url, code string) (*mo
 func (s *shortLinkRepository) GetByCode(ctx context.Context, code string) (*models.ShortLink, error) {
 	var shortLink models.ShortLink
 
-	if err := s.db.Where("code = ?", code).First(&shortLink).Error; err != nil {
+	if err := s.db.WithContext(ctx).Where("code = ?", code).First(&shortLink).Error; err != nil {
+		return nil, gormerrors.Map(err)
+	}
+
+	return &shortLink, nil
+}
+
+func (s *shortLinkRepository) GetByUrl(ctx context.Context, url string) (*models.ShortLink, error) {
+	var shortLink models.ShortLink
+
+	if err := s.db.WithContext(ctx).Where("url = ?", url).First(&shortLink).Error; err != nil {
 		return nil, gormerrors.Map(err)
 	}
 

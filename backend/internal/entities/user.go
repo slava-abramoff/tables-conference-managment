@@ -1,4 +1,4 @@
-package entitys
+package entities
 
 type User struct {
 	Login    string
