@@ -3,3 +3,4 @@
 # Logs
 backend/logs/*
 !backend/logs/.gitkeep
+setup.log
