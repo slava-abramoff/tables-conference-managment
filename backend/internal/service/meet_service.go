@@ -2,16 +2,12 @@ package service
 
 import (
 	"context"
-	"fmt"
 	"log"
-	"os"
-	"reflect"
-	"strings"
+	"table-api/internal/config"
 	"table-api/internal/entitys"
 	"table-api/internal/handler/dto"
 	"table-api/internal/mappers"
 	"table-api/internal/models"
-	"table-api/pkg/validator"
 	"time"
 )
 
@@ -34,14 +30,8 @@ type meetService struct {
 	domain           string
 }
 
-func NewMeetService(repo MeetRepository, mail Mailer, s ShortLinkService) *meetService {
-	domain := os.Getenv("SERVER_DOMAIN")
-
-	if !validator.IsValidDomain(domain) {
-		log.Fatal("Invalid SERVER_DOMAIN")
-	}
-
-	return &meetService{meetRepo: repo, mailService: mail, shortLinkService: s, domain: domain}
+func NewMeetService(repo MeetRepository, mail Mailer, s ShortLinkService, cfg config.Server) *meetService {
+	return &meetService{meetRepo: repo, mailService: mail, shortLinkService: s, domain: cfg.Domain}
 }
 
 func (m *meetService) Create(ctx context.Context, dto dto.CreateMeetRequest) (*models.Meet, error) {
@@ -50,51 +40,77 @@ func (m *meetService) Create(ctx context.Context, dto dto.CreateMeetRequest) (*m
 }
 
 func (m *meetService) Update(ctx context.Context, id int, dto dto.UpdateMeetRequest) (*models.Meet, error) {
-
-	v := reflect.ValueOf(dto)
-	t := reflect.TypeOf(dto)
-
 	updates := map[string]interface{}{}
 
-	for i := 0; i < v.NumField(); i++ {
-		fieldValue := v.Field(i)
-
-		if fieldValue.Kind() != reflect.Ptr || fieldValue.IsNil() {
-			continue
-		}
-
-		fieldType := t.Field(i)
-
-		jsonTag := fieldType.Tag.Get("json")
-		column := strings.Split(jsonTag, ",")[0]
-
-		if column == "" || column == "-" {
-			continue
-		}
-
-		updates[column] = fieldValue.Interface()
+	oldMeet, err := m.meetRepo.GetByID(ctx, id)
+	if err != nil {
+		return nil, err
 	}
 
-	url := dto.URL
+	isNotificate := false
 
-	if nil != url {
-		oldMeet, err := m.meetRepo.GetByID(ctx, id)
-		if err != nil {
-			return nil, err
-		}
+	if dto.EventName != nil {
+		updates["eventName"] = *dto.EventName
+	}
 
-		if oldMeet.Status == "new" {
-			updates["status"] = "active"
-		}
+	if dto.CustomerName != nil {
+		updates["customerName"] = *dto.CustomerName
+	}
 
-		if oldMeet.URL != nil && *url != *oldMeet.URL {
-			code, err := m.shortLinkService.ShortUrl(ctx, *url)
-			if err != nil {
-				return nil, err
+	if dto.Email != nil {
+		updates["email"] = *dto.Email
+	}
+
+	if dto.Phone != nil {
+		updates["phone"] = *dto.Phone
+	}
+
+	if dto.Location != nil {
+		updates["location"] = *dto.Location
+	}
+
+	if dto.Platform != nil {
+		updates["platform"] = *dto.Platform
+	}
+
+	if dto.Devices != nil {
+		updates["devices"] = *dto.Devices
+	}
+
+	if dto.URL != nil {
+		updates["url"] = *dto.URL
+
+		if *dto.URL != "" {
+			code, _ := m.shortLinkService.ShortUrl(ctx, *dto.URL)
+			if code != nil {
+				updates["shortUrl"] = *code
 			}
-
-			updates["shortUrl"] = code
 		}
+
+		if oldMeet.Status == "new" || oldMeet.Status == "active" {
+			updates["status"] = "active"
+			isNotificate = true
+		}
+	}
+
+	if dto.Status != nil {
+		updates["status"] = *dto.Status
+	}
+
+	if dto.Description != nil {
+		updates["description"] = *dto.Description
+	}
+
+	if dto.Admin != nil {
+		updates["admin"] = *dto.Admin
+	}
+
+	if dto.Start != nil {
+		updates["start"] = *dto.Start
+	}
+
+	if dto.End != nil {
+		updates["end"] = *dto.End
 	}
 
 	updatedMeet, err := m.meetRepo.Update(ctx, id, updates)
@@ -102,21 +118,18 @@ func (m *meetService) Update(ctx context.Context, id int, dto dto.UpdateMeetRequ
 		return nil, err
 	}
 
-	isValid := updatedMeet.ShortURL != nil &&
-		updatedMeet.Email != nil &&
-		updatedMeet.Start != nil &&
-		updatedMeet.EventName != nil
+	isNotificate = updatedMeet.Email != nil &&
+		*updatedMeet.Email != "" &&
+		updatedMeet.EventName != nil &&
+		updatedMeet.ShortURL != nil &&
+		*updatedMeet.ShortURL != "" &&
+		isNotificate
 
-	if isValid {
-		shortcode := m.domain + "/l/" + *updatedMeet.ShortURL
-
-		subject := fmt.Sprintf("Видеконференция %s", *updatedMeet.EventName)
-		msg := fmt.Sprintf("Ссылка для подключения к ВКС: %s", shortcode)
-		receiver := *updatedMeet.Email
-
-		go m.mailService.Send(receiver, subject, msg)
+	if isNotificate {
+		subject := "Ccылка для мероприятия " + *updatedMeet.EventName
+		body := "Ссылка для подключения: " + m.domain + "/l/" + *updatedMeet.ShortURL
+		go m.mailService.Send(*updatedMeet.Email, subject, body)
 	}
-
 	return updatedMeet, nil
 }
 

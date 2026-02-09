@@ -48,7 +48,7 @@ func main() {
 
 	// Meets
 	mRepo := repository.NewMeetRepository(db)
-	mService := service.NewMeetService(mRepo, mailer, sService)
+	mService := service.NewMeetService(mRepo, mailer, sService, cfg.Server)
 	mHandler := handler.NewMeetHandlers(mService)
 
 	// Lectures
