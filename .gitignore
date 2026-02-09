@@ -4,3 +4,4 @@
 backend/logs/*
 !backend/logs/.gitkeep
 setup.log
+dev_setup.log
