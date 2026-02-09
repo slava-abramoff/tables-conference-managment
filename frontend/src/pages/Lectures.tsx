@@ -14,7 +14,7 @@ import {
 } from "../api/lectures/lectures";
 import type { LectureResponse } from "../types/response/lecture";
 import type { LectureUpdateRequest } from "../types/request/lecture";
-import { baseURL } from "../api/api.ts";
+import { baseURL, shortBaseURL } from "../api/api.ts";
 
 interface Lecture {
   id: number;
@@ -37,7 +37,6 @@ interface Lecture {
 }
 
 const STORAGE_KEY = "lectures_visible_columns";
-const url = baseURL.replace("/api", "/l/");
 
 const columns = [
   { key: "id", label: "ID" },
@@ -352,12 +351,12 @@ export default function Lectures() {
                             className="px-4 py-3 text-sm text-slate-600"
                           >
                             <a
-                              href={url + value}
+                              href={shortBaseURL + value}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="text-blue-600 hover:text-blue-800 underline"
                             >
-                              {url + value}
+                              {shortBaseURL + value}
                             </a>
                           </td>
                         );

@@ -13,6 +13,8 @@ declare module "axios" {
 export const baseURL =
   import.meta.env.VITE_API_URL ?? "http://localhost:8080/api";
 
+export const shortBaseURL = baseURL.replace("/api", "/l/");
+
 /** Ключи для хранения токенов (используй при сохранении после login/refresh) */
 export const ACCESS_TOKEN_KEY = "accessToken";
 export const REFRESH_TOKEN_KEY = "refreshToken";

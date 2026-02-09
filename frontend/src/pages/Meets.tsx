@@ -11,6 +11,7 @@ import {
   MEET_STATUS_FILTER_OPTIONS,
   MEET_STATUS_ROW_OPTIONS,
 } from "../utils/meetStatusUtils";
+import { shortBaseURL } from "../api/api";
 
 interface Meet {
   id: number;
@@ -98,7 +99,9 @@ function tableColumnToApiSortField(columnKey: string): string | undefined {
     updatedAt: "updatedAt",
   };
   const api = map[columnKey] ?? columnKey;
-  return API_SORT_FIELDS.includes(api as (typeof API_SORT_FIELDS)[number]) ? api : undefined;
+  return API_SORT_FIELDS.includes(api as (typeof API_SORT_FIELDS)[number])
+    ? api
+    : undefined;
 }
 
 /**
@@ -110,12 +113,16 @@ function formatStartEndForApi(value: string): string {
   if (!trimmed) return value;
   if (/[+-]\d{2}:\d{2}$/.test(trimmed) || trimmed.endsWith("Z")) return trimmed;
   const hasSeconds = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(trimmed);
-  const normalized = hasSeconds ? trimmed.slice(0, 19) : trimmed.slice(0, 16) + ":00";
+  const normalized = hasSeconds
+    ? trimmed.slice(0, 19)
+    : trimmed.slice(0, 16) + ":00";
   return `${normalized}+03:00`;
 }
 
 /** Маппинг ключа таблицы в ключ тела PATCH (MeetUpdateRequest). */
-function tableFieldToApiField(field: keyof Meet): keyof MeetUpdateRequest | null {
+function tableFieldToApiField(
+  field: keyof Meet,
+): keyof MeetUpdateRequest | null {
   const map: Partial<Record<keyof Meet, keyof MeetUpdateRequest>> = {
     title: "eventName",
     fullName: "customerName",
@@ -132,7 +139,8 @@ function tableFieldToApiField(field: keyof Meet): keyof MeetUpdateRequest | null
     shortUrl: "shortUrl",
     admin: "admin",
   };
-  if (field === "id" || field === "createdAt" || field === "updatedAt") return null;
+  if (field === "id" || field === "createdAt" || field === "updatedAt")
+    return null;
   return map[field] ?? (field as keyof MeetUpdateRequest);
 }
 
@@ -179,7 +187,7 @@ export default function Meets() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [visibleColumns, setVisibleColumns] = useState<Set<string>>(
-    new Set(columns.map((col) => col.key))
+    new Set(columns.map((col) => col.key)),
   );
   const [showSettings, setShowSettings] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
@@ -189,7 +197,9 @@ export default function Meets() {
 
   const fetchMeets = useCallback(() => {
     setLoading(true);
-    const apiSortBy = sortColumn ? tableColumnToApiSortField(sortColumn) : undefined;
+    const apiSortBy = sortColumn
+      ? tableColumnToApiSortField(sortColumn)
+      : undefined;
     getMeets({
       page: currentPage,
       limit: PAGE_SIZE,
@@ -230,7 +240,10 @@ export default function Meets() {
 
   const handleSaveColumnSettings = (newVisibleColumns: Set<string>) => {
     setVisibleColumns(newVisibleColumns);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(Array.from(newVisibleColumns)));
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify(Array.from(newVisibleColumns)),
+    );
   };
 
   const handleExportSubmit = (params: { dateFrom: string; dateTo: string }) => {
@@ -242,7 +255,9 @@ export default function Meets() {
     const apiField = tableFieldToApiField(field);
     if (apiField == null) return;
     const sendValue =
-      apiField === "start" || apiField === "end" ? formatStartEndForApi(value) : value;
+      apiField === "start" || apiField === "end"
+        ? formatStartEndForApi(value)
+        : value;
     const body: MeetUpdateRequest = { [apiField]: sendValue };
     updateMeet(meetId, body)
       .then((updated) => {
@@ -252,10 +267,11 @@ export default function Meets() {
               ? {
                   ...m,
                   [field]: value,
-                  updatedAt: updated.UpdatedAt ?? new Date().toLocaleString("ru-RU"),
+                  updatedAt:
+                    updated.UpdatedAt ?? new Date().toLocaleString("ru-RU"),
                 }
-              : m
-          )
+              : m,
+          ),
         );
       })
       .catch(() => {
@@ -289,7 +305,7 @@ export default function Meets() {
       (m) =>
         m.title.toLowerCase().includes(q) ||
         m.fullName.toLowerCase().includes(q) ||
-        m.email.toLowerCase().includes(q)
+        m.email.toLowerCase().includes(q),
     );
   }, [meets, search]);
 
@@ -301,7 +317,9 @@ export default function Meets() {
     if (currentPage > totalPages && totalPages > 0) setCurrentPage(1);
   }, [currentPage, totalPages]);
 
-  const visibleColumnsArray = columns.filter((col) => visibleColumns.has(col.key));
+  const visibleColumnsArray = columns.filter((col) =>
+    visibleColumns.has(col.key),
+  );
 
   const SortIcon = ({ columnKey }: { columnKey: string }) => {
     if (sortColumn !== columnKey) return null;
@@ -361,9 +379,24 @@ export default function Meets() {
             className="p-2 text-slate-700 bg-white border border-slate-300 rounded-md hover:bg-slate-50"
             aria-label="Настройки колонок"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+              />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+              />
             </svg>
           </button>
         </div>
@@ -374,120 +407,127 @@ export default function Meets() {
             Загрузка...
           </div>
         ) : (
-        <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-x-auto">
-          <table className="min-w-full divide-y divide-slate-200">
-            <thead className="bg-slate-50">
-              <tr>
-                {visibleColumnsArray.map((col) => (
-                  <th
-                    key={col.key}
-                    onClick={() => handleSort(col.key)}
-                    className="px-4 py-3 text-left text-xs font-medium text-slate-700 uppercase tracking-wider cursor-pointer hover:bg-slate-100 select-none"
-                  >
-                    {col.label}
-                    <SortIcon columnKey={col.key} />
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-slate-200">
-              {filteredBySearchMeets.map((meet) => (
-                <tr key={meet.id} className="hover:bg-slate-50">
-                  {visibleColumnsArray.map((column) => {
-                    const value = meet[column.key as keyof Meet] as string;
-                    const isDisabled =
-                      column.key === "id" ||
-                      column.key === "shortUrl" ||
-                      column.key === "createdAt" ||
-                      column.key === "updatedAt";
+          <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-x-auto">
+            <table className="min-w-full divide-y divide-slate-200">
+              <thead className="bg-slate-50">
+                <tr>
+                  {visibleColumnsArray.map((col) => (
+                    <th
+                      key={col.key}
+                      onClick={() => handleSort(col.key)}
+                      className="px-4 py-3 text-left text-xs font-medium text-slate-700 uppercase tracking-wider cursor-pointer hover:bg-slate-100 select-none"
+                    >
+                      {col.label}
+                      <SortIcon columnKey={col.key} />
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-slate-200">
+                {filteredBySearchMeets.map((meet) => (
+                  <tr key={meet.id} className="hover:bg-slate-50">
+                    {visibleColumnsArray.map((column) => {
+                      const value = meet[column.key as keyof Meet] as string;
+                      const isDisabled =
+                        column.key === "id" ||
+                        column.key === "shortUrl" ||
+                        column.key === "createdAt" ||
+                        column.key === "updatedAt";
 
-                    if (column.key === "shortUrl" && value) {
-                      return (
-                        <td key={column.key} className="px-4 py-3 text-sm text-slate-600">
-                          <a
-                            href={value}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-600 hover:text-blue-800 underline"
+                      if (column.key === "shortUrl" && value) {
+                        return (
+                          <td
+                            key={column.key}
+                            className="px-4 py-3 text-sm text-slate-600"
                           >
-                            {value}
-                          </a>
-                        </td>
-                      );
-                    }
+                            <a
+                              href={shortBaseURL + value}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 hover:text-blue-800 underline"
+                            >
+                              {shortBaseURL + value}
+                            </a>
+                          </td>
+                        );
+                      }
 
-                    if (column.key === "status") {
-                      return (
-                        <EditableSelectCell
-                          key={column.key}
-                          value={value || ""}
-                          onSave={(v) => handleCellSave(meet.id, "status", v)}
-                          options={MEET_STATUS_ROW_OPTIONS}
-                        />
-                      );
-                    }
+                      if (column.key === "status") {
+                        return (
+                          <EditableSelectCell
+                            key={column.key}
+                            value={value || ""}
+                            onSave={(v) => handleCellSave(meet.id, "status", v)}
+                            options={MEET_STATUS_ROW_OPTIONS}
+                          />
+                        );
+                      }
 
-                    if (column.key === "phone") {
+                      if (column.key === "phone") {
+                        return (
+                          <EditableCell
+                            key={column.key}
+                            value={value || ""}
+                            onSave={(v) => {
+                              const digits = v.replace(/\D/g, "").slice(0, 11);
+                              handleCellSave(meet.id, "phone", digits);
+                            }}
+                            maxLength={11}
+                            disabled={isDisabled}
+                          />
+                        );
+                      }
+
+                      const maxLength =
+                        column.key === "title" || column.key === "equipment"
+                          ? 70
+                          : column.key === "fullName" ||
+                              column.key === "email" ||
+                              column.key === "place" ||
+                              column.key === "platform" ||
+                              column.key === "admin"
+                            ? 50
+                            : column.key === "url"
+                              ? 2048
+                              : column.key === "notes"
+                                ? 150
+                                : undefined;
+
+                      const type =
+                        column.key === "start" || column.key === "end"
+                          ? "datetime-local"
+                          : "text";
+
+                      const displayValue =
+                        column.key === "start" || column.key === "end"
+                          ? formatDateTime(value || "")
+                          : undefined;
+
                       return (
                         <EditableCell
                           key={column.key}
                           value={value || ""}
-                          onSave={(v) => {
-                            const digits = v.replace(/\D/g, "").slice(0, 11);
-                            handleCellSave(meet.id, "phone", digits);
-                          }}
-                          maxLength={11}
+                          onSave={(v) =>
+                            handleCellSave(meet.id, column.key as keyof Meet, v)
+                          }
+                          maxLength={maxLength}
+                          type={type}
                           disabled={isDisabled}
+                          displayValue={displayValue}
                         />
                       );
-                    }
-
-                    const maxLength =
-                      column.key === "title" || column.key === "equipment"
-                        ? 70
-                        : column.key === "fullName" ||
-                          column.key === "email" ||
-                          column.key === "place" ||
-                          column.key === "platform" ||
-                          column.key === "admin"
-                        ? 50
-                        : column.key === "url"
-                        ? 2048
-                        : column.key === "notes"
-                        ? 150
-                        : undefined;
-
-                    const type =
-                      column.key === "start" || column.key === "end"
-                        ? "datetime-local"
-                        : "text";
-
-                    const displayValue =
-                      column.key === "start" || column.key === "end"
-                        ? formatDateTime(value || "")
-                        : undefined;
-
-                    return (
-                      <EditableCell
-                        key={column.key}
-                        value={value || ""}
-                        onSave={(v) => handleCellSave(meet.id, column.key as keyof Meet, v)}
-                        maxLength={maxLength}
-                        type={type}
-                        disabled={isDisabled}
-                        displayValue={displayValue}
-                      />
-                    );
-                  })}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
 
         {!loading && meets.length === 0 && (
-          <div className="text-center py-12 text-slate-500">Нет данных для отображения</div>
+          <div className="text-center py-12 text-slate-500">
+            Нет данных для отображения
+          </div>
         )}
 
         {/* Пагинация */}
@@ -506,7 +546,12 @@ export default function Meets() {
                 Назад
               </button>
               {Array.from({ length: totalPages }, (_, i) => i + 1)
-                .filter((p) => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 2)
+                .filter(
+                  (p) =>
+                    p === 1 ||
+                    p === totalPages ||
+                    Math.abs(p - currentPage) <= 2,
+                )
                 .reduce<number[]>((acc, p) => {
                   if (acc.length && acc[acc.length - 1] !== p - 1) acc.push(-1);
                   acc.push(p);
@@ -529,10 +574,12 @@ export default function Meets() {
                     >
                       {p}
                     </button>
-                  )
+                  ),
                 )}
               <button
-                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                onClick={() =>
+                  setCurrentPage((p) => Math.min(totalPages, p + 1))
+                }
                 disabled={currentPage === totalPages}
                 className="px-3 py-1.5 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
               >
