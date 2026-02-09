@@ -47,7 +47,7 @@ type UpdateMeetRequest struct {
 	Platform     *string `json:"platform,omitempty"     validate:"omitempty,max=100"`
 	Devices      *string `json:"devices,omitempty"      validate:"omitempty,max=255"`
 	URL          *string `json:"url,omitempty"          validate:"omitempty,url"`
-	ShortURL     *string `json:"shortUrl,omitempty"     validate:"omitempty,url"`
+	ShortURL     *string `json:"shortUrl,omitempty"     validate:"omitempty,shortUrl"`
 
 	Status      *string `json:"status,omitempty"      validate:"omitempty,oneof=new active completed canceled"`
 	Description *string `json:"description,omitempty" validate:"omitempty,max=2000"`
