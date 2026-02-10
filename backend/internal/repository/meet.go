@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"log"
 
 	"table-api/internal/entities"
 	"table-api/internal/handler/dto"
@@ -66,6 +67,7 @@ func (m *meetRepository) List(
 	limit int,
 	filter dto.GetQueryMeetDto,
 ) ([]*models.Meet, *entities.Pagination, error) {
+	log.Println("Start function")
 	offset := (page - 1) * limit
 
 	var (
@@ -74,40 +76,60 @@ func (m *meetRepository) List(
 	)
 
 	query := m.db.WithContext(ctx).Model(&models.Meet{})
+	log.Println("Make query")
 
 	if filter.Status != nil {
+		log.Println("Status not nil")
 		query = query.Where("status = ?", *filter.Status)
+	} else {
+		log.Println("Status is nil")
 	}
 
 	if err := query.Count(&totalItems).Error; err != nil {
+		log.Println("Make error: ", err.Error())
 		return nil, nil, gormerrors.Map(err)
 	}
 
 	if filter.SortBy != nil && filter.Order != nil {
-		sortField := *filter.SortBy
+		var sortField string
+		camelCase := map[string]string{
+			"eventName":    "event_name",
+			"customerName": "customer_name",
+			"shortUrl":     "short_url",
+			"end":          "`end`",
+			"createdAt":    "created_at",
+			"updatedAt":    "updated_at",
+		}
+
+		if i, r := camelCase[*filter.SortBy]; r {
+			sortField = i
+		} else {
+			sortField = *filter.SortBy
+		}
+
 		orderDir := string(*filter.Order)
 
 		allowed := map[string]bool{
-			"eventName":    true,
-			"customerName": true,
-			"email":        true,
-			"phone":        true,
-			"location":     true,
-			"platform":     true,
-			"devices":      true,
-			"url":          true,
-			"shortUrl":     true,
-			"status":       true,
-			"description":  true,
-			"admin":        true,
-			"start":        true,
-			"end":          true,
-			"createdAt":    true,
-			"updatedAt":    true,
+			"event_name":    true,
+			"customer_name": true,
+			"email":         true,
+			"phone":         true,
+			"location":      true,
+			"platform":      true,
+			"devices":       true,
+			"url":           true,
+			"short_url":     true,
+			"status":        true,
+			"description":   true,
+			"admin":         true,
+			"start":         true,
+			"end":           true,
+			"created_at":    true,
+			"updated_at":    true,
 		}
 
 		if allowed[sortField] {
-			query = query.Order(sortField + " " + orderDir)
+			query = query.Order(sortField + ` ` + orderDir)
 		} else {
 			query = query.Order("created_at DESC")
 		}

@@ -25,21 +25,21 @@ func NewRefreshTokenRepository(db *gorm.DB) RefreshTokenRepository {
 }
 
 func (r *refreshTokenRepository) Create(ctx context.Context, rt *models.RefreshToken) error {
-	return r.db.Create(rt).Error
+	return r.db.WithContext(ctx).Create(rt).Error
 }
 
 func (r *refreshTokenRepository) GetByToken(ctx context.Context, token string) (*models.RefreshToken, error) {
 	var rt models.RefreshToken
-	if err := r.db.Where("token = ?", token).First(&rt).Error; err != nil {
+	if err := r.db.WithContext(ctx).Where("token = ?", token).First(&rt).Error; err != nil {
 		return nil, gormerrors.Map(err)
 	}
 	return &rt, nil
 }
 
 func (r *refreshTokenRepository) DeleteByToken(ctx context.Context, token string) error {
-	return r.db.Where("token = ?", token).Delete(&models.RefreshToken{}).Error
+	return r.db.WithContext(ctx).Where("token = ?", token).Delete(&models.RefreshToken{}).Error
 }
 
 func (r *refreshTokenRepository) DeleteByUserID(ctx context.Context, userID uuid.UUID) error {
-	return r.db.Where("user_id = ?", userID).Delete(&models.RefreshToken{}).Error
+	return r.db.WithContext(ctx).Where("user_id = ?", userID).Delete(&models.RefreshToken{}).Error
 }
