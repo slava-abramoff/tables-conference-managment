@@ -33,6 +33,12 @@ export interface LectureUpdateRequest {
   abnormalTime?: string; // например, "Перерыв 15 минут"
 }
 
+export interface ExportLecturesRequest {
+  group?: string;
+  start: string;
+  end: string;
+}
+
 export interface LectureCreateAdvancedRequest {
   lectures: LectureCreateRequest[];
 }

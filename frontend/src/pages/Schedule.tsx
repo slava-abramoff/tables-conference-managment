@@ -4,7 +4,7 @@ import ScheduleCard from "../components/ScheduleCard";
 import SchedulePlanningModal from "../components/SchedulePlanningModal";
 import ScheduleExportModal from "../components/ScheduleExportModal";
 import { getAvailableDates, getScheduleDays } from "../api/schedule/schedule";
-import { createManyLectures } from "../api/lectures/lectures";
+import { createManyLectures, exportLectures } from "../api/lectures/lectures";
 import type { YearSchedule, DaySchedule } from "../types/response/schedule";
 import type { LectureCreateRequest } from "../types/request/lecture";
 import { englishToRussianMonth, monthToTwoDigits } from "../utils/monthUtils";
@@ -117,13 +117,13 @@ export default function Schedule() {
     setShowExportModal(true);
   };
 
-  const handleExportSubmit = (params: {
+  const handleExportSubmit = async (params: {
     dateFrom: string;
     dateTo: string;
     group: string;
   }) => {
     console.log("Экспорт расписания:", params);
-    // Здесь будет логика экспорта
+    await exportLectures({ start: params.dateFrom, end: params.dateTo });
   };
 
   const handleSchedule = () => {

@@ -16,6 +16,11 @@ func AuthMiddleware(secret string) func() Middleware {
 	return func() Middleware {
 		return func(next httprouter.Handle) httprouter.Handle {
 			return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+				if r.Method == http.MethodOptions {
+					next(w, r, ps)
+					return
+				}
+
 				authHeader := r.Header.Get("Authorization")
 				if authHeader == "" {
 					httprespond.ErrorResponse(w, "Unauthorized", http.StatusUnauthorized)

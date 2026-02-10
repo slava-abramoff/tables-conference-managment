@@ -28,133 +28,132 @@ func NewRouter(
 	cors := middleware.CorsMiddleware(cfg.Server.Frontend)
 
 	// Auth
-	router.POST("/api/auth/login", chain(a.Login, cors, logs(logger)))
-	router.POST("/api/auth/refresh", chain(a.Refresh, cors, logs(logger)))
-	router.POST("/api/auth/logout", chain(a.Logout, cors, logs(logger)))
+	router.POST("/api/auth/login", chain(a.Login, logs(logger), cors))
+	router.POST("/api/auth/refresh", chain(a.Refresh, logs(logger), cors))
+	router.POST("/api/auth/logout", chain(a.Logout, logs(logger), cors))
 
 	// ShortLink
-	router.GET("/l/:code", chain(sl.GetUrl, cors, logs(logger)))
+	router.GET("/l/:code", chain(sl.GetUrl, logs(logger), cors))
 
 	// Meets
 	router.POST("/api/meets", chain(
 		m.Create,
-		cors,
 		logs(logger),
+		cors,
 	))
 	router.GET("/api/meets/find", chain(
 		m.FindMany,
-		cors,
 		logs(logger),
+		cors,
 		auth(),
 	))
 	router.PATCH("/api/meets/:id", chain(
 		m.Update,
-		cors,
 		logs(logger),
-		auth(),
 		roles([]string{"admin", "moderator"}),
+		cors,
+		auth(),
 	))
 
 	// Lectures
 	router.POST("/api/lectures", chain(
 		l.Create,
-		cors,
 		logs(logger),
-		auth(),
 		roles([]string{"admin", "moderator"}),
+		cors,
+		auth(),
 	))
 	router.POST("/api/lectures/advanced", chain(
 		l.CreateMany,
-		cors,
 		logs(logger),
-		auth(),
 		roles([]string{"admin", "moderator"}),
+		cors,
+		auth(),
 	))
 	router.POST("/api/lectures/links", chain(
 		l.CreateManyLinks,
-		cors,
 		logs(logger),
-		auth(),
 		roles([]string{"admin", "moderator"}),
+		cors,
+		auth(),
 	))
 	router.GET("/api/lectures/dates", chain(
 		l.GetDates,
-		cors,
 		logs(logger),
+		cors,
 		auth(),
 	))
 	router.GET("/api/lectures/days", chain(
 		l.GetSchedule,
-		cors,
 		logs(logger),
+		cors,
 		auth(),
 	))
 	router.GET("/api/lectures/schedule/:date", chain(
 		l.GetByDates,
-		cors,
 		logs(logger),
+		cors,
 		auth(),
 	))
 	router.PATCH("/api/lectures/:id", chain(
 		l.Update,
-		cors,
 		logs(logger),
-		auth(),
 		roles([]string{"admin", "moderator"}),
+		cors,
+		auth(),
 	))
 	router.GET("/api/lectures/export", chain(
 		l.ExportExcel,
-		cors,
 		logs(logger),
-		auth(),
+		cors,
 	))
 	router.DELETE("/api/lectures/:id", chain(
 		l.Remove,
-		cors,
 		logs(logger),
-		auth(),
 		roles([]string{"admin", "moderator"}),
+		cors,
+		auth(),
 	))
 
 	// Users
 	router.POST("/api/users", chain(
 		u.Create,
-		cors,
 		logs(logger),
-		auth(),
 		roles([]string{"admin"}),
+		cors,
+		auth(),
 	))
 
 	router.GET("/api/users/find", chain(
 		u.FindMany,
-		cors,
 		logs(logger),
-		auth(),
 		roles([]string{"admin"}),
+		cors,
+		auth(),
 	))
 
 	router.GET("/api/users/search", chain(
 		u.Search,
-		cors,
 		logs(logger),
-		auth(),
 		roles([]string{"admin"}),
+		cors,
+		auth(),
 	))
 
 	router.PATCH("/api/users/:id", chain(
 		u.Update,
-		cors,
 		logs(logger),
-		auth(),
 		roles([]string{"admin"}),
+		cors,
+		auth(),
 	))
 
 	router.DELETE("/api/users/:id", chain(
 		u.Remove,
-		cors,
 		logs(logger),
-		auth(),
 		roles([]string{"admin"}),
+		cors,
+		auth(),
 	))
 
 	router.GlobalOPTIONS = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -164,17 +163,18 @@ func NewRouter(
 			cfg.Server.Frontend:     true,
 			"http://localhost:5173": true,
 			"http://127.0.0.1:5173": true,
-			"http://localhost:4444": true,
 		}
 
 		if allowedOrigins[origin] {
 			w.Header().Set("Access-Control-Allow-Origin", origin)
 			w.Header().Set("Vary", "Origin")
+			w.Header().Set("Access-Control-Allow-Credentials", "true")
+			// w.Header().Set("Access-Control-Expose-Headers", "Content-Disposition")
 		}
 
+		w.Header().Set("Access-Control-Expose-Headers", "Content-Disposition")
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-		w.Header().Set("Access-Control-Allow-Credentials", "true")
 
 		w.WriteHeader(http.StatusNoContent)
 	})
