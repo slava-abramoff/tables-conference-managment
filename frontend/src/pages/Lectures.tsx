@@ -14,7 +14,7 @@ import {
 } from "../api/lectures/lectures";
 import type { LectureResponse } from "../types/response/lecture";
 import type { LectureUpdateRequest } from "../types/request/lecture";
-import { baseURL, shortBaseURL } from "../api/api.ts";
+import { shortBaseURL } from "../api/api.ts";
 
 interface Lecture {
   id: number;

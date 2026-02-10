@@ -36,9 +36,7 @@ export default function Login() {
             <h1 className="text-xl font-semibold text-white tracking-tight">
               CRM — Расписания и мероприятия
             </h1>
-            <p className="text-slate-300 text-sm mt-0.5">
-              Войдите в систему
-            </p>
+            <p className="text-slate-300 text-sm mt-0.5">Войдите в систему</p>
           </div>
 
           <form onSubmit={handleSubmit} className="p-6 space-y-4">
