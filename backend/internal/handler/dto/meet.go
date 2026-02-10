@@ -79,3 +79,8 @@ type MeetResponse struct {
 	CreatedAt time.Time  `gorm:"createdAt"`
 	UpdatedAt *time.Time `gorm:"updatedAt"`
 }
+
+type ExportMeetsExcelRequest struct {
+	Start time.Time
+	End   time.Time
+}

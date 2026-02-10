@@ -162,3 +162,24 @@ func (m *meetRepository) MarkCompletedIfEnded() error {
 		Update("status", "completed").
 		Error
 }
+
+func (m *meetRepository) FindByDateRange(ctx context.Context, start, end time.Time) ([]*models.Meet, error) {
+	var meets []*models.Meet
+
+	query := m.db.WithContext(ctx).Model(&models.Meet{})
+
+	query = query.Where(`
+		"start" BETWEEN ? AND ?
+		AND status != ?
+		`,
+		start.Format("2006-01-02"),
+		end.Format("2006-01-02"),
+		"canceled",
+	)
+
+	if err := query.Find(&meets).Error; err != nil {
+		return nil, gormerrors.Map(err)
+	}
+
+	return meets, nil
+}

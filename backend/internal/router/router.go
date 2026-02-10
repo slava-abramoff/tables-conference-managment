@@ -54,6 +54,12 @@ func NewRouter(
 		cors,
 		auth(),
 	))
+	// router.GET("/api/meets/export", chain(
+	// 	m.ExportExcel,
+	// 	logs(logger),
+	// 	cors,
+	// 	// auth(),
+	// ))
 
 	// Lectures
 	router.POST("/api/lectures", chain(

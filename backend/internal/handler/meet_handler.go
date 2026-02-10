@@ -3,8 +3,10 @@ package handler
 import (
 	"context"
 	"encoding/json"
+	"io"
 	"net/http"
 	"strconv"
+	"time"
 
 	"table-api/internal/entities"
 	"table-api/internal/handler/dto"
@@ -19,6 +21,7 @@ type MeetService interface {
 	Create(ctx context.Context, dto dto.CreateMeetRequest) (*models.Meet, error)
 	Update(ctx context.Context, id int, dto dto.UpdateMeetRequest) (*models.Meet, error)
 	List(ctx context.Context, page, limit int, filter dto.GetQueryMeetDto) ([]*models.Meet, *entities.Pagination, error)
+	Export(ctx context.Context, filter dto.ExportMeetsExcelRequest, writer io.Writer) error
 }
 
 type MeetHandlers struct {
@@ -141,4 +144,35 @@ func (m *MeetHandlers) Update(w http.ResponseWriter, r *http.Request, ps httprou
 	resp := mappers.MeetToDto(updatedMeet)
 
 	httprespond.JsonResponse(w, resp, http.StatusOK)
+}
+
+func (m *MeetHandlers) ExportExcel(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	ctx := r.Context()
+
+	q := r.URL.Query()
+	start := q.Get("start")
+	end := q.Get("end")
+
+	startDate, err := time.Parse("2006-01-02", start)
+	if err != nil {
+		httprespond.ErrorResponse(w, "Start must be date YYYY-MM-DD", http.StatusBadRequest)
+		return
+	}
+	endDate, err := time.Parse("2006-01-02", end)
+	if err != nil {
+		httprespond.ErrorResponse(w, "End must be date YYYY-MM-DD", http.StatusBadRequest)
+		return
+	}
+
+	filter := dto.ExportMeetsExcelRequest{
+		Start: startDate,
+		End:   endDate,
+	}
+
+	w.Header().Set("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+	w.Header().Set(`Content-Disposition`, `attachment; filename="meets.xlsx"`)
+
+	if err := m.meetService.Export(ctx, filter, w); err != nil {
+		httprespond.HandleErrorResponse(w, err)
+	}
 }
