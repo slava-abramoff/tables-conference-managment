@@ -123,7 +123,11 @@ export default function Schedule() {
     group: string;
   }) => {
     console.log("Экспорт расписания:", params);
-    await exportLectures({ start: params.dateFrom, end: params.dateTo });
+    // TODO: с группами доделай
+    await exportLectures({
+      start: params.dateFrom,
+      end: params.dateTo,
+    });
   };
 
   const handleSchedule = () => {
