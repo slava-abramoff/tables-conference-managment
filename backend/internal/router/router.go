@@ -50,9 +50,9 @@ func NewRouter(
 	router.PATCH("/api/meets/:id", chain(
 		m.Update,
 		logs(logger),
-		roles([]string{"admin", "moderator"}),
 		cors,
 		auth(),
+		roles([]string{"admin", "moderator"}),
 	))
 	// router.GET("/api/meets/export", chain(
 	// 	m.ExportExcel,
@@ -65,23 +65,23 @@ func NewRouter(
 	router.POST("/api/lectures", chain(
 		l.Create,
 		logs(logger),
-		roles([]string{"admin", "moderator"}),
 		cors,
 		auth(),
+		roles([]string{"admin", "moderator"}),
 	))
 	router.POST("/api/lectures/advanced", chain(
 		l.CreateMany,
 		logs(logger),
-		roles([]string{"admin", "moderator"}),
 		cors,
 		auth(),
+		roles([]string{"admin", "moderator"}),
 	))
 	router.POST("/api/lectures/links", chain(
 		l.CreateManyLinks,
 		logs(logger),
-		roles([]string{"admin", "moderator"}),
 		cors,
 		auth(),
+		roles([]string{"admin", "moderator"}),
 	))
 	router.GET("/api/lectures/dates", chain(
 		l.GetDates,
@@ -104,9 +104,9 @@ func NewRouter(
 	router.PATCH("/api/lectures/:id", chain(
 		l.Update,
 		logs(logger),
-		roles([]string{"admin", "moderator"}),
 		cors,
 		auth(),
+		roles([]string{"admin", "moderator"}),
 	))
 	router.GET("/api/lectures/export", chain(
 		l.ExportExcel,
@@ -116,50 +116,50 @@ func NewRouter(
 	router.DELETE("/api/lectures/:id", chain(
 		l.Remove,
 		logs(logger),
-		roles([]string{"admin", "moderator"}),
 		cors,
 		auth(),
+		roles([]string{"admin", "moderator"}),
 	))
 
 	// Users
 	router.POST("/api/users", chain(
 		u.Create,
 		logs(logger),
-		roles([]string{"admin"}),
 		cors,
 		auth(),
+		roles([]string{"admin"}),
 	))
 
 	router.GET("/api/users/find", chain(
 		u.FindMany,
 		logs(logger),
-		roles([]string{"admin"}),
 		cors,
 		auth(),
+		roles([]string{"admin"}),
 	))
 
 	router.GET("/api/users/search", chain(
 		u.Search,
 		logs(logger),
-		roles([]string{"admin"}),
 		cors,
 		auth(),
+		roles([]string{"admin"}),
 	))
 
 	router.PATCH("/api/users/:id", chain(
 		u.Update,
 		logs(logger),
-		roles([]string{"admin"}),
 		cors,
 		auth(),
+		roles([]string{"admin"}),
 	))
 
 	router.DELETE("/api/users/:id", chain(
 		u.Remove,
 		logs(logger),
-		roles([]string{"admin"}),
 		cors,
 		auth(),
+		roles([]string{"admin"}),
 	))
 
 	router.GlobalOPTIONS = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
