@@ -12,6 +12,7 @@ import (
 	"table-api/internal/models"
 	httprespond "table-api/pkg/http"
 	"table-api/pkg/utils"
+	"table-api/pkg/validator"
 	"time"
 
 	"github.com/julienschmidt/httprouter"
@@ -162,6 +163,13 @@ func (l *LectureHandlers) Update(w http.ResponseWriter, r *http.Request, ps http
 		return
 	}
 
+	if req.URL != nil {
+		if !validator.IsValidUrl(*req.URL) {
+			httprespond.ErrorResponse(w, "Invalid URL", http.StatusBadRequest)
+			return
+		}
+	}
+
 	data, err := l.lectureService.Update(ctx, id, req)
 	if err != nil {
 		httprespond.HandleErrorResponse(w, err)
@@ -183,6 +191,11 @@ func (l *LectureHandlers) CreateManyLinks(w http.ResponseWriter, r *http.Request
 
 	if message, err := dto.Validate(req); err != nil {
 		httprespond.ErrorResponse(w, message, http.StatusBadRequest)
+		return
+	}
+
+	if !validator.IsValidUrl(req.Url) {
+		httprespond.ErrorResponse(w, "Invalid URL", http.StatusBadRequest)
 		return
 	}
 

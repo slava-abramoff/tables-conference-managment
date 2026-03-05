@@ -186,7 +186,8 @@ func (l *lectureService) Update(
 
 	updates := map[string]interface{}{}
 
-	if dto.URL != nil && dto.ShortURL == nil {
+	if dto.URL != nil {
+
 		shortUrl, err := l.shortLinkService.ShortUrl(ctx, *dto.URL)
 		if err != nil {
 			return nil, err

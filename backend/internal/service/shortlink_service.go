@@ -41,6 +41,11 @@ func (s *shortLinkService) GetUrl(ctx context.Context, code string) (*string, er
 func (s *shortLinkService) ShortUrl(ctx context.Context, url string) (*string, error) {
 	var code string
 
+	if url == "" || url == " " {
+		code = ""
+		return &code, nil
+	}
+
 	shortlink, _ := s.shortLinkRepo.GetByUrl(ctx, url)
 	if shortlink != nil {
 		return &shortlink.Code, nil

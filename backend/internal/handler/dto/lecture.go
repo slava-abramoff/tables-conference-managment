@@ -11,8 +11,8 @@ type CreateLectureRequest struct {
 	Platform     *string   `json:"platform,omitempty"    validate:"omitempty,max=100"`
 	Unit         *string   `json:"unit,omitempty"        validate:"omitempty,max=100"`
 	Location     *string   `json:"location,omitempty"    validate:"omitempty,max=150"`
-	URL          *string   `json:"url,omitempty"         validate:"omitempty,url"`
-	ShortURL     *string   `json:"shortUrl,omitempty"    validate:"omitempty,url"`
+	URL          *string   `json:"url,omitempty"         validate:"omitempty,max=2048"`
+	ShortURL     *string   `json:"shortUrl,omitempty"    validate:"omitempty,max=2048"`
 	StreamKey    *string   `json:"streamKey,omitempty"   validate:"omitempty,max=100"`
 	Description  *string   `json:"description,omitempty" validate:"omitempty,max=2000"`
 	Admin        *string   `json:"admin,omitempty"       validate:"omitempty,max=100"`
@@ -32,8 +32,8 @@ type UpdateLectureRequest struct {
 	Platform     *string    `json:"platform,omitempty"    validate:"omitempty,max=100"`
 	Unit         *string    `json:"unit,omitempty"        validate:"omitempty,max=100"`
 	Location     *string    `json:"location,omitempty"    validate:"omitempty,max=150"`
-	URL          *string    `json:"url,omitempty"         validate:"omitempty,url"`
-	ShortURL     *string    `json:"shortUrl,omitempty"    validate:"omitempty,url"`
+	URL          *string    `json:"url,omitempty"         validate:"omitempty,max=2048"`
+	ShortURL     *string    `json:"shortUrl,omitempty"    validate:"omitempty,max=2048"`
 	StreamKey    *string    `json:"streamKey,omitempty"   validate:"omitempty,max=100"`
 	Description  *string    `json:"description,omitempty" validate:"omitempty,max=2000"`
 	Admin        *string    `json:"admin,omitempty"       validate:"omitempty,max=100"`
