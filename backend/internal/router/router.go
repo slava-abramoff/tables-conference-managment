@@ -69,6 +69,13 @@ func NewRouter(
 		auth(),
 		roles([]string{"admin", "moderator"}),
 	))
+	router.POST("/api/lectures/import", chain(
+		l.ImportExcel,
+		logs(logger),
+		cors,
+		auth(),
+		roles([]string{"admin", "moderator"}),
+	))
 	router.POST("/api/lectures/advanced", chain(
 		l.CreateMany,
 		logs(logger),

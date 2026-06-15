@@ -1,10 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react"; // Добавили useRef для работы с файлами
 import { useNavigate } from "react-router-dom";
 import ScheduleCard from "../components/ScheduleCard";
 import SchedulePlanningModal from "../components/SchedulePlanningModal";
 import ScheduleExportModal from "../components/ScheduleExportModal";
 import { getAvailableDates, getScheduleDays } from "../api/schedule/schedule";
-import { createManyLectures, exportLectures } from "../api/lectures/lectures";
+import { createManyLectures, exportLectures, importLectures } from "../api/lectures/lectures";
 import type { YearSchedule, DaySchedule } from "../types/response/schedule";
 import type { LectureCreateRequest } from "../types/request/lecture";
 import { englishToRussianMonth, monthToTwoDigits } from "../utils/monthUtils";
@@ -58,6 +58,9 @@ export default function Schedule() {
   const [cardsLoading, setCardsLoading] = useState(false);
   const [showPlanningModal, setShowPlanningModal] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
+
+  // Ссылка на невидимый элемент выбора файлов
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const availableYears = yearsData.map((y) => y.year);
   const selectedYearData = yearsData.find((y) => y.year === selectedYear);
@@ -113,6 +116,32 @@ export default function Schedule() {
     );
   };
 
+  // Функция, которая имитирует клик по скрытому инпуту при нажатии красивой кнопки
+  const handleImportButtonClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  // Функция, которая берет выбранный файл Excel и отправляет на Go бэкенд
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+
+    const selectedFile = files[0];
+
+    try {
+      setCardsLoading(true); // Включаем индикатор загрузки
+      await importLectures(selectedFile); // Отправляем файл
+      alert("Импорт успешно завершен!");
+      fetchScheduleDays(); // Перезагружаем карточки, чтобы сразу увидеть новые лекции
+    } catch (error: any) {
+      console.error(error);
+      alert("Ошибка при импорте файла. Проверьте консоль браузера.");
+    } finally {
+      event.target.value = ''; // Сбрасываем инпут
+      setCardsLoading(false);
+    }
+  };
+
   const handleExport = () => {
     setShowExportModal(true);
   };
@@ -123,7 +152,6 @@ export default function Schedule() {
     group: string;
   }) => {
     console.log("Экспорт расписания:", params);
-    // TODO: с группами доделай
     await exportLectures({
       start: params.dateFrom,
       end: params.dateTo,
@@ -237,8 +265,16 @@ export default function Schedule() {
             <div className="flex-1" />
 
             {/* Кнопки */}
+            {/* Скрытый инпут для выбора Excel-файла */}
+            <input
+              type="file"
+              ref={fileInputRef}
+              style={{ display: "none" }}
+              accept=".xlsx"
+              onChange={handleFileChange}
+            />
             <button
-              onClick={() => console.log("Импорт")}
+              onClick={handleImportButtonClick}
               className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-md hover:bg-slate-50 transition-colors"
             >
               Импорт

@@ -28,6 +28,7 @@ type LectureService interface {
 	Update(ctx context.Context, id int, dto dto.UpdateLectureRequest) (*models.Lecture, error)
 	Export(ctx context.Context, filter dto.ExportLecturesExcelRequest, writer io.Writer) error
 	Remove(ctx context.Context, id int) (*models.Lecture, error)
+	Import(ctx context.Context, file io.Reader) error
 }
 
 type LectureHandlers struct {
@@ -263,4 +264,27 @@ func (h *LectureHandlers) ExportExcel(w http.ResponseWriter, r *http.Request, _ 
 	if err := h.lectureService.Export(ctx, filter, w); err != nil {
 		httprespond.HandleErrorResponse(w, err)
 	}
+}
+
+func (h *LectureHandlers) ImportExcel(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	ctx := r.Context()
+
+	if err := r.ParseMultipartForm(10 << 20); err != nil {
+		httprespond.ErrorResponse(w, "Превышен максимальный размер файла (10 MB)", http.StatusBadRequest)
+		return
+	}
+
+	file, _, err := r.FormFile("file")
+	if err != nil {
+		httprespond.ErrorResponse(w, "Файл не найден. Убедитесь, что FormData содержит ключ 'file'", http.StatusBadRequest)
+		return
+	}
+	defer file.Close()
+
+	if err := h.lectureService.Import(ctx, file); err != nil {
+		httprespond.ErrorResponse(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	httprespond.JsonResponse(w, map[string]string{"message": "Импорт успешно завершен"}, http.StatusOK)
 }
