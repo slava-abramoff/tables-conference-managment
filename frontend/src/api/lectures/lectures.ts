@@ -75,3 +75,15 @@ export const deleteLecture = async (id: number): Promise<LectureResponse> => {
   const { data } = await api.delete<LectureResponse>(`/lectures/${id}`);
   return data;
 };
+
+export const importLectures = async (file: File): Promise<{ message: string }> => {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const { data } = await api.post<{ message: string }>("/lectures/import", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+  return data;
+};

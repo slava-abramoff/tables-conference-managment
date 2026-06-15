@@ -411,3 +411,90 @@ func (l *lectureService) Export(
 
 	return f.Write(writer)
 }
+
+func (l *lectureService) Import(ctx context.Context, file io.Reader) error {
+	f, err := excelize.OpenReader(file)
+	if err != nil {
+		return fmt.Errorf("не удалось открыть Excel файл: %w", err)
+	}
+	defer f.Close()
+
+	sheet := "Lectures"
+	rows, err := f.GetRows(sheet)
+	if err != nil {
+		sheets := f.GetSheetList()
+		if len(sheets) == 0 {
+			return fmt.Errorf("в документе отсутствуют страницы (листы)")
+		}
+		sheet = sheets[0]
+		rows, err = f.GetRows(sheet)
+		if err != nil {
+			return fmt.Errorf("не удалось прочитать строки из листа '%s': %w", sheet, err)
+		}
+	}
+
+	if len(rows) <= 1 {
+		return fmt.Errorf("файл пустой или содержит только строку заголовков")
+	}
+
+	var dtos []dto.CreateLectureRequest
+
+	getStrPtr := func(row []string, idx int) *string {
+		if idx < len(row) {
+			val := strings.TrimSpace(row[idx])
+			if val != "" {
+				return &val
+			}
+		}
+		return nil
+	}
+
+	for i := 1; i < len(rows); i++ {
+		row := rows[i]
+
+		if len(row) == 0 || (len(row) == 1 && strings.TrimSpace(row[0]) == "") {
+			continue
+		}
+
+		if len(row) < 2 || strings.TrimSpace(row[1]) == "" {
+			return fmt.Errorf("строка %d: отсутствует обязательное поле 'Дата' (Колонка B)", i+1)
+		}
+
+		dateStr := strings.TrimSpace(row[1])
+		var parsedDate time.Time
+
+		parsedDate, err = time.Parse("2006-01-02", dateStr)
+		if err != nil {
+			parsedDate, err = time.Parse("02.01.2006", dateStr)
+			if err != nil {
+				return fmt.Errorf("строка %d: неверный формат даты '%s'. Ожидается YYYY-MM-DD или DD.MM.YYYY", i+1, dateStr)
+			}
+		}
+
+		lectureDTO := dto.CreateLectureRequest{
+			Date:        parsedDate,
+			Start:       getStrPtr(row, 2),
+			End:         getStrPtr(row, 3),
+			Group:       getStrPtr(row, 4),
+			Lector:      getStrPtr(row, 5),
+			Platform:    getStrPtr(row, 6),
+			Unit:        getStrPtr(row, 7),
+			Location:    getStrPtr(row, 8),
+			URL:         getStrPtr(row, 9),
+			StreamKey:   getStrPtr(row, 10),
+			Description: getStrPtr(row, 11),
+			Admin:       getStrPtr(row, 12),
+		}
+
+		dtos = append(dtos, lectureDTO)
+	}
+
+	if len(dtos) > 0 {
+		_, err = l.CreateMany(ctx, dtos)
+		if err != nil {
+			return fmt.Errorf("ошибка при сохранении пачки лекций в БД: %w", err)
+		}
+	}
+
+	return nil
+}
